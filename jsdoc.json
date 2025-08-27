@@ -1,0 +1,15 @@
+{
+  "plugins": [],
+  "recurseDepth": 10,
+  "source": {
+    "include": ["src/js"],
+    "includePattern": ".js$",
+    "excludePattern": "(node_modules/|dist/)"
+  },
+  "opts": {
+    "encoding": "utf8",
+    "destination": "docs",
+    "recurse": true,
+    "verbose": true
+  }
+}

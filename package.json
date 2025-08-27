@@ -1,13 +1,16 @@
 {
   "name": "social-sparks",
   "version": "1.0.0",
+  "type": "module",
   "description": "A mini social network / micro-blogging app",
   "main": "index.js",
   "scripts": {
-  "dev": "vite",
-  "build": "vite build --outDir docs",
-  "preview": "vite preview"
-},
+    "dev": "vite",
+    "build": "vite build --outDir docs",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KatjaTurnsek/social-sparks.git"
@@ -20,6 +23,12 @@
   },
   "homepage": "https://github.com/KatjaTurnsek/social-sparks#readme",
   "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "eslint": "^9.34.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
     "vite": "^7.1.3"
   }
 }

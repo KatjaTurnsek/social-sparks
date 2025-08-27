@@ -1,3 +1,6 @@
 import "../../css/main.css";
 
-console.log("Main JS running...");
+const app = document.getElementById("app");
+if (app) {
+  app.innerHTML = `<p>Vite is running</p>`;
+}

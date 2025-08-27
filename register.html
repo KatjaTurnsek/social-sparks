@@ -1,26 +1,98 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register · Social Sparks</title>
-  <meta name="description" content="">
-  <script type="module" src="./src/js/pages/register.js"></script>
-  <base href="%BASE_URL%">
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register · Social Sparks</title>
+    <meta name="description" content="Create your Social Sparks account." />
+    <base href="%BASE_URL%" />
+    <script type="module" src="./src/js/pages/register.js"></script>
+  </head>
   <body>
-    <main>
-      <h1>Create Account</h1>
-      <form id="register-form">
-        <label>Name <input type="text" id="name" required /></label>
-        <label>Email <input type="email" id="email" required /></label>
-        <label>Password <input type="password" id="password" required /></label>
-        <button type="submit">Register</button>
-      </form>
-      <p>Have an account? <a href="login.html">Login here</a></p>
+    <header class="site-header">
+      <nav class="nav container">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links">
+          <li><a href="feed.html">Feed</a></li>
+          <li><a href="login.html">Login</a></li>
+        </ul>
+      </nav>
+    </header>
 
-      <!-- mount point -->
-    <div id="app"></div>
+    <main class="container">
+      <section class="card" style="max-width: 520px; margin: 2rem auto">
+        <h1 class="mt-0 mb-2">Create account</h1>
+
+        <form class="form" id="register-form" novalidate>
+          <div class="field">
+            <label class="label" for="name">Name</label>
+            <input class="input" type="text" id="name" name="name" required />
+            <small class="help">This will be visible on your profile.</small>
+          </div>
+
+          <div class="field">
+            <label class="label" for="email">Email</label>
+            <input
+              class="input"
+              type="email"
+              id="email"
+              name="email"
+              required
+            />
+            <small class="help">Use a valid email you can access.</small>
+          </div>
+
+          <div class="field">
+            <label class="label" for="password">Password</label>
+            <input
+              class="input"
+              type="password"
+              id="password"
+              name="password"
+              required
+              minlength="8"
+            />
+            <small class="help">At least 8 characters.</small>
+          </div>
+
+          <!-- Optional confirm. Keep if you want client-side check -->
+          <div class="field">
+            <label class="label" for="confirm">Confirm password</label>
+            <input
+              class="input"
+              type="password"
+              id="confirm"
+              name="confirm"
+              required
+              minlength="8"
+            />
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Create account</button>
+            <a href="login.html" class="btn btn-outline"
+              >I already have an account</a
+            >
+          </div>
+
+          <!-- Inline message area; toggle via JS -->
+          <p
+            id="register-msg"
+            class="form-message alert"
+            aria-live="polite"
+            style="display: none"
+          ></p>
+        </form>
+      </section>
+
+      <!-- mount point for any extra JS -->
+      <div id="app"></div>
     </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
   </body>
 </html>

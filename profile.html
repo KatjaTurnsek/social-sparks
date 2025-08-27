@@ -1,21 +1,150 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile · Social Sparks</title>
-  <meta name="description" content="">
-  <script type="module" src="./src/js/pages/profile.js"></script>
-  <base href="%BASE_URL%">
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile · Social Sparks</title>
+    <meta
+      name="description"
+      content="View a Social Sparks profile and posts."
+    />
+    <base href="%BASE_URL%" />
+    <script type="module" src="./src/js/pages/profile.js"></script>
+  </head>
   <body>
-    <main>
-      <h1>Profile</h1>
-      <section id="profile-header"></section>
-      <section id="profile-posts"></section>
+    <header class="site-header">
+      <nav class="nav container">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links">
+          <li><a href="feed.html">Feed</a></li>
+          <li><a href="login.html">Login</a></li>
+          <li><a href="register.html">Register</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="container">
+      <!-- Profile header -->
+      <section class="card" style="max-width: 860px; margin: 2rem auto">
+        <div class="grid cols-2" style="align-items: center">
+          <!-- Avatar -->
+          <div>
+            <img
+              id="profile-avatar"
+              src="https://via.placeholder.com/160"
+              alt="Profile avatar"
+              style="
+                width: 160px;
+                height: 160px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 1px solid var(--color-border);
+              "
+            />
+          </div>
+
+          <!-- Basic info -->
+          <div>
+            <h1 id="profile-name" class="mt-0 mb-1">User Name</h1>
+            <p class="muted mb-1">@<span id="profile-handle">username</span></p>
+            <p id="profile-bio" class="mb-2">
+              This is the user bio. It can be a short introduction or tagline.
+            </p>
+
+            <div class="form-actions" style="gap: 0.75rem">
+              <button id="followBtn" class="btn">Follow</button>
+              <button id="messageBtn" class="btn btn-outline">Message</button>
+            </div>
+
+            <p class="muted mt-2">
+              <strong id="count-posts">0</strong> Posts ·
+              <strong id="count-followers">0</strong> Followers ·
+              <strong id="count-following">0</strong> Following
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabs (optional UI hint; wire up later in JS if you want switching) -->
+      <nav
+        class="card"
+        style="max-width: 860px; margin: 0 auto 1rem auto; padding: 0.5rem"
+      >
+        <ul class="nav-links" role="tablist">
+          <li>
+            <a href="#tab-posts" id="tabPosts" role="tab" aria-selected="true"
+              >Posts</a
+            >
+          </li>
+          <li>
+            <a href="#tab-about" id="tabAbout" role="tab" aria-selected="false"
+              >About</a
+            >
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Posts grid -->
+      <section
+        id="tab-posts"
+        class="section"
+        aria-labelledby="tabPosts"
+        style="max-width: 860px; margin: 0 auto"
+      >
+        <h2 class="mb-2">Posts</h2>
+        <div id="profile-posts" class="grid"></div>
+
+        <!-- Empty state -->
+        <p id="profile-empty" class="muted" style="display: none">
+          No posts yet.
+        </p>
+
+        <!-- Loading skeletons -->
+        <div id="profile-skeletons" class="grid">
+          <div class="card skeleton" style="height: 160px"></div>
+          <div class="card skeleton" style="height: 160px"></div>
+          <div class="card skeleton" style="height: 160px"></div>
+        </div>
+      </section>
+
+      <!-- About section (optional; toggle via JS if using tabs) -->
+      <section
+        id="tab-about"
+        class="section"
+        aria-labelledby="tabAbout"
+        style="display: none; max-width: 860px; margin: 0 auto"
+      >
+        <h2 class="mb-2">About</h2>
+        <article class="card">
+          <p id="profile-about-text">
+            This section can show more detailed information about the user.
+          </p>
+        </article>
+      </section>
+
+      <!-- Post card template (for cloning in profile.js) -->
+      <template id="profile-post-template">
+        <article class="card">
+          <h3 class="post-title">Post title</h3>
+          <p class="muted mb-1">
+            <time class="post-time" datetime="">Just now</time>
+          </p>
+          <img class="post-media mb-1" src="" alt="" style="display: none" />
+          <p class="post-body">Post body text…</p>
+          <div class="form-actions mt-1">
+            <a href="post.html" class="btn btn-outline">View</a>
+          </div>
+        </article>
+      </template>
 
       <!-- mount point -->
-    <div id="app"></div>
+      <div id="app"></div>
     </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
   </body>
 </html>

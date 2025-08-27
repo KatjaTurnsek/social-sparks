@@ -1,18 +1,81 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Feed · Social Sparks</title>
-  <meta name="description" content="">
-  <script type="module" src="./src/js/pages/feed.js"></script>
-  <base href="%BASE_URL%">
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feed · Social Sparks</title>
+    <meta name="description" content="See the latest posts on Social Sparks." />
+    <base href="%BASE_URL%" />
+    <script type="module" src="./src/js/pages/feed.js"></script>
+  </head>
   <body>
-    <main>
-      <h1>Feed</h1>
-      <section id="composer"></section>
-      <section id="feed-list"></section>
+    <header class="site-header">
+      <nav class="nav container">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links">
+          <li><a href="profile.html">Profile</a></li>
+          <li><a href="login.html">Login</a></li>
+          <li><a href="register.html">Register</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="container">
+      <!-- Toolbar -->
+      <section
+        class="form-actions"
+        style="justify-content: flex-end; margin: 1.5rem 0"
+      >
+        <a href="create-post.html" class="btn">New Post</a>
+      </section>
+
+      <!-- Feed list -->
+      <section id="feed">
+        <h1 class="mt-0 mb-2">Latest Posts</h1>
+        <div id="feed-list" class="grid"></div>
+
+        <!-- Empty state -->
+        <p id="feed-empty" class="muted" style="display: none">
+          No posts yet. Be the first to share something!
+        </p>
+
+        <!-- Loading skeletons -->
+        <div id="feed-skeletons" class="grid">
+          <div class="card skeleton" style="height: 160px"></div>
+          <div class="card skeleton" style="height: 160px"></div>
+          <div class="card skeleton" style="height: 160px"></div>
+        </div>
+      </section>
+
+      <!-- Post card template (hidden, cloned in JS) -->
+      <template id="post-template">
+        <article class="card">
+          <h2 class="post-title">Post title</h2>
+          <p class="muted mb-1">
+            by <a href="profile.html" class="post-author">Author</a> ·
+            <time class="post-time" datetime="">Just now</time>
+          </p>
+          <img
+            src="https://via.placeholder.com/600x300"
+            alt="Post media"
+            class="mb-1 post-media"
+            style="display: none"
+          />
+          <p class="post-body">Post body text…</p>
+          <div class="form-actions mt-1">
+            <a href="post.html" class="btn btn-outline">View</a>
+          </div>
+        </article>
+      </template>
+
+      <!-- mount point -->
+      <div id="app"></div>
     </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
   </body>
 </html>

@@ -1,25 +1,75 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login · Social Sparks</title>
-  <meta name="description" content="">
-  <script type="module" src="./src/js/pages/login.js"></script>
-  <base href="%BASE_URL%">
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login · Social Sparks</title>
+    <meta
+      name="description"
+      content="Login to Social Sparks to share and connect."
+    />
+    <script type="module" src="./src/js/pages/login.js"></script>
+    <base href="%BASE_URL%" />
+  </head>
   <body>
-    <main>
-      <h1>Login</h1>
-      <form id="login-form">
-        <label>Email <input type="email" id="email" required /></label>
-        <label>Password <input type="password" id="password" required /></label>
-        <button type="submit">Sign in</button>
-      </form>
-      <p>No account? <a href="register.html">Register here</a></p>
+    <header class="site-header">
+      <nav class="nav container">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links">
+          <li><a href="feed.html">Feed</a></li>
+          <li><a href="register.html">Register</a></li>
+        </ul>
+      </nav>
+    </header>
 
-      <!-- mount point -->
-    <div id="app"></div>
+    <main class="container">
+      <section class="card" style="max-width: 480px; margin: 2rem auto">
+        <h1 class="mt-0 mb-2">Login</h1>
+
+        <form class="form" id="login-form" novalidate>
+          <div class="field">
+            <label class="label" for="email">Email</label>
+            <input
+              class="input"
+              type="email"
+              id="email"
+              name="email"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="label" for="password">Password</label>
+            <input
+              class="input"
+              type="password"
+              id="password"
+              name="password"
+              required
+            />
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Sign in</button>
+            <a href="register.html" class="btn btn-outline">Register</a>
+          </div>
+
+          <p
+            id="login-msg"
+            class="form-message alert"
+            style="display: none"
+          ></p>
+        </form>
+      </section>
+
+      <!-- mount point for JS-driven content -->
+      <div id="app"></div>
     </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
   </body>
 </html>

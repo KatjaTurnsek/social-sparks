@@ -1,21 +1,94 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Post · Social Sparks</title>
-  <meta name="description" content="">
-  <script type="module" src="./src/js/pages/post.js"></script>
-  <base href="%BASE_URL%">
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Post · Social Sparks</title>
+    <meta name="description" content="View a single post on Social Sparks." />
+    <script type="module" src="./src/js/pages/post.js"></script>
+    <base href="%BASE_URL%" />
+  </head>
   <body>
-    <main>
-      <h1>Post</h1>
-      <article id="post"></article>
-      <section id="comments"></section>
+    <header class="site-header">
+      <nav class="nav container">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links">
+          <li><a href="feed.html">Feed</a></li>
+          <li><a href="profile.html">Profile</a></li>
+          <li><a href="login.html">Login</a></li>
+        </ul>
+      </nav>
+    </header>
 
-      <!-- mount point -->
-    <div id="app"></div>
+    <main class="container">
+      <!-- Post -->
+      <article
+        id="post"
+        class="card"
+        style="margin: 2rem auto; max-width: 680px"
+      >
+        <h1 class="mt-0 mb-2">Post title</h1>
+        <p class="muted mb-2">
+          by <a href="profile.html">Author Name</a> ·
+          <time datetime="2025-08-27">Aug 27, 2025</time>
+        </p>
+        <img
+          src="https://via.placeholder.com/600x300"
+          alt="Post media"
+          class="mb-2"
+        />
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque
+          at urna quis tellus fringilla congue nec sed nulla.
+        </p>
+
+        <div class="form-actions mt-2">
+          <button class="btn btn-outline" id="editBtn">Edit</button>
+          <button class="btn btn-outline" id="deleteBtn">Delete</button>
+        </div>
+      </article>
+
+      <!-- Comments -->
+      <section id="comments" style="margin: 2rem auto; max-width: 680px">
+        <h2 class="mb-2">Comments</h2>
+        <div id="comment-list" class="grid"></div>
+
+        <!-- Comment card template (hidden, for cloning in JS) -->
+        <template id="comment-template">
+          <article class="card" style="padding: 1rem">
+            <p class="muted mb-1">
+              <strong class="comment-author">Author</strong> ·
+              <time class="comment-time" datetime="">Just now</time>
+            </p>
+            <p class="comment-body">Comment text goes here…</p>
+          </article>
+        </template>
+
+        <!-- Add new comment -->
+        <form class="form mt-3" id="comment-form">
+          <div class="field">
+            <label class="label" for="comment">Add a comment</label>
+            <textarea
+              class="textarea"
+              id="comment"
+              name="comment"
+              required
+            ></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="btn" type="submit">Post comment</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- mount point for any extra JS -->
+      <div id="app"></div>
     </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
   </body>
 </html>

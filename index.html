@@ -1,25 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Social Sparks</title>
-  <meta name="description" content="">
-  <script type="module" src="./src/js/pages/main.js"></script>
-  <base href="%BASE_URL%">
-</head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Social Sparks</title>
+    <meta
+      name="description"
+      content="Social Sparks — A simple social app powered by the Noroff API"
+    />
+    <script type="module" src="./src/js/pages/main.js"></script>
+    <base href="%BASE_URL%" />
+  </head>
   <body>
-    <main>
-      <h1>Welcome to Social Sparks</h1>
-      <p>Choose where to go:</p>
-      <nav>
-        <a href="login.html">Login</a> ·
-        <a href="register.html">Register</a> ·
-        <a href="feed.html">Feed</a>
+    <header class="site-header">
+      <nav class="nav container">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links">
+          <li><a href="feed.html">Feed</a></li>
+          <li><a href="login.html">Login</a></li>
+          <li><a href="register.html">Register</a></li>
+        </ul>
       </nav>
+    </header>
 
-      <!-- mount point -->
-    <div id="app"></div>
+    <main class="container">
+      <section class="hero">
+        <h1 class="hero-title">Welcome to Social Sparks</h1>
+        <p class="hero-text">
+          A simple social platform built with the Noroff API.
+        </p>
+        <div class="hero-actions">
+          <a href="login.html" class="btn">Login</a>
+          <a href="register.html" class="btn btn-outline">Register</a>
+        </div>
+      </section>
+
+      <section class="about">
+        <h2>About</h2>
+        <p>
+          Social Sparks is your place to share posts, connect with others, and
+          follow your favorite profiles. Built as a student project with modern
+          tools and clean design.
+        </p>
+      </section>
+
+      <!-- mount point for JS-driven content -->
+      <div id="app"></div>
     </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
   </body>
 </html>

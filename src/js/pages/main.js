@@ -2,5 +2,5 @@ import "../../css/main.css";
 
 const app = document.getElementById("app");
 if (app) {
-  app.innerHTML = `<p>Vite is running</p>`;
+  app.innerHTML = `<p>Welcome! This is the Index page.</p>`;
 }

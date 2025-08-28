@@ -1,4 +1,5 @@
 import "../../css/main.css";
+import { showLoader, hideLoader } from "../boot.js";
 
 const app = document.getElementById("app");
 if (app) {
@@ -9,12 +10,22 @@ const form = document.getElementById("login-form");
 const msg = document.getElementById("login-msg");
 
 if (form) {
-  form.addEventListener("submit", (e) => {
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
     msg.style.display = "block";
     msg.textContent = "Logging in…";
 
-    // TODO: replace with API call
-    setTimeout(() => (msg.textContent = "Demo login successful"), 800);
+    try {
+      showLoader();
+
+      // TODO: replace this with a real API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      msg.textContent = "Demo login successful";
+    } catch (err) {
+      msg.textContent = err instanceof Error ? err.message : "Login failed";
+    } finally {
+      hideLoader();
+    }
   });
 }

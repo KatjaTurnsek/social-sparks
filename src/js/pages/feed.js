@@ -1,5 +1,5 @@
-import "../../css/main.css";
 import { showLoader, hideLoader } from "../boot.js";
+import { PostCard, setStatus } from "../components.js";
 
 const feedList = document.getElementById("feed-list");
 const empty = document.getElementById("feed-empty");
@@ -8,49 +8,50 @@ const skeletons = document.getElementById("feed-skeletons");
 async function loadFeed() {
   if (!feedList || !empty || !skeletons) return;
 
-  // show page skeletons immediately
   skeletons.style.display = "grid";
   empty.style.display = "none";
-  feedList.innerHTML = "";
+  feedList.replaceChildren();
 
   try {
-    showLoader(); // global loader during API call
+    showLoader();
 
-    // TODO: replace with real API request
-    await new Promise((r) => setTimeout(r, 1000));
-    const demoPosts = [
-      { title: "Hello World", body: "This is my first post!" },
-      { title: "Another Post", body: "Loving Social Sparks." },
-    ];
-    // const demoPosts = []; // uncomment to test empty state
+    // TODO: replace with real API request and set `posts` to the response array
+    await new Promise((r) => setTimeout(r, 600));
+    const posts = []; // keep empty to avoid lint issues with demo literals
 
     skeletons.style.display = "none";
 
-    if (demoPosts.length === 0) {
+    if (posts.length === 0) {
       empty.style.display = "block";
+      empty.textContent = "No posts yet. Be the first to share something!";
       return;
     }
 
-    feedList.innerHTML = demoPosts
-      .map(
-        (p) => `
-          <article class="card">
-            <h2>${p.title}</h2>
-            <p>${p.body}</p>
-            <div class="form-actions mt-1">
-              <a href="post.html" class="btn btn-outline">View</a>
-            </div>
-          </article>
-        `
-      )
-      .join("");
-
-    console.log("Feed page script is running.");
+    // Will render when you provide real posts with { id, title, author, created, body, media? }
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < posts.length; i += 1) {
+      const p = posts[i];
+      frag.appendChild(
+        PostCard({
+          id: p.id,
+          title: p.title,
+          author: p.author,
+          created: p.created,
+          body: p.body,
+          media: p.media, // optional
+        })
+      );
+    }
+    feedList.appendChild(frag);
   } catch (err) {
     skeletons.style.display = "none";
     empty.style.display = "block";
-    empty.textContent =
-      err instanceof Error ? err.message : "Failed to load feed.";
+    let msg = "Failed to load feed.";
+    if (err && typeof err === "object" && err !== null && "message" in err) {
+      const maybe = /** @type {{message?: unknown}} */ (err).message;
+      if (typeof maybe === "string") msg = maybe;
+    }
+    setStatus(empty, msg, "error");
   } finally {
     hideLoader();
   }

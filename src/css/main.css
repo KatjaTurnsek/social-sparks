@@ -169,10 +169,14 @@ textarea {
   border-radius: var(--radius);
 }
 
-.nav-links a:hover,
+/* Hover: subtle background, Focus: strong visible outline */
+.nav-links a:hover {
+  background: var(--color-border);
+}
 .nav-links a:focus-visible {
   background: var(--color-border);
   outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
 }
 
 .site-footer {
@@ -223,12 +227,17 @@ p {
   cursor: pointer;
   transition:
     background 0.15s ease,
-    transform 0.02s ease;
+    transform 0.02s ease,
+    box-shadow 0.15s ease;
 }
-.btn:hover,
-.btn:focus-visible {
+.btn:hover {
   background: var(--color-primary-hover);
+}
+.btn:focus-visible {
   outline: none;
+  background: var(--color-primary-hover);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  border-color: var(--color-primary);
 }
 .btn:active {
   transform: translateY(1px);
@@ -243,10 +252,21 @@ p {
   color: var(--color-primary);
   border-color: var(--color-primary);
 }
-.btn-outline:hover,
-.btn-outline:focus-visible {
+.btn-outline:hover {
   background: var(--color-primary);
   color: #fff;
+}
+.btn-outline:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  border-color: var(--color-primary);
+}
+
+/* Make generic links visibly focusable inside content areas */
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  border-radius: var(--radius);
 }
 
 .card {
@@ -334,7 +354,6 @@ p {
     background 0.15s ease,
     box-shadow 0.15s ease;
 }
-
 .textarea {
   min-height: 120px;
   resize: vertical;
@@ -377,7 +396,7 @@ p {
   background: #fff;
 }
 
-/* Inline alert area for form messages */
+/* Inline alert area for form messages (use with role="status" aria-live="polite") */
 .form-message {
   margin-top: 0.5rem;
   font-size: 0.95rem;
@@ -442,7 +461,7 @@ p {
   z-index: 9999;
 }
 
-/* Spinner (you likely already have this) */
+/* Spinner */
 .spinner {
   width: 48px;
   height: 48px;
@@ -454,6 +473,14 @@ p {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
   }
 }
 

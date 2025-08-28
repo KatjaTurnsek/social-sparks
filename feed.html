@@ -34,8 +34,14 @@
         <h1 class="mt-0 mb-2">Latest Posts</h1>
         <div id="feed-list" class="grid"></div>
 
-        <!-- Empty state -->
-        <p id="feed-empty" class="muted" style="display: none">
+        <!-- Empty state (announced by screen readers when shown) -->
+        <p
+          id="feed-empty"
+          class="muted"
+          role="status"
+          aria-live="polite"
+          style="display: none"
+        >
           No posts yet. Be the first to share something!
         </p>
 

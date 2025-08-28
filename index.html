@@ -8,12 +8,15 @@
       name="description"
       content="Social Sparks — A simple social app powered by the Noroff API"
     />
-    <script type="module" src="./src/js/pages/main.js"></script>
     <base href="%BASE_URL%" />
+    <script type="module" src="./src/js/pages/main.js"></script>
   </head>
   <body>
+    <!-- Skip to content (visible on keyboard focus) -->
+    <a href="#main-content" class="visually-hidden">Skip to main content</a>
+
     <header class="site-header">
-      <nav class="nav container">
+      <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
           <li><a href="feed.html">Feed</a></li>
@@ -23,15 +26,22 @@
       </nav>
     </header>
 
-    <main class="container">
+    <main id="main-content" class="container">
       <section class="hero">
         <h1 class="hero-title">Welcome to Social Sparks</h1>
         <p class="hero-text">
           A simple social platform built with the Noroff API.
         </p>
         <div class="hero-actions">
-          <a href="login.html" class="btn">Login</a>
-          <a href="register.html" class="btn btn-outline">Register</a>
+          <a href="login.html" class="btn" aria-label="Login to Social Sparks"
+            >Login</a
+          >
+          <a
+            href="register.html"
+            class="btn btn-outline"
+            aria-label="Register for Social Sparks"
+            >Register</a
+          >
         </div>
       </section>
 
@@ -44,8 +54,8 @@
         </p>
       </section>
 
-      <!-- mount point for JS-driven content -->
-      <div id="app"></div>
+      <!-- Dynamic notices announced to AT -->
+      <div id="app" role="status" aria-live="polite"></div>
     </main>
 
     <footer class="site-footer">

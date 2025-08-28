@@ -12,8 +12,11 @@
     <script type="module" src="./src/js/pages/profile.js"></script>
   </head>
   <body>
+    <!-- Skip to content (visible on keyboard focus) -->
+    <a href="#main-content" class="visually-hidden">Skip to main content</a>
+
     <header class="site-header">
-      <nav class="nav container">
+      <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
           <li><a href="feed.html">Feed</a></li>
@@ -23,7 +26,7 @@
       </nav>
     </header>
 
-    <main class="container">
+    <main id="main-content" class="container">
       <!-- Profile header -->
       <section class="card" style="max-width: 860px; margin: 2rem auto">
         <div class="grid cols-2" style="align-items: center">
@@ -52,8 +55,18 @@
             </p>
 
             <div class="form-actions" style="gap: 0.75rem">
-              <button id="followBtn" class="btn">Follow</button>
-              <button id="messageBtn" class="btn btn-outline">Message</button>
+              <!-- aria-pressed toggled by JS when following/unfollowing -->
+              <button
+                id="followBtn"
+                class="btn"
+                type="button"
+                aria-pressed="false"
+              >
+                Follow
+              </button>
+              <button id="messageBtn" class="btn btn-outline" type="button">
+                Message
+              </button>
             </div>
 
             <p class="muted mt-2">
@@ -61,41 +74,68 @@
               <strong id="count-followers">0</strong> Followers ·
               <strong id="count-following">0</strong> Following
             </p>
+
+            <!-- Inline status for profile actions/errors (announced to AT) -->
+            <p
+              id="profile-msg"
+              class="form-message alert"
+              role="status"
+              aria-live="polite"
+              style="display: none"
+            ></p>
           </div>
         </div>
       </section>
 
-      <!-- Tabs (optional UI hint; wire up later in JS if you want switching) -->
+      <!-- Tabs (accessible) -->
       <nav
         class="card"
         style="max-width: 860px; margin: 0 auto 1rem auto; padding: 0.5rem"
+        aria-label="Profile sections"
       >
         <ul class="nav-links" role="tablist">
           <li>
-            <a href="#tab-posts" id="tabPosts" role="tab" aria-selected="true"
+            <a
+              href="#tab-posts"
+              id="tabPosts"
+              role="tab"
+              aria-controls="tab-posts"
+              aria-selected="true"
               >Posts</a
             >
           </li>
           <li>
-            <a href="#tab-about" id="tabAbout" role="tab" aria-selected="false"
+            <a
+              href="#tab-about"
+              id="tabAbout"
+              role="tab"
+              aria-controls="tab-about"
+              aria-selected="false"
               >About</a
             >
           </li>
         </ul>
       </nav>
 
-      <!-- Posts grid -->
+      <!-- Posts grid (tabpanel) -->
       <section
         id="tab-posts"
         class="section"
+        role="tabpanel"
         aria-labelledby="tabPosts"
         style="max-width: 860px; margin: 0 auto"
       >
         <h2 class="mb-2">Posts</h2>
         <div id="profile-posts" class="grid"></div>
 
-        <!-- Empty state -->
-        <p id="profile-empty" class="muted" style="display: none">
+        <!-- Empty state (live region so it’s announced when shown) -->
+        <p
+          id="profile-empty"
+          class="muted"
+          role="status"
+          aria-live="polite"
+          style="display: none"
+        >
           No posts yet.
         </p>
 
@@ -107,12 +147,14 @@
         </div>
       </section>
 
-      <!-- About section (optional; toggle via JS if using tabs) -->
+      <!-- About section (tabpanel) -->
       <section
         id="tab-about"
         class="section"
+        role="tabpanel"
         aria-labelledby="tabAbout"
-        style="display: none; max-width: 860px; margin: 0 auto"
+        hidden
+        style="max-width: 860px; margin: 0 auto"
       >
         <h2 class="mb-2">About</h2>
         <article class="card">
@@ -138,7 +180,7 @@
       </template>
 
       <!-- mount point -->
-      <div id="app"></div>
+      <div id="app" role="status" aria-live="polite"></div>
     </main>
 
     <footer class="site-footer">

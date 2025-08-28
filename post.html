@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Post · Social Sparks</title>
     <meta name="description" content="View a single post on Social Sparks." />
-    <script type="module" src="./src/js/pages/post.js"></script>
     <base href="%BASE_URL%" />
+    <script type="module" src="./src/js/pages/post.js"></script>
   </head>
   <body>
+    <!-- Skip to content (visible on keyboard focus) -->
+    <a href="#main-content" class="visually-hidden">Skip to main content</a>
+
     <header class="site-header">
-      <nav class="nav container">
+      <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
           <li><a href="feed.html">Feed</a></li>
@@ -20,7 +23,7 @@
       </nav>
     </header>
 
-    <main class="container">
+    <main id="main-content" class="container">
       <!-- Post -->
       <article
         id="post"
@@ -29,29 +32,56 @@
       >
         <h1 class="mt-0 mb-2">Post title</h1>
         <p class="muted mb-2">
-          by <a href="profile.html">Author Name</a> ·
-          <time datetime="2025-08-27">Aug 27, 2025</time>
+          by <a href="profile.html" id="post-author">Author</a> ·
+          <time id="post-time" datetime="">Just now</time>
         </p>
-        <img
-          src="https://via.placeholder.com/600x300"
-          alt="Post media"
-          class="mb-2"
-        />
-        <p>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque
-          at urna quis tellus fringilla congue nec sed nulla.
-        </p>
+        <img id="post-media" src="" alt="" class="mb-2" style="display: none" />
+        <p id="post-body">Loading the post content…</p>
 
         <div class="form-actions mt-2">
-          <button class="btn btn-outline" id="editBtn">Edit</button>
-          <button class="btn btn-outline" id="deleteBtn">Delete</button>
+          <button
+            class="btn btn-outline"
+            id="editBtn"
+            type="button"
+            aria-label="Edit post"
+          >
+            Edit
+          </button>
+          <button
+            class="btn btn-outline"
+            id="deleteBtn"
+            type="button"
+            aria-label="Delete post"
+          >
+            Delete
+          </button>
         </div>
+
+        <!-- Inline status for post actions/errors (announced to AT) -->
+        <p
+          id="post-msg"
+          class="form-message alert"
+          role="status"
+          aria-live="polite"
+          style="display: none"
+        ></p>
       </article>
 
       <!-- Comments -->
-      <section id="comments" style="margin: 2rem auto; max-width: 680px">
-        <h2 class="mb-2">Comments</h2>
-        <div id="comment-list" class="grid"></div>
+      <section
+        id="comments"
+        style="margin: 2rem auto; max-width: 680px"
+        aria-labelledby="comments-heading"
+      >
+        <h2 id="comments-heading" class="mb-2">Comments</h2>
+
+        <!-- List announced when items are added -->
+        <div
+          id="comment-list"
+          class="grid"
+          aria-live="polite"
+          aria-relevant="additions"
+        ></div>
 
         <!-- Comment card template (hidden, for cloning in JS) -->
         <template id="comment-template">
@@ -60,12 +90,12 @@
               <strong class="comment-author">Author</strong> ·
               <time class="comment-time" datetime="">Just now</time>
             </p>
-            <p class="comment-body">Comment text goes here…</p>
+            <p class="comment-body">Comment text…</p>
           </article>
         </template>
 
         <!-- Add new comment -->
-        <form class="form mt-3" id="comment-form">
+        <form class="form mt-3" id="comment-form" novalidate>
           <div class="field">
             <label class="label" for="comment">Add a comment</label>
             <textarea
@@ -73,16 +103,31 @@
               id="comment"
               name="comment"
               required
+              aria-describedby="comment-help"
+              autocomplete="off"
             ></textarea>
+            <small id="comment-help" class="help"
+              >Be kind and follow the community guidelines.</small
+            >
           </div>
           <div class="form-actions">
-            <button class="btn" type="submit">Post comment</button>
+            <button class="btn" type="submit" aria-label="Post your comment">
+              Post comment
+            </button>
           </div>
+          <!-- Status for comment submit (success/error) -->
+          <p
+            id="comments-msg"
+            class="form-message alert"
+            role="status"
+            aria-live="polite"
+            style="display: none"
+          ></p>
         </form>
       </section>
 
-      <!-- mount point for any extra JS -->
-      <div id="app"></div>
+      <!-- mount point for any extra JS messages -->
+      <div id="app" role="status" aria-live="polite"></div>
     </main>
 
     <footer class="site-footer">

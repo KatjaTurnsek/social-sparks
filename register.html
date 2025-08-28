@@ -9,8 +9,11 @@
     <script type="module" src="./src/js/pages/register.js"></script>
   </head>
   <body>
+    <!-- Skip to content (visible on keyboard focus) -->
+    <a href="#main-content" class="visually-hidden">Skip to main content</a>
+
     <header class="site-header">
-      <nav class="nav container">
+      <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
           <li><a href="feed.html">Feed</a></li>
@@ -19,15 +22,24 @@
       </nav>
     </header>
 
-    <main class="container">
+    <main id="main-content" class="container">
       <section class="card" style="max-width: 520px; margin: 2rem auto">
         <h1 class="mt-0 mb-2">Create account</h1>
 
         <form class="form" id="register-form" novalidate>
           <div class="field">
             <label class="label" for="name">Name</label>
-            <input class="input" type="text" id="name" name="name" required />
-            <small class="help">This will be visible on your profile.</small>
+            <input
+              class="input"
+              type="text"
+              id="name"
+              name="name"
+              required
+              autocomplete="name"
+            />
+            <small class="help" id="name-help"
+              >This will be visible on your profile.</small
+            >
           </div>
 
           <div class="field">
@@ -38,8 +50,12 @@
               id="email"
               name="email"
               required
+              autocomplete="email"
+              inputmode="email"
             />
-            <small class="help">Use a valid email you can access.</small>
+            <small class="help" id="email-help"
+              >Use a valid email you can access.</small
+            >
           </div>
 
           <div class="field">
@@ -51,8 +67,12 @@
               name="password"
               required
               minlength="8"
+              autocomplete="new-password"
+              aria-describedby="password-help"
             />
-            <small class="help">At least 8 characters.</small>
+            <small class="help" id="password-help"
+              >At least 8 characters.</small
+            >
           </div>
 
           <!-- Optional confirm. Keep if you want client-side check -->
@@ -65,20 +85,26 @@
               name="confirm"
               required
               minlength="8"
+              autocomplete="new-password"
+              aria-describedby="confirm-help"
             />
+            <small class="help" id="confirm-help">Re-type your password.</small>
           </div>
 
           <div class="form-actions">
-            <button class="btn" type="submit">Create account</button>
+            <button class="btn" id="submitBtn" type="submit">
+              Create account
+            </button>
             <a href="login.html" class="btn btn-outline"
               >I already have an account</a
             >
           </div>
 
-          <!-- Inline message area; toggle via JS -->
+          <!-- Inline message area; announced by assistive tech -->
           <p
             id="register-msg"
             class="form-message alert"
+            role="status"
             aria-live="polite"
             style="display: none"
           ></p>
@@ -86,7 +112,7 @@
       </section>
 
       <!-- mount point for any extra JS -->
-      <div id="app"></div>
+      <div id="app" role="status" aria-live="polite"></div>
     </main>
 
     <footer class="site-footer">

@@ -8,12 +8,15 @@
       name="description"
       content="Login to Social Sparks to share and connect."
     />
-    <script type="module" src="./src/js/pages/login.js"></script>
     <base href="%BASE_URL%" />
+    <script type="module" src="./src/js/pages/login.js"></script>
   </head>
   <body>
+    <!-- Skip to content (visible on keyboard focus) -->
+    <a href="#main-content" class="visually-hidden">Skip to main content</a>
+
     <header class="site-header">
-      <nav class="nav container">
+      <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
           <li><a href="feed.html">Feed</a></li>
@@ -22,7 +25,7 @@
       </nav>
     </header>
 
-    <main class="container">
+    <main id="main-content" class="container">
       <section class="card" style="max-width: 480px; margin: 2rem auto">
         <h1 class="mt-0 mb-2">Login</h1>
 
@@ -31,10 +34,12 @@
             <label class="label" for="email">Email</label>
             <input
               class="input"
-              type="email"
               id="email"
               name="email"
+              type="email"
               required
+              autocomplete="email"
+              inputmode="email"
             />
           </div>
 
@@ -42,10 +47,11 @@
             <label class="label" for="password">Password</label>
             <input
               class="input"
-              type="password"
               id="password"
               name="password"
+              type="password"
               required
+              autocomplete="current-password"
             />
           </div>
 
@@ -54,16 +60,19 @@
             <a href="register.html" class="btn btn-outline">Register</a>
           </div>
 
+          <!-- Inline status message (announced by screen readers) -->
           <p
             id="login-msg"
             class="form-message alert"
+            role="status"
+            aria-live="polite"
             style="display: none"
           ></p>
         </form>
       </section>
 
-      <!-- mount point for JS-driven content -->
-      <div id="app"></div>
+      <!-- mount point for any extra JS -->
+      <div id="app" role="status" aria-live="polite"></div>
     </main>
 
     <footer class="site-footer">

@@ -1,36 +1,10 @@
 import { showLoader, hideLoader } from "../boot.js";
-// If you want live announcements for errors, add this and set a message:
-// import { setStatus } from "../components.js";
+import { Button } from "../components.js";
+import { getPost, reactToPost } from "../api/posts.js";
 
 const postEl = document.getElementById("post");
 const commentsEl = document.getElementById("comments");
-// const postMsg = document.getElementById("post-msg"); // exists in post.html if you added it
 
-function wait(ms) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
-// Demo "API" calls — replace with real fetches later
-async function fetchPost() {
-  await wait(600);
-  // return a minimal object to avoid lint on demo literals
-  return {
-    // You can fill these from the real API later
-    // title: "",
-    // body: "",
-    // media: { url: "", alt: "" },
-    // created: "2025-01-01T00:00:00.000Z",
-    // author: ""
-  };
-}
-
-async function fetchComments() {
-  await wait(500);
-  // Keep empty to avoid lint on demo literals
-  return [];
-}
-
-// Small helper to create elements
 function el(tag, className, text) {
   const n = document.createElement(tag);
   if (className) n.className = className;
@@ -38,18 +12,94 @@ function el(tag, className, text) {
   return n;
 }
 
+function getPostIdFromURL() {
+  try {
+    const sp = new URLSearchParams(window.location.search);
+    const id = sp.get("id");
+    return id ? id : "";
+  } catch {
+    return "";
+  }
+}
+
+function countFor(reactions, symbol) {
+  if (!reactions || !Array.isArray(reactions)) return 0;
+  for (let i = 0; i < reactions.length; i += 1) {
+    const r = reactions[i];
+    if (r && r.symbol === symbol && typeof r.count === "number") return r.count;
+  }
+  return 0;
+}
+
+function uniqueSymbolsFromReactions(reactions) {
+  const out = [];
+  if (Array.isArray(reactions)) {
+    for (let i = 0; i < reactions.length; i += 1) {
+      const s = reactions[i] && reactions[i].symbol;
+      if (typeof s === "string" && s && out.indexOf(s) === -1) out.push(s);
+    }
+  }
+  return out;
+}
+
+function buildReactionBar(post) {
+  const wrap = el("div", "form-actions mt-1");
+  const reactions = post && Array.isArray(post.reactions) ? post.reactions : [];
+
+  // Merge API symbols with defaults
+  let symbols = uniqueSymbolsFromReactions(reactions);
+  if (symbols.length === 0) symbols = ["👍", "❤️", "🎉"];
+
+  for (let i = 0; i < symbols.length; i += 1) {
+    const symbol = symbols[i];
+    const initial = countFor(reactions, symbol);
+    const btn = Button({
+      label: initial > 0 ? `${symbol} ${initial}` : symbol,
+      variant: "outline",
+      ariaLabel: `React ${symbol}`,
+    });
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      try {
+        const result = await reactToPost(post.id, symbol);
+        let newCount = 0;
+        if (result && Array.isArray(result.reactions)) {
+          for (let j = 0; j < result.reactions.length; j += 1) {
+            const r = result.reactions[j];
+            if (r && r.symbol === symbol && typeof r.count === "number") {
+              newCount = r.count;
+              break;
+            }
+          }
+        }
+        btn.textContent = newCount > 0 ? `${symbol} ${newCount}` : symbol;
+      } catch {
+        // swallow
+      } finally {
+        btn.disabled = false;
+      }
+    });
+    wrap.appendChild(btn);
+  }
+  return wrap;
+}
+
 function buildPostElements(post) {
   const nodes = [];
 
   const titleText = post && post.title ? post.title : "Untitled";
-  const authorText = post && post.author ? post.author : "Unknown";
-
-  // Avoid ternary: compute createdISO with an if
-  let createdISO = new Date().toISOString();
-  if (post && post.created) {
-    createdISO = post.created;
+  let authorText = "Unknown";
+  if (
+    post &&
+    post.author &&
+    typeof post.author === "object" &&
+    typeof post.author.name === "string"
+  ) {
+    authorText = post.author.name;
   }
 
+  const createdISO =
+    post && post.created ? post.created : new Date().toISOString();
   const bodyText = post && post.body ? post.body : "";
 
   const h = el("h2", "mt-0 mb-1", titleText);
@@ -76,6 +126,7 @@ function buildPostElements(post) {
   const body = el("p", "", bodyText);
   nodes.push(body);
 
+  nodes.push(buildReactionBar(post));
   return nodes;
 }
 
@@ -120,19 +171,31 @@ function buildCommentsElements(comments) {
 async function init() {
   if (!postEl || !commentsEl) return;
 
+  const id = getPostIdFromURL();
+  if (!id) {
+    const alert = el("p", "alert error", "Missing post id.");
+    postEl.replaceChildren(alert);
+    return;
+  }
+
   try {
     showLoader();
 
-    const [post, comments] = await Promise.all([fetchPost(), fetchComments()]);
+    const post = await getPost(id, {
+      _author: true,
+      _comments: true,
+      _reactions: true,
+    });
 
-    // Render post
     const postNodes = buildPostElements(post);
     postEl.replaceChildren();
     for (let i = 0; i < postNodes.length; i += 1) {
       postEl.appendChild(postNodes[i]);
     }
 
-    // Render comments (no .apply)
+    let comments = [];
+    if (post && Array.isArray(post.comments)) comments = post.comments;
+
     const commentNodes = buildCommentsElements(comments);
     commentsEl.replaceChildren();
     for (let j = 0; j < commentNodes.length; j += 1) {
@@ -140,14 +203,16 @@ async function init() {
     }
   } catch (err) {
     let message = "Failed to load post.";
-    if (err && typeof err === "object" && err !== null && "message" in err) {
-      const maybe = /** @type {{message?: unknown}} */ (err).message;
+    if (
+      err &&
+      typeof err === "object" &&
+      Object.prototype.hasOwnProperty.call(err, "message")
+    ) {
+      const maybe = err.message;
       if (typeof maybe === "string") message = maybe;
     }
     const alert = el("p", "alert error", message);
     postEl.replaceChildren(alert);
-    // If using a live region in post.html, you can announce it:
-    // setStatus(postMsg, message, "error");
   } finally {
     hideLoader();
   }

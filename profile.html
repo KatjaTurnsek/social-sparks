@@ -13,7 +13,7 @@
   </head>
   <body>
     <!-- Skip to content (visible on keyboard focus) -->
-    <a href="#main-content" class="visually-hidden">Skip to main content</a>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <header class="site-header">
       <nav class="nav container" aria-label="Primary">
@@ -125,7 +125,7 @@
         aria-labelledby="tabPosts"
         style="max-width: 860px; margin: 0 auto"
       >
-        <h2 class="mb-2">Posts</h2>
+        <h2 class="mb-2" tabindex="-1">Posts</h2>
         <div id="profile-posts" class="grid"></div>
 
         <!-- Empty state (live region so it’s announced when shown) -->
@@ -156,7 +156,7 @@
         hidden
         style="max-width: 860px; margin: 0 auto"
       >
-        <h2 class="mb-2">About</h2>
+        <h2 class="mb-2" tabindex="-1">About</h2>
         <article class="card">
           <p id="profile-about-text">
             This section can show more detailed information about the user.
@@ -164,7 +164,7 @@
         </article>
       </section>
 
-      <!-- Post card template (for cloning in profile.js) -->
+      <!-- Post card template (used by profile.js) -->
       <template id="profile-post-template">
         <article class="card">
           <h3 class="post-title">Post title</h3>
@@ -179,8 +179,15 @@
         </article>
       </template>
 
-      <!-- mount point -->
-      <div id="app" role="status" aria-live="polite"></div>
+      <!-- Global page-level live region -->
+      <div id="app">
+        <p
+          id="page-msg"
+          class="form-message alert"
+          aria-live="polite"
+          style="display: none"
+        ></p>
+      </div>
     </main>
 
     <footer class="site-footer">

@@ -10,7 +10,7 @@
   </head>
   <body>
     <!-- Skip to content (visible on keyboard focus) -->
-    <a href="#main-content" class="visually-hidden">Skip to main content</a>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <header class="site-header">
       <nav class="nav container" aria-label="Primary">
@@ -18,6 +18,7 @@
         <ul class="nav-links">
           <li><a href="feed.html">Feed</a></li>
           <li><a href="login.html">Login</a></li>
+          <li><a href="register.html" aria-current="page">Register</a></li>
         </ul>
       </nav>
     </header>
@@ -36,6 +37,7 @@
               name="name"
               required
               autocomplete="name"
+              aria-describedby="name-help"
             />
             <small class="help" id="name-help"
               >This will be visible on your profile.</small
@@ -52,6 +54,9 @@
               required
               autocomplete="email"
               inputmode="email"
+              autocapitalize="off"
+              spellcheck="false"
+              aria-describedby="email-help"
             />
             <small class="help" id="email-help"
               >Use a valid email you can access.</small
@@ -111,8 +116,15 @@
         </form>
       </section>
 
-      <!-- mount point for any extra JS -->
-      <div id="app" role="status" aria-live="polite"></div>
+      <!-- Global page-level live region -->
+      <div id="app">
+        <p
+          id="page-msg"
+          class="form-message alert"
+          aria-live="polite"
+          style="display: none"
+        ></p>
+      </div>
     </main>
 
     <footer class="site-footer">
@@ -120,5 +132,11 @@
         <small>&copy; 2025 Social Sparks</small>
       </div>
     </footer>
+
+    <noscript>
+      <p class="alert error" style="margin: 1rem">
+        JavaScript is required to register.
+      </p>
+    </noscript>
   </body>
 </html>

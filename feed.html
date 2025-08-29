@@ -10,7 +10,7 @@
   </head>
   <body>
     <header class="site-header">
-      <nav class="nav container">
+      <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
           <li><a href="profile.html">Profile</a></li>
@@ -20,18 +20,21 @@
       </nav>
     </header>
 
-    <main class="container">
+    <main class="container" id="main">
       <!-- Toolbar -->
       <section
         class="form-actions"
         style="justify-content: flex-end; margin: 1.5rem 0"
       >
-        <a href="create-post.html" class="btn">New Post</a>
+        <a href="create-post.html" class="btn" aria-label="Create a new post"
+          >New Post</a
+        >
       </section>
 
       <!-- Feed list -->
-      <section id="feed">
-        <h1 class="mt-0 mb-2">Latest Posts</h1>
+      <section id="feed" aria-labelledby="feed-title">
+        <h1 id="feed-title" class="mt-0 mb-2">Latest Posts</h1>
+
         <div id="feed-list" class="grid"></div>
 
         <!-- Empty state (announced by screen readers when shown) -->
@@ -53,29 +56,15 @@
         </div>
       </section>
 
-      <!-- Post card template (hidden, cloned in JS) -->
-      <template id="post-template">
-        <article class="card">
-          <h2 class="post-title">Post title</h2>
-          <p class="muted mb-1">
-            by <a href="profile.html" class="post-author">Author</a> ·
-            <time class="post-time" datetime="">Just now</time>
-          </p>
-          <img
-            src="https://via.placeholder.com/600x300"
-            alt="Post media"
-            class="mb-1 post-media"
-            style="display: none"
-          />
-          <p class="post-body">Post body text…</p>
-          <div class="form-actions mt-1">
-            <a href="post.html" class="btn btn-outline">View</a>
-          </div>
-        </article>
-      </template>
-
-      <!-- mount point -->
-      <div id="app"></div>
+      <!-- Global page-level live region (used by setStatus if needed) -->
+      <div id="app">
+        <p
+          id="page-msg"
+          class="form-message alert"
+          aria-live="polite"
+          style="display: none"
+        ></p>
+      </div>
     </main>
 
     <footer class="site-footer">
@@ -83,5 +72,11 @@
         <small>&copy; 2025 Social Sparks</small>
       </div>
     </footer>
+
+    <noscript>
+      <p class="alert error" style="margin: 1rem">
+        JavaScript is required to load the feed.
+      </p>
+    </noscript>
   </body>
 </html>

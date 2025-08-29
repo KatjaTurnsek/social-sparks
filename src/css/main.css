@@ -262,6 +262,24 @@ p {
   border-color: var(--color-primary);
 }
 
+/* Accessible skip link */
+.skip-link {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translateY(-150%);
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  z-index: 10000;
+}
+.skip-link:focus {
+  transform: translateY(0);
+  outline: none;
+}
+
 /* Make generic links visibly focusable inside content areas */
 a:focus-visible {
   outline: none;

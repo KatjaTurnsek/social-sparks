@@ -6,57 +6,58 @@
     <title>Feed · Social Sparks</title>
     <meta name="description" content="See the latest posts on Social Sparks." />
     <base href="%BASE_URL%" />
+    <link rel="stylesheet" href="./src/css/main.css" />
     <script type="module" src="./src/js/pages/feed.js"></script>
   </head>
   <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <header class="site-header">
       <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
+          <li><a href="feed.html">Feed</a></li>
           <li><a href="profile.html">Profile</a></li>
           <li><a href="login.html">Login</a></li>
           <li><a href="register.html">Register</a></li>
         </ul>
+
+        <!-- Search form -->
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
       </nav>
     </header>
 
-    <main class="container" id="main">
-      <!-- Toolbar -->
+    <main
+      id="main-content"
+      class="container"
+      style="max-width: 860px; margin: 2rem auto"
+    >
       <section
         class="form-actions"
-        style="justify-content: flex-end; margin: 1.5rem 0"
+        style="justify-content: flex-end; margin-bottom: 1.5rem"
       >
         <a href="create-post.html" class="btn" aria-label="Create a new post"
           >New Post</a
         >
       </section>
 
-      <!-- Feed list -->
-      <section id="feed" aria-labelledby="feed-title">
-        <h1 id="feed-title" class="mt-0 mb-2">Latest Posts</h1>
+      <div id="display-container"></div>
 
-        <div id="feed-list" class="grid"></div>
-
-        <!-- Empty state (announced by screen readers when shown) -->
-        <p
-          id="feed-empty"
-          class="muted"
-          role="status"
-          aria-live="polite"
-          style="display: none"
-        >
-          No posts yet. Be the first to share something!
-        </p>
-
-        <!-- Loading skeletons -->
-        <div id="feed-skeletons" class="grid">
-          <div class="card skeleton" style="height: 160px"></div>
-          <div class="card skeleton" style="height: 160px"></div>
-          <div class="card skeleton" style="height: 160px"></div>
-        </div>
-      </section>
-
-      <!-- Global page-level live region (used by setStatus if needed) -->
       <div id="app">
         <p
           id="page-msg"

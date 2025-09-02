@@ -1,122 +1,231 @@
+import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
-import { PostCard, setStatus } from "../components.js";
-import { listPosts, reactToPost } from "../api/posts.js";
+import { errorFrom } from "../shared/errors.js";
+import { formatDate } from "../shared/dates.js";
+import { clear, createEl } from "../shared/dom.js";
+import { normalizeBearer } from "../shared/auth.js";
 
-const feedList = document.getElementById("feed-list");
-const empty = document.getElementById("feed-empty");
-const skeletons = document.getElementById("feed-skeletons");
+var display = document.getElementById("display-container");
 
-async function loadFeed() {
-  if (!feedList || !empty || !skeletons) return;
-
-  skeletons.style.display = "grid";
-  empty.style.display = "none";
-  feedList.replaceChildren();
-
+function getIntParam(name, def) {
   try {
-    showLoader();
+    var sp = new URLSearchParams(window.location.search);
+    var v = parseInt(String(sp.get(name) || ""), 10);
+    if (isNaN(v) || v <= 0) return def;
+    return v;
+  } catch {
+    return def;
+  }
+}
 
-    const posts = await listPosts({
-      limit: 12,
-      page: 1,
-      _author: true,
-      _reactions: true,
-    });
-    skeletons.style.display = "none";
+function setPageInUrl(page, pageSize) {
+  try {
+    var sp = new URLSearchParams(window.location.search);
+    sp.set("page", String(page));
+    sp.set("pageSize", String(pageSize));
+    var qs = sp.toString();
+    var base = window.location.pathname;
+    window.history.replaceState(null, "", base + (qs ? "?" + qs : ""));
+  } catch {
+    // ignore
+  }
+}
 
-    if (!posts || posts.length === 0) {
-      empty.style.display = "block";
-      empty.textContent = "No posts yet. Be the first to share something!";
-      return;
+async function fetchAllPosts() {
+  var rawToken = getFromLocalStorage("accessToken") || "";
+  var token = normalizeBearer(rawToken);
+
+  var url = BASE_API_URL + "/social/posts?_author=true&_comments=false";
+
+  var headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
+  if (token) {
+    headers.Authorization = "Bearer " + token;
+  }
+
+  var res = await fetch(url, { headers: headers });
+
+  var json = null;
+  try {
+    json = await res.json();
+  } catch {
+    json = null;
+  }
+
+  if (!res.ok) {
+    throw new Error(errorFrom(json, "Failed to load feed"));
+  }
+
+  var data = [];
+  if (json && json.data) {
+    data = json.data;
+  } else if (Array.isArray(json)) {
+    data = json;
+  }
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  data.sort(function (a, b) {
+    var ta = a && a.created ? new Date(a.created).getTime() : 0;
+    var tb = b && b.created ? new Date(b.created).getTime() : 0;
+    return tb - ta;
+  });
+
+  return data;
+}
+
+function renderEmpty(message) {
+  if (!display) return;
+  clear(display);
+  var card = createEl("article", "card", "");
+  var p = createEl("p", "muted", message || "No posts yet.");
+  card.appendChild(p);
+  display.appendChild(card);
+}
+
+function renderListPage(allPosts, page, pageSize) {
+  if (!display) return;
+  clear(display);
+
+  if (!allPosts.length) {
+    renderEmpty("No posts yet.");
+    return;
+  }
+
+  var total = allPosts.length;
+  var totalPages = Math.max(1, Math.ceil(total / pageSize));
+  if (page > totalPages) page = totalPages;
+  var startIndex = (page - 1) * pageSize;
+  var endIndex = Math.min(startIndex + pageSize, total);
+  var slice = allPosts.slice(startIndex, endIndex);
+
+  var header = createEl("div", "", "");
+  var h = createEl("h2", "", "Feed");
+
+  var rangeText = "Showing " + String(startIndex + 1) + "-" + String(endIndex);
+  rangeText += " of " + String(total);
+
+  var sub = createEl("p", "muted", rangeText);
+  header.appendChild(h);
+  header.appendChild(sub);
+  display.appendChild(header);
+
+  for (var i = 0; i < slice.length; i += 1) {
+    var post = slice[i] || {};
+
+    var item = createEl("article", "card", "");
+
+    var title = createEl("h3", "", "");
+    title.textContent = post && post.title ? post.title : "Untitled";
+
+    var meta = createEl("p", "muted", "");
+    var authorName =
+      post && post.author && post.author.name ? post.author.name : "Unknown";
+    var createdText = post && post.created ? formatDate(post.created) : "";
+
+    meta.textContent =
+      "by " + authorName + (createdText ? " · " + createdText : "");
+
+    var body = createEl("p", "", post && post.body ? post.body : "");
+    if (body.textContent.length > 260) {
+      body.textContent = body.textContent.slice(0, 257) + "...";
     }
 
-    const frag = document.createDocumentFragment();
-    for (let i = 0; i < posts.length; i += 1) {
-      const p = posts[i];
-      const id = p && p.id != null ? p.id : "";
-      const title = p && p.title ? p.title : "Untitled";
-      const body = p && p.body ? p.body : "";
-      const created = p && p.created ? p.created : new Date().toISOString();
-      const media = p && p.media ? p.media : null;
-
-      let authorName = "Unknown";
-      if (
-        p &&
-        p.author &&
-        typeof p.author === "object" &&
-        p.author !== null &&
-        typeof p.author.name === "string"
-      ) {
-        authorName = p.author.name;
-      }
-
-      frag.appendChild(
-        PostCard({
-          id: id,
-          title: title,
-          author: authorName,
-          created: created,
-          body: body,
-          media: media,
-          reactions: p && Array.isArray(p.reactions) ? p.reactions : [],
-          // Optional: provide a preferred list; will merge with API symbols
-          reactSymbols: ["👍", "❤️", "🎉"],
-          onReact: async (args) => {
-            const postId = args.postId;
-            const symbol = args.symbol;
-            const button = args.button;
-            const setCount = args.setCount;
-
-            button.disabled = true;
-            try {
-              const result = await reactToPost(postId, symbol);
-              // Find the new count for this symbol
-              let newCount = 0;
-              if (result && Array.isArray(result.reactions)) {
-                for (let j = 0; j < result.reactions.length; j += 1) {
-                  const r = result.reactions[j];
-                  if (r && r.symbol === symbol && typeof r.count === "number") {
-                    newCount = r.count;
-                    break;
-                  }
-                }
-              }
-              setCount(newCount);
-            } catch (err) {
-              let m = "Failed to react.";
-              if (
-                err &&
-                typeof err === "object" &&
-                Object.prototype.hasOwnProperty.call(err, "message")
-              ) {
-                const maybe = err.message;
-                if (typeof maybe === "string") m = maybe;
-              }
-              setStatus(empty, m, "error");
-            } finally {
-              button.disabled = false;
-            }
-          },
-        })
-      );
+    var actions = createEl("div", "form-actions", "");
+    var view = createEl("a", "btn btn-outline", "View");
+    var pid = "";
+    if (post && post.id !== undefined && post.id !== null) {
+      pid = String(post.id);
     }
-    feedList.appendChild(frag);
-  } catch (err) {
-    skeletons.style.display = "none";
-    empty.style.display = "block";
-    let m = "Failed to load feed.";
-    if (
-      err &&
-      typeof err === "object" &&
-      Object.prototype.hasOwnProperty.call(err, "message")
-    ) {
-      const maybe = err.message;
-      if (typeof maybe === "string") m = maybe;
+    view.href = "post.html?id=" + encodeURIComponent(pid);
+    actions.appendChild(view);
+
+    item.appendChild(title);
+    item.appendChild(meta);
+    item.appendChild(body);
+    item.appendChild(actions);
+    display.appendChild(item);
+  }
+
+  // Pagination controls
+  var pager = createEl("div", "form-actions", "");
+  pager.style.justifyContent = "space-between";
+
+  var left = createEl("div", "", "");
+  var right = createEl("div", "", "");
+
+  var prevBtn = createEl("a", "btn btn-outline", "← Previous");
+  var nextBtn = createEl("a", "btn btn-outline", "Next →");
+
+  var info = createEl("span", "muted", "");
+  info.textContent = "Page " + String(page) + " of " + String(totalPages);
+
+  if (page <= 1) {
+    prevBtn.className = "btn btn-outline";
+    prevBtn.style.pointerEvents = "none";
+    prevBtn.style.opacity = "0.6";
+  } else {
+    prevBtn.href = buildPageLink(page - 1, pageSize);
+  }
+
+  if (page >= totalPages) {
+    nextBtn.className = "btn btn-outline";
+    nextBtn.style.pointerEvents = "none";
+    nextBtn.style.opacity = "0.6";
+  } else {
+    nextBtn.href = buildPageLink(page + 1, pageSize);
+  }
+
+  left.appendChild(prevBtn);
+  right.appendChild(info);
+  right.appendChild(nextBtn);
+
+  pager.appendChild(left);
+  pager.appendChild(right);
+  display.appendChild(pager);
+}
+
+function buildPageLink(page, pageSize) {
+  try {
+    var sp = new URLSearchParams(window.location.search);
+    sp.set("page", String(page));
+    sp.set("pageSize", String(pageSize));
+    return window.location.pathname + "?" + sp.toString();
+  } catch {
+    return "feed.html?page=" + String(page) + "&pageSize=" + String(pageSize);
+  }
+}
+
+async function main() {
+  var page = getIntParam("page", 1);
+  var pageSize = getIntParam("pageSize", 10);
+
+  // Optional: skeletons under the overlay
+  if (display) {
+    clear(display);
+    var skeletonWrap = createEl("div", "grid", "");
+    for (var i = 0; i < Math.min(pageSize, 5); i += 1) {
+      var sk = createEl("div", "card skeleton", "");
+      sk.style.height = "140px";
+      skeletonWrap.appendChild(sk);
     }
-    setStatus(empty, m, "error");
+    display.appendChild(skeletonWrap);
+  }
+
+  showLoader();
+  try {
+    var all = await fetchAllPosts();
+    setPageInUrl(page, pageSize);
+    renderListPage(all, page, pageSize);
+  } catch (e) {
+    var msg =
+      e && typeof e === "object" && e !== null && "message" in e
+        ? /** @type {{message?: unknown}} */ (e).message
+        : null;
+    renderEmpty(typeof msg === "string" && msg ? msg : "Could not load feed.");
   } finally {
     hideLoader();
   }
 }
 
-loadFeed();
+main();

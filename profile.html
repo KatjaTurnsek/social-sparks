@@ -9,10 +9,10 @@
       content="View a Social Sparks profile and posts."
     />
     <base href="%BASE_URL%" />
+    <link rel="stylesheet" href="./src/css/main.css" />
     <script type="module" src="./src/js/pages/profile.js"></script>
   </head>
   <body>
-    <!-- Skip to content (visible on keyboard focus) -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <header class="site-header">
@@ -20,166 +20,37 @@
         <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
           <li><a href="feed.html">Feed</a></li>
+          <li><a href="profile.html">Profile</a></li>
           <li><a href="login.html">Login</a></li>
-          <li><a href="register.html">Register</a></li>
         </ul>
+
+        <!-- Search form -->
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
       </nav>
     </header>
 
-    <main id="main-content" class="container">
-      <!-- Profile header -->
-      <section class="card" style="max-width: 860px; margin: 2rem auto">
-        <div class="grid cols-2" style="align-items: center">
-          <!-- Avatar -->
-          <div>
-            <img
-              id="profile-avatar"
-              src="https://via.placeholder.com/160"
-              alt="Profile avatar"
-              style="
-                width: 160px;
-                height: 160px;
-                border-radius: 50%;
-                object-fit: cover;
-                border: 1px solid var(--color-border);
-              "
-            />
-          </div>
+    <main
+      id="main-content"
+      class="container"
+      style="max-width: 860px; margin: 2rem auto"
+    >
+      <div id="display-container"></div>
 
-          <!-- Basic info -->
-          <div>
-            <h1 id="profile-name" class="mt-0 mb-1">User Name</h1>
-            <p class="muted mb-1">@<span id="profile-handle">username</span></p>
-            <p id="profile-bio" class="mb-2">
-              This is the user bio. It can be a short introduction or tagline.
-            </p>
-
-            <div class="form-actions" style="gap: 0.75rem">
-              <!-- aria-pressed toggled by JS when following/unfollowing -->
-              <button
-                id="followBtn"
-                class="btn"
-                type="button"
-                aria-pressed="false"
-              >
-                Follow
-              </button>
-              <button id="messageBtn" class="btn btn-outline" type="button">
-                Message
-              </button>
-            </div>
-
-            <p class="muted mt-2">
-              <strong id="count-posts">0</strong> Posts ·
-              <strong id="count-followers">0</strong> Followers ·
-              <strong id="count-following">0</strong> Following
-            </p>
-
-            <!-- Inline status for profile actions/errors (announced to AT) -->
-            <p
-              id="profile-msg"
-              class="form-message alert"
-              role="status"
-              aria-live="polite"
-              style="display: none"
-            ></p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Tabs (accessible) -->
-      <nav
-        class="card"
-        style="max-width: 860px; margin: 0 auto 1rem auto; padding: 0.5rem"
-        aria-label="Profile sections"
-      >
-        <ul class="nav-links" role="tablist">
-          <li>
-            <a
-              href="#tab-posts"
-              id="tabPosts"
-              role="tab"
-              aria-controls="tab-posts"
-              aria-selected="true"
-              >Posts</a
-            >
-          </li>
-          <li>
-            <a
-              href="#tab-about"
-              id="tabAbout"
-              role="tab"
-              aria-controls="tab-about"
-              aria-selected="false"
-              >About</a
-            >
-          </li>
-        </ul>
-      </nav>
-
-      <!-- Posts grid (tabpanel) -->
-      <section
-        id="tab-posts"
-        class="section"
-        role="tabpanel"
-        aria-labelledby="tabPosts"
-        style="max-width: 860px; margin: 0 auto"
-      >
-        <h2 class="mb-2" tabindex="-1">Posts</h2>
-        <div id="profile-posts" class="grid"></div>
-
-        <!-- Empty state (live region so it’s announced when shown) -->
-        <p
-          id="profile-empty"
-          class="muted"
-          role="status"
-          aria-live="polite"
-          style="display: none"
-        >
-          No posts yet.
-        </p>
-
-        <!-- Loading skeletons -->
-        <div id="profile-skeletons" class="grid">
-          <div class="card skeleton" style="height: 160px"></div>
-          <div class="card skeleton" style="height: 160px"></div>
-          <div class="card skeleton" style="height: 160px"></div>
-        </div>
-      </section>
-
-      <!-- About section (tabpanel) -->
-      <section
-        id="tab-about"
-        class="section"
-        role="tabpanel"
-        aria-labelledby="tabAbout"
-        hidden
-        style="max-width: 860px; margin: 0 auto"
-      >
-        <h2 class="mb-2" tabindex="-1">About</h2>
-        <article class="card">
-          <p id="profile-about-text">
-            This section can show more detailed information about the user.
-          </p>
-        </article>
-      </section>
-
-      <!-- Post card template (used by profile.js) -->
-      <template id="profile-post-template">
-        <article class="card">
-          <h3 class="post-title">Post title</h3>
-          <p class="muted mb-1">
-            <time class="post-time" datetime="">Just now</time>
-          </p>
-          <img class="post-media mb-1" src="" alt="" style="display: none" />
-          <p class="post-body">Post body text…</p>
-          <div class="form-actions mt-1">
-            <a href="post.html" class="btn btn-outline">View</a>
-          </div>
-        </article>
-      </template>
-
-      <!-- Global page-level live region -->
       <div id="app">
         <p
           id="page-msg"
@@ -195,5 +66,11 @@
         <small>&copy; 2025 Social Sparks</small>
       </div>
     </footer>
+
+    <noscript>
+      <p class="alert error" style="margin: 1rem">
+        JavaScript is required to view this profile.
+      </p>
+    </noscript>
   </body>
 </html>

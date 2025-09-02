@@ -1,6 +1,3 @@
-// Imports global CSS once for every page that imports boot.js
-import "../css/main.css";
-
 let loaderEl = null;
 
 function createLoader() {

@@ -3,11 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Post · Social Sparks</title>
-    <meta name="description" content="View a single post on Social Sparks." />
+    <title>Search · Social Sparks</title>
+    <meta name="description" content="Search posts on Social Sparks." />
     <base href="%BASE_URL%" />
     <link rel="stylesheet" href="./src/css/main.css" />
-    <script type="module" src="./src/js/pages/post.js"></script>
+    <script type="module" src="./src/js/pages/search.js"></script>
   </head>
   <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -19,9 +19,9 @@
           <li><a href="feed.html">Feed</a></li>
           <li><a href="profile.html">Profile</a></li>
           <li><a href="login.html">Login</a></li>
+          <li><a href="register.html">Register</a></li>
         </ul>
 
-        <!-- Search form -->
         <form
           action="search.html"
           method="get"
@@ -44,18 +44,10 @@
     <main
       id="main-content"
       class="container"
-      style="margin: 2rem auto; max-width: 680px"
+      style="max-width: 860px; margin: 2rem auto"
     >
+      <h1>Search Results</h1>
       <div id="display-container"></div>
-
-      <div id="app">
-        <p
-          id="page-msg"
-          class="form-message alert"
-          aria-live="polite"
-          style="display: none"
-        ></p>
-      </div>
     </main>
 
     <footer class="site-footer">
@@ -66,7 +58,7 @@
 
     <noscript>
       <p class="alert error" style="margin: 1rem">
-        JavaScript is required to view this post.
+        JavaScript is required to use search.
       </p>
     </noscript>
   </body>

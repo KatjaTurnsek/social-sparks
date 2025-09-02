@@ -9,10 +9,10 @@
       content="Login to Social Sparks to share and connect."
     />
     <base href="%BASE_URL%" />
+    <link rel="stylesheet" href="./src/css/main.css" />
     <script type="module" src="./src/js/pages/login.js"></script>
   </head>
   <body>
-    <!-- Skip to content (visible on keyboard focus) -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <header class="site-header">
@@ -20,9 +20,27 @@
         <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
           <li><a href="feed.html">Feed</a></li>
-          <li><a href="register.html">Register</a></li>
-          <li><a href="login.html" aria-current="page">Login</a></li>
+          <li><a href="profile.html">Profile</a></li>
+          <li><a href="login.html">Login</a></li>
         </ul>
+
+        <!-- Search form -->
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
       </nav>
     </header>
 
@@ -64,7 +82,6 @@
             <a href="register.html" class="btn btn-outline">Register</a>
           </div>
 
-          <!-- Inline status message (announced by screen readers) -->
           <p
             id="login-msg"
             class="form-message alert"
@@ -75,7 +92,6 @@
         </form>
       </section>
 
-      <!-- Global page-level live region (used by setStatus if needed) -->
       <div id="app">
         <p
           id="page-msg"

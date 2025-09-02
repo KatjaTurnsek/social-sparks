@@ -9,20 +9,38 @@
       content="Social Sparks — A simple social app powered by the Noroff API"
     />
     <base href="%BASE_URL%" />
-    <script type="module" src="./src/js/pages/main.js"></script>
+    <link rel="stylesheet" href="./src/css/main.css" />
+    <script type="module" src="./src/js/pages/index.js"></script>
   </head>
   <body>
-    <!-- Skip to content (visible on keyboard focus) -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <header class="site-header">
       <nav class="nav container" aria-label="Primary">
-        <a href="index.html" class="brand" aria-current="page">Social Sparks</a>
+        <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
           <li><a href="feed.html">Feed</a></li>
+          <li><a href="profile.html">Profile</a></li>
           <li><a href="login.html">Login</a></li>
-          <li><a href="register.html">Register</a></li>
         </ul>
+
+        <!-- Search form -->
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
       </nav>
     </header>
 
@@ -54,7 +72,11 @@
         </p>
       </section>
 
-      <!-- Global page-level live region for notices -->
+      <section aria-labelledby="latest-posts-heading" class="section">
+        <h2 id="latest-posts-heading" class="mb-2">Latest posts</h2>
+        <div id="display-container" class="grid"></div>
+      </section>
+
       <div id="app">
         <p
           id="page-msg"

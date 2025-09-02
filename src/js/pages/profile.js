@@ -1,208 +1,220 @@
-// src/js/pages/profile.js
+import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
-import { PostCard, setStatus } from "../components.js";
-import {
-  getProfile,
-  listProfilePosts,
-  followProfile,
-  unfollowProfile,
-} from "../api/profiles.js";
+import { errorFrom } from "../shared/errors.js";
+import { normalizeBearer } from "../shared/auth.js";
 
-// DOM refs
-const avatarEl = document.getElementById("profile-avatar");
-const nameEl = document.getElementById("profile-name");
-const handleEl = document.getElementById("profile-handle");
-const bioEl = document.getElementById("profile-bio");
+var display = document.getElementById("display-container");
 
-const countPostsEl = document.getElementById("count-posts");
-const countFollowersEl = document.getElementById("count-followers");
-const countFollowingEl = document.getElementById("count-following");
-
-const postsGrid = document.getElementById("profile-posts");
-const skeletons = document.getElementById("profile-skeletons");
-const empty = document.getElementById("profile-empty");
-
-const followBtn = document.getElementById("followBtn");
-// Optional polite live region in HTML:
-// <p id="profile-msg" class="form-message" aria-live="polite"></p>
-const profileMsg = document.getElementById("profile-msg");
-
-// Helpers
-function getProfileNameFromURL() {
+function getProfileName() {
+  var nameFromUrl = "";
   try {
-    const sp = new URLSearchParams(window.location.search);
-    const n = sp.get("name");
-    return n ? n : "";
+    var sp = new URLSearchParams(window.location.search);
+    nameFromUrl = sp.get("name") || "";
   } catch {
-    return "";
+    // no-op; fall back to local storage
   }
+  if (nameFromUrl) return nameFromUrl;
+
+  var saved = getFromLocalStorage("profileName");
+  return saved || "";
 }
 
-function renderHeader(p) {
-  if (avatarEl && p && p.avatar && typeof p.avatar === "object") {
-    if (p.avatar.url) avatarEl.src = p.avatar.url;
-    avatarEl.alt = p.name ? p.name + " avatar" : "Profile avatar";
+async function fetchProfile(name) {
+  var rawToken = getFromLocalStorage("accessToken") || "";
+  var token = normalizeBearer(rawToken);
+
+  var url =
+    BASE_API_URL +
+    "/social/profiles/" +
+    encodeURIComponent(name) +
+    "?_posts=true";
+
+  var headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
+  if (token) headers.Authorization = "Bearer " + token;
+
+  var res = await fetch(url, { headers });
+
+  var json = null;
+  try {
+    json = await res.json();
+  } catch {
+    json = null;
   }
-  if (nameEl && p && p.name) nameEl.textContent = p.name;
-  if (handleEl && p && p.name) handleEl.textContent = p.name;
-  if (bioEl) bioEl.textContent = p && p.bio ? p.bio : "";
 
-  const c = p && p._count ? p._count : {};
-  const postsCount = typeof c.posts === "number" ? c.posts : 0;
-  const followersCount = typeof c.followers === "number" ? c.followers : 0;
-  const followingCount = typeof c.following === "number" ? c.following : 0;
+  if (!res.ok) {
+    throw new Error(errorFrom(json, "Failed to load profile"));
+  }
 
-  if (countPostsEl) countPostsEl.textContent = String(postsCount);
-  if (countFollowersEl) countFollowersEl.textContent = String(followersCount);
-  if (countFollowingEl) countFollowingEl.textContent = String(followingCount);
+  return json && json.data ? json.data : null;
 }
 
-function renderPosts(posts) {
-  if (!postsGrid) return;
+async function follow(name, action) {
+  var rawToken = getFromLocalStorage("accessToken") || "";
+  var token = normalizeBearer(rawToken);
 
-  postsGrid.replaceChildren(); // clear
+  var url =
+    BASE_API_URL +
+    "/social/profiles/" +
+    encodeURIComponent(name) +
+    "/" +
+    action;
 
-  if (!posts || posts.length === 0) {
-    if (empty) {
-      empty.style.display = "block";
-      empty.textContent = "No posts yet.";
-    }
-    return;
+  var headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
+  if (token) headers.Authorization = "Bearer " + token;
+
+  var res = await fetch(url, {
+    method: "PUT",
+    headers: headers,
+  });
+
+  var json = null;
+  try {
+    json = await res.json();
+  } catch {
+    json = null;
   }
 
-  if (empty) empty.style.display = "none";
-
-  const frag = document.createDocumentFragment();
-  for (let i = 0; i < posts.length; i += 1) {
-    const p = posts[i];
-    const id = p && p.id != null ? p.id : "";
-    const title = p && p.title ? p.title : "Untitled";
-    const body = p && p.body ? p.body : "";
-    const created = p && p.created ? p.created : new Date().toISOString();
-    const media = p && p.media ? p.media : null;
-
-    // Clean author name check (no long chained condition)
-    let authorName = "Unknown";
-    if (p && typeof p === "object" && p !== null) {
-      const a = p.author;
-      if (a && typeof a === "object" && a !== null) {
-        const maybeName = a.name;
-        if (typeof maybeName === "string") authorName = maybeName;
-      }
-    } else if (handleEl && handleEl.textContent) {
-      authorName = handleEl.textContent;
-    }
-
-    frag.appendChild(
-      PostCard({
-        id: id,
-        title: title,
-        author: authorName,
-        created: created,
-        body: body,
-        media: media,
-      })
-    );
+  if (!res.ok) {
+    throw new Error(errorFrom(json, "Failed"));
   }
-  postsGrid.appendChild(frag);
+
+  var result = null;
+  if (json && json.data) {
+    result = json.data;
+  } else {
+    result = json;
+  }
+  return result;
 }
 
-function wireFollow(name) {
-  if (!followBtn) return;
+function renderProfile(p) {
+  if (!display) return;
+  display.innerHTML = "";
 
-  followBtn.addEventListener("click", async () => {
-    const pressedStr = followBtn.getAttribute("aria-pressed");
-    const pressed = pressedStr === "true";
-    followBtn.disabled = true;
+  var card = document.createElement("article");
+  card.className = "card";
 
+  var h = document.createElement("h2");
+  h.textContent = p && p.name ? p.name : "Profile";
+
+  var bio = document.createElement("p");
+  bio.textContent = p && p.bio ? p.bio : "";
+
+  var actions = document.createElement("div");
+  actions.className = "form-actions";
+
+  var f = document.createElement("button");
+  f.className = "btn";
+  f.textContent = "Follow";
+  f.addEventListener("click", async function () {
+    showLoader();
     try {
-      let result = null;
-      if (pressed) {
-        result = await unfollowProfile(name);
-        followBtn.setAttribute("aria-pressed", "false");
-        followBtn.textContent = "Follow";
-        setStatus(profileMsg, "Unfollowed profile.", "success");
-      } else {
-        result = await followProfile(name);
-        followBtn.setAttribute("aria-pressed", "true");
-        followBtn.textContent = "Unfollow";
-        setStatus(profileMsg, "Followed profile.", "success");
-      }
-
-      // Adjust counts if API responded with updated arrays
-      if (result && typeof result === "object" && result !== null) {
-        if (Array.isArray(result.followers) && countFollowersEl) {
-          countFollowersEl.textContent = String(result.followers.length);
-        }
-        if (Array.isArray(result.following) && countFollowingEl) {
-          countFollowingEl.textContent = String(result.following.length);
-        }
-      }
-    } catch (err) {
-      let msg = "Action failed.";
-      if (err && typeof err === "object" && err !== null && "message" in err) {
-        const maybe = /** @type {{message?: unknown}} */ (err).message;
-        if (typeof maybe === "string") msg = maybe;
-      }
-      setStatus(profileMsg, msg, "error");
+      await follow(p && p.name ? p.name : "", "follow");
+      window.alert("Followed.");
+    } catch (e) {
+      var em =
+        e && typeof e === "object" && e !== null && "message" in e
+          ? /** @type {{message?: unknown}} */ (e).message
+          : null;
+      window.alert(typeof em === "string" && em ? em : "Failed to follow");
     } finally {
-      followBtn.disabled = false;
+      hideLoader();
     }
   });
-}
 
-async function init() {
-  const name = getProfileNameFromURL();
-  if (!name) {
-    if (postsGrid) {
-      const p = document.createElement("p");
-      p.className = "alert error";
-      p.textContent = "Missing profile name (?name=...)";
-      postsGrid.replaceChildren(p);
+  var u = document.createElement("button");
+  u.className = "btn btn-outline";
+  u.textContent = "Unfollow";
+  u.addEventListener("click", async function () {
+    showLoader();
+    try {
+      await follow(p && p.name ? p.name : "", "unfollow");
+      window.alert("Unfollowed.");
+    } catch (e) {
+      var em2 =
+        e && typeof e === "object" && e !== null && "message" in e
+          ? /** @type {{message?: unknown}} */ (e).message
+          : null;
+      window.alert(typeof em2 === "string" && em2 ? em2 : "Failed to unfollow");
+    } finally {
+      hideLoader();
     }
-    return;
+  });
+
+  actions.appendChild(f);
+  actions.appendChild(u);
+
+  var postsTitle = document.createElement("h3");
+  postsTitle.textContent = "Posts";
+
+  var list = document.createElement("div");
+  var posts = p && Array.isArray(p.posts) ? p.posts : [];
+
+  if (posts.length > 0) {
+    for (var i = 0; i < posts.length; i += 1) {
+      var post = posts[i] || {};
+
+      var item = document.createElement("article");
+      item.className = "card";
+
+      var t = document.createElement("h4");
+      t.textContent = post && post.title ? post.title : "Untitled";
+
+      var b = document.createElement("p");
+      b.textContent = post && post.body ? post.body : "";
+
+      var view = document.createElement("a");
+      view.className = "btn btn-outline";
+
+      var pid = "";
+      if (post && post.id !== undefined && post.id !== null) {
+        pid = String(post.id);
+      }
+      view.href = "post.html?id=" + encodeURIComponent(pid);
+      view.textContent = "View";
+
+      item.appendChild(t);
+      item.appendChild(b);
+      item.appendChild(view);
+      list.appendChild(item);
+    }
+  } else {
+    var none = document.createElement("p");
+    none.className = "muted";
+    none.textContent = "No posts yet.";
+    list.appendChild(none);
   }
 
+  card.appendChild(h);
+  card.appendChild(bio);
+  card.appendChild(actions);
+  card.appendChild(postsTitle);
+  card.appendChild(list);
+  display.appendChild(card);
+}
+
+async function main() {
+  var name = getProfileName();
+  if (!name) {
+    if (display) display.textContent = "No profile name provided.";
+    return;
+  }
+  showLoader();
   try {
-    showLoader();
-    if (skeletons) skeletons.style.display = "grid";
-    if (empty) {
-      empty.style.display = "none";
-      empty.textContent = "No posts yet.";
+    var profile = await fetchProfile(name);
+    renderProfile(profile);
+  } catch (e) {
+    var em =
+      e && typeof e === "object" && e !== null && "message" in e
+        ? /** @type {{message?: unknown}} */ (e).message
+        : null;
+    if (display) {
+      display.textContent =
+        typeof em === "string" && em ? em : "Could not load profile.";
     }
-    if (postsGrid) postsGrid.replaceChildren();
-
-    const [profile, posts] = await Promise.all([
-      getProfile(name, { _followers: true, _following: true, _posts: false }),
-      listProfilePosts(name, { _author: true, page: 1, limit: 12 }),
-    ]);
-
-    if (skeletons) skeletons.style.display = "none";
-    renderHeader(profile);
-    renderPosts(posts);
-
-    // Default follow button state; for real state, check if current user is in profile.followers
-    if (followBtn) {
-      followBtn.setAttribute("aria-pressed", "false");
-      followBtn.textContent = "Follow";
-    }
-    wireFollow(name);
-  } catch (err) {
-    let message = "Failed to load profile.";
-    if (err && typeof err === "object" && err !== null && "message" in err) {
-      const maybe = /** @type {{message?: unknown}} */ (err).message;
-      if (typeof maybe === "string") message = maybe;
-    }
-    if (postsGrid) {
-      const p = document.createElement("p");
-      p.className = "alert error";
-      p.textContent = message;
-      postsGrid.replaceChildren(p);
-    }
-    setStatus(profileMsg, message, "error");
   } finally {
     hideLoader();
   }
 }
 
-init();
+main();

@@ -1,55 +1,80 @@
+import { BASE_API_URL, addToLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
-import { setStatus } from "../components.js";
-import { loginUser } from "../api/auth.js";
+import { errorFrom } from "../shared/errors.js";
 
-const app = document.getElementById("app");
-if (app) {
-  const p = document.createElement("p");
-  p.className = "muted";
-  p.textContent = "Please log in to continue.";
-  app.replaceChildren(p);
+const loginForm = document.querySelector("#login-form");
+const AUTH_LOGIN_URL = BASE_API_URL + "/auth/login";
+
+async function loginUser(userDetails) {
+  showLoader();
+  try {
+    const fetchOptions = {
+      method: "POST",
+      body: JSON.stringify(userDetails),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+
+    const response = await fetch(AUTH_LOGIN_URL, fetchOptions);
+
+    let json = null;
+    try {
+      json = await response.json();
+    } catch (err) {
+      void err;
+      json = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(errorFrom(json, "Login failed"));
+    }
+
+    let accessToken = "";
+    if (json && typeof json === "object") {
+      if (json.data && typeof json.data.accessToken === "string") {
+        accessToken = json.data.accessToken;
+      } else if (typeof json.accessToken === "string") {
+        accessToken = json.accessToken;
+      }
+    }
+    if (!accessToken) throw new Error("No access token returned.");
+
+    addToLocalStorage("accessToken", accessToken);
+
+    let name = "";
+    if (json && typeof json === "object") {
+      if (json.data && typeof json.data.name === "string") {
+        name = json.data.name;
+      } else if (typeof json.name === "string") {
+        name = json.name;
+      }
+    }
+    if (name) addToLocalStorage("profileName", name);
+
+    return json;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  } finally {
+    hideLoader();
+  }
 }
 
-const form = document.getElementById("login-form");
-const msg = document.getElementById("login-msg");
+function onLoginFormSubmit(event) {
+  event.preventDefault();
+  const formData = new FormData(event.target);
+  const formFields = Object.fromEntries(formData);
+  loginUser(formFields)
+    .then(function () {
+      alert("Login successful!");
+      window.location.href = "feed.html";
+    })
+    .catch(function (err) {
+      alert((err && err.message) || "Login failed");
+    });
+}
 
-if (form && msg) {
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    setStatus(msg, "Logging in…", null);
-
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-
-    const email =
-      emailInput instanceof HTMLInputElement ? emailInput.value.trim() : "";
-    const password =
-      passwordInput instanceof HTMLInputElement ? passwordInput.value : "";
-
-    try {
-      showLoader();
-
-      // Optional minimal validation before calling API
-      if (email === "" || password === "") {
-        setStatus(msg, "Please enter both email and password.", "error");
-        return;
-      }
-
-      await loginUser({ email, password });
-      setStatus(msg, "Login successful.", "success");
-
-      // Optional redirect:
-      // location.href = `${import.meta.env.BASE_URL}feed.html`;
-    } catch (err) {
-      let text = "Login failed.";
-      if (err && typeof err === "object" && err !== null && "message" in err) {
-        const m = /** @type {{message?: unknown}} */ (err).message;
-        if (typeof m === "string") text = m;
-      }
-      setStatus(msg, text, "error");
-    } finally {
-      hideLoader();
-    }
-  });
+if (loginForm) {
+  loginForm.addEventListener("submit", onLoginFormSubmit);
 }

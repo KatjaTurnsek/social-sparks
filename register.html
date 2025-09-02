@@ -6,10 +6,10 @@
     <title>Register · Social Sparks</title>
     <meta name="description" content="Create your Social Sparks account." />
     <base href="%BASE_URL%" />
+    <link rel="stylesheet" href="./src/css/main.css" />
     <script type="module" src="./src/js/pages/register.js"></script>
   </head>
   <body>
-    <!-- Skip to content (visible on keyboard focus) -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <header class="site-header">
@@ -17,9 +17,27 @@
         <a href="index.html" class="brand">Social Sparks</a>
         <ul class="nav-links">
           <li><a href="feed.html">Feed</a></li>
+          <li><a href="profile.html">Profile</a></li>
           <li><a href="login.html">Login</a></li>
-          <li><a href="register.html" aria-current="page">Register</a></li>
         </ul>
+
+        <!-- Search form -->
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
       </nav>
     </header>
 
@@ -39,9 +57,9 @@
               autocomplete="name"
               aria-describedby="name-help"
             />
-            <small class="help" id="name-help"
-              >This will be visible on your profile.</small
-            >
+            <small class="help" id="name-help">
+              This will be visible on your profile.
+            </small>
           </div>
 
           <div class="field">
@@ -58,9 +76,9 @@
               spellcheck="false"
               aria-describedby="email-help"
             />
-            <small class="help" id="email-help"
-              >Use a valid email you can access.</small
-            >
+            <small class="help" id="email-help">
+              Use a valid email you can access.
+            </small>
           </div>
 
           <div class="field">
@@ -80,22 +98,6 @@
             >
           </div>
 
-          <!-- Optional confirm. Keep if you want client-side check -->
-          <div class="field">
-            <label class="label" for="confirm">Confirm password</label>
-            <input
-              class="input"
-              type="password"
-              id="confirm"
-              name="confirm"
-              required
-              minlength="8"
-              autocomplete="new-password"
-              aria-describedby="confirm-help"
-            />
-            <small class="help" id="confirm-help">Re-type your password.</small>
-          </div>
-
           <div class="form-actions">
             <button class="btn" id="submitBtn" type="submit">
               Create account
@@ -105,7 +107,6 @@
             >
           </div>
 
-          <!-- Inline message area; announced by assistive tech -->
           <p
             id="register-msg"
             class="form-message alert"
@@ -116,7 +117,6 @@
         </form>
       </section>
 
-      <!-- Global page-level live region -->
       <div id="app">
         <p
           id="page-msg"

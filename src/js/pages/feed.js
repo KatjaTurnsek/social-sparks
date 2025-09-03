@@ -166,6 +166,18 @@ function renderListPage(allPosts, page, pageSize) {
     meta.textContent =
       "by " + authorName + (createdText ? " · " + createdText : "");
 
+    // >>> NEW: render media image if present
+    var media = post && post.media ? post.media : null;
+    if (media && typeof media.url === "string" && media.url) {
+      var img = document.createElement("img");
+      img.src = media.url;
+      img.alt = media && typeof media.alt === "string" ? media.alt : "";
+      img.loading = "lazy";
+      img.className = "post-media";
+      item.appendChild(img);
+    }
+    // <<< NEW
+
     var body = createEl("p", "", post && post.body ? post.body : "");
     if (body.textContent.length > 260) {
       body.textContent = body.textContent.slice(0, 257) + "...";

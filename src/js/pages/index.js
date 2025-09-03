@@ -128,6 +128,17 @@ function renderPosts(posts) {
       var created = post && post.created ? formatDate(post.created) : "";
       meta.textContent = "by " + authorName + (created ? " · " + created : "");
 
+      // NEW: media preview if available
+      var media = post && post.media ? post.media : null;
+      if (media && typeof media.url === "string" && media.url) {
+        var img = document.createElement("img");
+        img.src = media.url;
+        img.alt = media && typeof media.alt === "string" ? media.alt : "";
+        img.loading = "lazy";
+        img.className = "post-media";
+        card.appendChild(img);
+      }
+
       var body = document.createElement("p");
       body.textContent = post && post.body ? post.body : "";
 

@@ -160,6 +160,17 @@ function renderProfile(p) {
       var t = document.createElement("h4");
       t.textContent = post && post.title ? post.title : "Untitled";
 
+      // NEW: media thumbnail if present
+      var media = post && post.media ? post.media : null;
+      if (media && typeof media.url === "string" && media.url) {
+        var img = document.createElement("img");
+        img.src = media.url;
+        img.alt = media && typeof media.alt === "string" ? media.alt : "";
+        img.loading = "lazy";
+        img.className = "post-thumb";
+        item.appendChild(img);
+      }
+
       var b = document.createElement("p");
       b.textContent = post && post.body ? post.body : "";
 

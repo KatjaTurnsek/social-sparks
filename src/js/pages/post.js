@@ -62,6 +62,17 @@ function renderPost(post) {
   meta.textContent =
     "by " + authorName + (createdText ? " · " + createdText : "");
 
+  // NEW: media preview if present
+  const media = post && post.media ? post.media : null;
+  if (media && typeof media.url === "string" && media.url) {
+    const img = document.createElement("img");
+    img.src = media.url;
+    img.alt = media && typeof media.alt === "string" ? media.alt : "";
+    img.loading = "lazy";
+    img.className = "post-media";
+    card.appendChild(img);
+  }
+
   const body = document.createElement("p");
   body.textContent = post && post.body ? post.body : "";
 

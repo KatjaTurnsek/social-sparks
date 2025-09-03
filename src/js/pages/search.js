@@ -88,6 +88,17 @@ function renderResults(q, results) {
     meta.textContent =
       "by " + authorName + (createdText ? " · " + createdText : "");
 
+    // NEW: media thumbnail if present
+    var media = post && post.media ? post.media : null;
+    if (media && typeof media.url === "string" && media.url) {
+      var img = document.createElement("img");
+      img.src = media.url;
+      img.alt = media && typeof media.alt === "string" ? media.alt : "";
+      img.loading = "lazy";
+      img.className = "post-thumb"; // styled in CSS
+      item.appendChild(img);
+    }
+
     var body = createEl("p", "", post && post.body ? post.body : "");
     if (body.textContent.length > 240) {
       body.textContent = body.textContent.slice(0, 237) + "...";

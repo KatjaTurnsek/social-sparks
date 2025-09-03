@@ -1,3 +1,8 @@
+// @ts-check
+/** @typedef {import("../types.js").Post} Post */
+/** @typedef {import("../types.js").Profile} Profile */
+/** @typedef {import("../types.js").Comment} Comment */
+
 import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
@@ -7,6 +12,12 @@ import { normalizeBearer } from "../shared/auth.js";
 
 var display = document.getElementById("display-container");
 
+/**
+ * Read an integer query param or return a default.
+ * @param {string} name
+ * @param {number} def
+ * @returns {number}
+ */
 function getIntParam(name, def) {
   try {
     var sp = new URLSearchParams(window.location.search);
@@ -18,6 +29,12 @@ function getIntParam(name, def) {
   }
 }
 
+/**
+ * Reflect the current page/pageSize in the URL (without navigation).
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {void}
+ */
 function setPageInUrl(page, pageSize) {
   try {
     var sp = new URLSearchParams(window.location.search);
@@ -31,12 +48,19 @@ function setPageInUrl(page, pageSize) {
   }
 }
 
+/**
+ * Fetch all posts (newest first).
+ * Attaches API key and Authorization (when available).
+ * @returns {Promise<Post[]>}
+ * @throws {Error} When the API request fails or returns non-OK.
+ */
 async function fetchAllPosts() {
   var rawToken = getFromLocalStorage("accessToken") || "";
   var token = normalizeBearer(rawToken);
 
   var url = BASE_API_URL + "/social/posts?_author=true&_comments=false";
 
+  /** @type {Record<string,string>} */
   var headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
   if (token) {
     headers.Authorization = "Bearer " + token;
@@ -55,6 +79,7 @@ async function fetchAllPosts() {
     throw new Error(errorFrom(json, "Failed to load feed"));
   }
 
+  /** @type {any} */
   var data = [];
   if (json && json.data) {
     data = json.data;
@@ -65,15 +90,21 @@ async function fetchAllPosts() {
     return [];
   }
 
+  // Sort newest → oldest by created
   data.sort(function (a, b) {
     var ta = a && a.created ? new Date(a.created).getTime() : 0;
     var tb = b && b.created ? new Date(b.created).getTime() : 0;
     return tb - ta;
   });
 
-  return data;
+  return /** @type {Post[]} */ (data);
 }
 
+/**
+ * Render the empty-state card with a message.
+ * @param {string} message
+ * @returns {void}
+ */
 function renderEmpty(message) {
   if (!display) return;
   clear(display);
@@ -83,6 +114,13 @@ function renderEmpty(message) {
   display.appendChild(card);
 }
 
+/**
+ * Render a paginated slice of posts into the page.
+ * @param {Post[]} allPosts
+ * @param {number} page 1-based page number
+ * @param {number} pageSize items per page
+ * @returns {void}
+ */
 function renderListPage(allPosts, page, pageSize) {
   if (!display) return;
   clear(display);
@@ -99,6 +137,7 @@ function renderListPage(allPosts, page, pageSize) {
   var endIndex = Math.min(startIndex + pageSize, total);
   var slice = allPosts.slice(startIndex, endIndex);
 
+  // Header with count/range
   var header = createEl("div", "", "");
   var h = createEl("h2", "", "Feed");
 
@@ -110,6 +149,7 @@ function renderListPage(allPosts, page, pageSize) {
   header.appendChild(sub);
   display.appendChild(header);
 
+  // List
   for (var i = 0; i < slice.length; i += 1) {
     var post = slice[i] || {};
 
@@ -185,6 +225,12 @@ function renderListPage(allPosts, page, pageSize) {
   display.appendChild(pager);
 }
 
+/**
+ * Build a URL pointing to the given page with pageSize preserved.
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {string}
+ */
 function buildPageLink(page, pageSize) {
   try {
     var sp = new URLSearchParams(window.location.search);
@@ -196,6 +242,7 @@ function buildPageLink(page, pageSize) {
   }
 }
 
+/** Boot the feed page. */
 async function main() {
   var page = getIntParam("page", 1);
   var pageSize = getIntParam("pageSize", 10);

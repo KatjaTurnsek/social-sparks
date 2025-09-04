@@ -23,7 +23,6 @@ function byId(id) {
  * Safely set text content on an element.
  * @param {HTMLElement|null} el
  * @param {string} text
- * @returns {void}
  */
 function setText(el, text) {
   if (el) el.textContent = text;
@@ -34,7 +33,6 @@ function setText(el, text) {
  * @param {HTMLImageElement|null} imgEl
  * @param {string} url
  * @param {string} [alt]
- * @returns {void}
  */
 function setImg(imgEl, url, alt) {
   if (!imgEl) return;
@@ -54,9 +52,22 @@ function setImg(imgEl, url, alt) {
  * @returns {string}
  */
 function getProfileName() {
-  const sp = new URLSearchParams(window.location.search || "");
-  const fromUrl = sp.get("name") || "";
-  return fromUrl || getFromLocalStorage("profileName") || "";
+  try {
+    const sp = new URLSearchParams(window.location.search || "");
+    const fromUrl = sp.get("name") || "";
+    return fromUrl || getFromLocalStorage("profileName") || "";
+  } catch {
+    return getFromLocalStorage("profileName") || "";
+  }
+}
+
+/** Case-insensitive, trimmed equality. */
+function sameUser(a, b) {
+  return (
+    typeof a === "string" &&
+    typeof b === "string" &&
+    a.trim().toLowerCase() === b.trim().toLowerCase()
+  );
 }
 
 /* ----------------------------- API calls -------------------------------- */
@@ -65,7 +76,6 @@ function getProfileName() {
  * Fetch a profile with posts/followers/following.
  * @param {string} name
  * @returns {Promise<Profile|null>}
- * @throws {Error} When the request fails or returns a non-OK response.
  */
 async function fetchProfile(name) {
   const rawToken = getFromLocalStorage("accessToken") || "";
@@ -99,8 +109,6 @@ async function fetchProfile(name) {
  * Follow or unfollow a profile.
  * @param {string} name
  * @param {"follow"|"unfollow"} action
- * @returns {Promise<any>}
- * @throws {Error} When the request fails.
  */
 async function follow(name, action) {
   const rawToken = getFromLocalStorage("accessToken") || "";
@@ -134,7 +142,6 @@ async function follow(name, action) {
  * Render posts into a panel as cards.
  * @param {HTMLElement|null} panelEl
  * @param {Post[]|null|undefined} posts
- * @returns {void}
  */
 function renderPosts(panelEl, posts) {
   if (!panelEl) return;
@@ -186,10 +193,8 @@ function renderPosts(panelEl, posts) {
 
 /**
  * Render followers/following as a simple vertical list of mini-cards.
- * NOTE: items here are "profile summaries", not full Profile objects.
  * @param {HTMLElement|null} panelEl
  * @param {Array<{name?: string, bio?: string, avatar?: Media}>|null|undefined} list
- * @returns {void}
  */
 function renderPeople(panelEl, list) {
   if (!panelEl) return;
@@ -254,7 +259,6 @@ function renderPeople(panelEl, list) {
 
 /**
  * Page bootstrap: fetch profile and render header + panels + tabs.
- * @returns {Promise<void>}
  */
 async function main() {
   const name = getProfileName();
@@ -309,15 +313,37 @@ async function main() {
     setText(cntFollowers, String((p && p._count && p._count.followers) || 0));
     setText(cntFollowing, String((p && p._count && p._count.following) || 0));
 
-    // own profile? show Edit, hide follow buttons
+    // Determine ownership (require a token AND same username, case-insensitive)
+    const rawToken = getFromLocalStorage("accessToken") || "";
+    const token = normalizeBearer(rawToken);
     const myName = getFromLocalStorage("profileName") || "";
-    const isMe = !!(myName && p && p.name && myName === p.name);
-    if (btnEdit) btnEdit.hidden = !isMe;
-    if (btnFollow) btnFollow.style.display = isMe ? "none" : "";
-    if (btnUnfollow) btnUnfollow.style.display = isMe ? "none" : "";
+    const isMe =
+      !!token && !!myName && p?.name ? sameUser(myName, p.name) : false;
+
+    // Edit link: only for owner — remove for everyone else
+    if (btnEdit) {
+      if (isMe) {
+        btnEdit.hidden = false;
+        btnEdit.href = "edit-profile.html";
+        btnEdit.onclick = null;
+      } else {
+        btnEdit.remove(); // remove entirely so it can't be interacted with
+      }
+    }
+
+    // Follow/Unfollow: only when viewing someone else AND logged in
+    const canFollow = !!token && !isMe;
+    if (btnFollow) {
+      btnFollow.style.display = canFollow ? "" : "none";
+      btnFollow.onclick = null;
+    }
+    if (btnUnfollow) {
+      btnUnfollow.style.display = canFollow ? "" : "none";
+      btnUnfollow.onclick = null;
+    }
 
     // wire follow/unfollow
-    if (!isMe) {
+    if (canFollow) {
       if (btnFollow) {
         btnFollow.onclick = async () => {
           showLoader();
@@ -325,7 +351,7 @@ async function main() {
             if (p && p.name) await follow(p.name, "follow");
             window.alert("Followed.");
           } catch (err) {
-            // @ts-ignore - runtime message access only
+            // @ts-ignore
             window.alert((err && err.message) || "Failed to follow");
           } finally {
             hideLoader();
@@ -339,7 +365,7 @@ async function main() {
             if (p && p.name) await follow(p.name, "unfollow");
             window.alert("Unfollowed.");
           } catch (err) {
-            // @ts-ignore - runtime message access only
+            // @ts-ignore
             window.alert((err && err.message) || "Failed to unfollow");
           } finally {
             hideLoader();
@@ -348,7 +374,7 @@ async function main() {
       }
     }
 
-    // panels (use Array.isArray ternaries to avoid boolean unions)
+    // panels
     renderPosts(panelPosts, Array.isArray(p?.posts) ? p.posts : []);
     renderPeople(
       panelFollowers,
@@ -368,7 +394,7 @@ async function main() {
         tabBtn.classList.add("is-active");
         const target = tabBtn.getAttribute("data-tab"); // posts|followers|following
         panels.forEach((pnl) => pnl.classList.add("is-hidden"));
-        const active = byId("panel-" + target);
+        const active = byId("panel-" + (target || ""));
         if (active) active.classList.remove("is-hidden");
       });
     });

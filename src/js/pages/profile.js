@@ -1,227 +1,387 @@
+// @ts-check
+/** @typedef {import("../types.js").Profile} Profile */
+/** @typedef {import("../types.js").Post} Post */
+/** @typedef {import("../types.js").Media} Media */
+
 import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
 import { normalizeBearer } from "../shared/auth.js";
 
-var display = document.getElementById("display-container");
+/* ----------------------------- helpers ---------------------------------- */
 
-function getProfileName() {
-  var nameFromUrl = "";
-  try {
-    var sp = new URLSearchParams(window.location.search);
-    nameFromUrl = sp.get("name") || "";
-  } catch {
-    // no-op; fall back to local storage
-  }
-  if (nameFromUrl) return nameFromUrl;
-
-  var saved = getFromLocalStorage("profileName");
-  return saved || "";
+/**
+ * Shorthand for getElementById.
+ * @param {string} id
+ * @returns {HTMLElement|null}
+ */
+function byId(id) {
+  return document.getElementById(id);
 }
 
-async function fetchProfile(name) {
-  var rawToken = getFromLocalStorage("accessToken") || "";
-  var token = normalizeBearer(rawToken);
+/**
+ * Safely set text content on an element.
+ * @param {HTMLElement|null} el
+ * @param {string} text
+ * @returns {void}
+ */
+function setText(el, text) {
+  if (el) el.textContent = text;
+}
 
-  var url =
+/**
+ * Safely set an image’s src/alt or hide it if no URL.
+ * @param {HTMLImageElement|null} imgEl
+ * @param {string} url
+ * @param {string} [alt]
+ * @returns {void}
+ */
+function setImg(imgEl, url, alt) {
+  if (!imgEl) return;
+  if (url) {
+    imgEl.src = url;
+    imgEl.alt = alt || "";
+    imgEl.style.display = "";
+  } else {
+    imgEl.removeAttribute("src");
+    imgEl.alt = "";
+    imgEl.style.display = "none";
+  }
+}
+
+/**
+ * Resolve profile name from URL (?name=) or localStorage.
+ * @returns {string}
+ */
+function getProfileName() {
+  const sp = new URLSearchParams(window.location.search || "");
+  const fromUrl = sp.get("name") || "";
+  return fromUrl || getFromLocalStorage("profileName") || "";
+}
+
+/* ----------------------------- API calls -------------------------------- */
+
+/**
+ * Fetch a profile with posts/followers/following.
+ * @param {string} name
+ * @returns {Promise<Profile|null>}
+ * @throws {Error} When the request fails or returns a non-OK response.
+ */
+async function fetchProfile(name) {
+  const rawToken = getFromLocalStorage("accessToken") || "";
+  const token = normalizeBearer(rawToken);
+
+  const url =
     BASE_API_URL +
     "/social/profiles/" +
     encodeURIComponent(name) +
-    "?_posts=true";
+    "?_posts=true&_followers=true&_following=true";
 
-  var headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
+  /** @type {Record<string,string>} */
+  const headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
   if (token) headers.Authorization = "Bearer " + token;
 
-  var res = await fetch(url, { headers });
+  const res = await fetch(url, { headers });
 
-  var json = null;
+  /** @type {any} */
+  let json = null;
   try {
     json = await res.json();
   } catch {
     json = null;
   }
 
-  if (!res.ok) {
-    throw new Error(errorFrom(json, "Failed to load profile"));
-  }
-
-  return json && json.data ? json.data : null;
+  if (!res.ok) throw new Error(errorFrom(json, "Failed to load profile"));
+  return (json && json.data) || null;
 }
 
+/**
+ * Follow or unfollow a profile.
+ * @param {string} name
+ * @param {"follow"|"unfollow"} action
+ * @returns {Promise<any>}
+ * @throws {Error} When the request fails.
+ */
 async function follow(name, action) {
-  var rawToken = getFromLocalStorage("accessToken") || "";
-  var token = normalizeBearer(rawToken);
+  const rawToken = getFromLocalStorage("accessToken") || "";
+  const token = normalizeBearer(rawToken);
+  /** @type {Record<string,string>} */
+  const headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
+  if (token) headers.Authorization = "Bearer " + token;
 
-  var url =
+  const url =
     BASE_API_URL +
     "/social/profiles/" +
     encodeURIComponent(name) +
     "/" +
     action;
 
-  var headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
-  if (token) headers.Authorization = "Bearer " + token;
-
-  var res = await fetch(url, {
-    method: "PUT",
-    headers: headers,
-  });
-
-  var json = null;
+  const res = await fetch(url, { method: "PUT", headers });
+  /** @type {any} */
+  let json = null;
   try {
     json = await res.json();
   } catch {
     json = null;
   }
-
-  if (!res.ok) {
-    throw new Error(errorFrom(json, "Failed"));
-  }
-
-  var result = null;
-  if (json && json.data) {
-    result = json.data;
-  } else {
-    result = json;
-  }
-  return result;
+  if (!res.ok) throw new Error(errorFrom(json, "Failed"));
+  return (json && json.data) || json || null;
 }
 
-function renderProfile(p) {
-  if (!display) return;
-  display.innerHTML = "";
+/* ------------------------------ renderers -------------------------------- */
 
-  var card = document.createElement("article");
-  card.className = "card";
+/**
+ * Render posts into a panel as cards.
+ * @param {HTMLElement|null} panelEl
+ * @param {Post[]|null|undefined} posts
+ * @returns {void}
+ */
+function renderPosts(panelEl, posts) {
+  if (!panelEl) return;
+  panelEl.innerHTML = "";
+  panelEl.classList.add("grid");
 
-  var h = document.createElement("h2");
-  h.textContent = p && p.name ? p.name : "Profile";
-
-  var bio = document.createElement("p");
-  bio.textContent = p && p.bio ? p.bio : "";
-
-  var actions = document.createElement("div");
-  actions.className = "form-actions";
-
-  var f = document.createElement("button");
-  f.className = "btn";
-  f.textContent = "Follow";
-  f.addEventListener("click", async function () {
-    showLoader();
-    try {
-      await follow(p && p.name ? p.name : "", "follow");
-      window.alert("Followed.");
-    } catch (e) {
-      var em =
-        e && typeof e === "object" && e !== null && "message" in e
-          ? /** @type {{message?: unknown}} */ (e).message
-          : null;
-      window.alert(typeof em === "string" && em ? em : "Failed to follow");
-    } finally {
-      hideLoader();
-    }
-  });
-
-  var u = document.createElement("button");
-  u.className = "btn btn-outline";
-  u.textContent = "Unfollow";
-  u.addEventListener("click", async function () {
-    showLoader();
-    try {
-      await follow(p && p.name ? p.name : "", "unfollow");
-      window.alert("Unfollowed.");
-    } catch (e) {
-      var em2 =
-        e && typeof e === "object" && e !== null && "message" in e
-          ? /** @type {{message?: unknown}} */ (e).message
-          : null;
-      window.alert(typeof em2 === "string" && em2 ? em2 : "Failed to unfollow");
-    } finally {
-      hideLoader();
-    }
-  });
-
-  actions.appendChild(f);
-  actions.appendChild(u);
-
-  var postsTitle = document.createElement("h3");
-  postsTitle.textContent = "Posts";
-
-  var list = document.createElement("div");
-  var posts = p && Array.isArray(p.posts) ? p.posts : [];
-
-  if (posts.length > 0) {
-    for (var i = 0; i < posts.length; i += 1) {
-      var post = posts[i] || {};
-
-      var item = document.createElement("article");
-      item.className = "card";
-
-      var t = document.createElement("h4");
-      t.textContent = post && post.title ? post.title : "Untitled";
-
-      // NEW: media thumbnail if present
-      var media = post && post.media ? post.media : null;
-      if (media && typeof media.url === "string" && media.url) {
-        var img = document.createElement("img");
-        img.src = media.url;
-        img.alt = media && typeof media.alt === "string" ? media.alt : "";
-        img.loading = "lazy";
-        img.className = "post-thumb";
-        item.appendChild(img);
-      }
-
-      var b = document.createElement("p");
-      b.textContent = post && post.body ? post.body : "";
-
-      var view = document.createElement("a");
-      view.className = "btn btn-outline";
-
-      var pid = "";
-      if (post && post.id !== undefined && post.id !== null) {
-        pid = String(post.id);
-      }
-      view.href = "post.html?id=" + encodeURIComponent(pid);
-      view.textContent = "View";
-
-      item.appendChild(t);
-      item.appendChild(b);
-      item.appendChild(view);
-      list.appendChild(item);
-    }
-  } else {
-    var none = document.createElement("p");
-    none.className = "muted";
-    none.textContent = "No posts yet.";
-    list.appendChild(none);
-  }
-
-  card.appendChild(h);
-  card.appendChild(bio);
-  card.appendChild(actions);
-  card.appendChild(postsTitle);
-  card.appendChild(list);
-  display.appendChild(card);
-}
-
-async function main() {
-  var name = getProfileName();
-  if (!name) {
-    if (display) display.textContent = "No profile name provided.";
+  if (!Array.isArray(posts) || posts.length === 0) {
+    const p = document.createElement("p");
+    p.className = "muted";
+    p.textContent = "No posts yet.";
+    panelEl.appendChild(p);
     return;
   }
+
+  posts.forEach((post) => {
+    const card = document.createElement("article");
+    card.className = "card";
+
+    const h = document.createElement("h4");
+    h.textContent = post && post.title ? post.title : "Untitled";
+
+    if (post && post.media && post.media.url) {
+      const img = document.createElement("img");
+      img.className = "post-thumb";
+      img.loading = "lazy";
+      img.src = post.media.url;
+      img.alt = (post.media && post.media.alt) || "";
+      card.appendChild(img);
+    }
+
+    const bodyP = document.createElement("p");
+    bodyP.textContent = post && post.body ? post.body : "";
+
+    const actions = document.createElement("div");
+    actions.className = "form-actions";
+    const view = document.createElement("a");
+    view.className = "btn btn-outline";
+    const pid = post && post.id != null ? String(post.id) : "";
+    view.href = "post.html?id=" + encodeURIComponent(pid);
+    view.textContent = "View";
+    actions.appendChild(view);
+
+    card.appendChild(h);
+    card.appendChild(bodyP);
+    card.appendChild(actions);
+    panelEl.appendChild(card);
+  });
+}
+
+/**
+ * Render followers/following as a simple vertical list of mini-cards.
+ * NOTE: items here are "profile summaries", not full Profile objects.
+ * @param {HTMLElement|null} panelEl
+ * @param {Array<{name?: string, bio?: string, avatar?: Media}>|null|undefined} list
+ * @returns {void}
+ */
+function renderPeople(panelEl, list) {
+  if (!panelEl) return;
+  panelEl.innerHTML = "";
+  panelEl.classList.remove("grid");
+
+  if (!Array.isArray(list) || list.length === 0) {
+    const p = document.createElement("p");
+    p.className = "muted";
+    p.textContent = "Nothing to show.";
+    panelEl.appendChild(p);
+    return;
+  }
+
+  list.forEach((person) => {
+    const line = document.createElement("article");
+    line.className = "card";
+
+    const row = document.createElement("div");
+    row.style.display = "flex";
+    row.style.gap = "0.75rem";
+    row.style.alignItems = "center";
+
+    const avatar = document.createElement("img");
+    avatar.style.width = "40px";
+    avatar.style.height = "40px";
+    avatar.style.borderRadius = "999px";
+    if (person && person.avatar && person.avatar.url) {
+      avatar.src = person.avatar.url;
+      avatar.alt = (person.avatar && person.avatar.alt) || "";
+    } else {
+      avatar.style.display = "none";
+    }
+
+    const info = document.createElement("div");
+    const nm = document.createElement("p");
+    nm.style.margin = "0";
+    nm.style.fontWeight = "600";
+    nm.textContent = person && person.name ? person.name : "Unknown";
+    const bi = document.createElement("p");
+    bi.className = "muted";
+    bi.style.margin = "0";
+    bi.textContent = person && person.bio ? person.bio : "";
+
+    info.appendChild(nm);
+    info.appendChild(bi);
+
+    const go = document.createElement("a");
+    go.className = "btn btn-outline";
+    go.textContent = "View";
+    go.href = "profile.html?name=" + encodeURIComponent(person?.name || "");
+
+    row.appendChild(avatar);
+    row.appendChild(info);
+    row.appendChild(go);
+    line.appendChild(row);
+    panelEl.appendChild(line);
+  });
+}
+
+/* ------------------------------- main ------------------------------------ */
+
+/**
+ * Page bootstrap: fetch profile and render header + panels + tabs.
+ * @returns {Promise<void>}
+ */
+async function main() {
+  const name = getProfileName();
+
+  const bannerEl = /** @type {HTMLImageElement|null} */ (
+    byId("profile-banner")
+  );
+  const avatarEl = /** @type {HTMLImageElement|null} */ (
+    byId("profile-avatar")
+  );
+  const nameEl = byId("profile-name");
+  const emailEl = byId("profile-email");
+  const bioEl = byId("profile-bio");
+  const cntPosts = byId("count-posts");
+  const cntFollowers = byId("count-followers");
+  const cntFollowing = byId("count-following");
+  const btnFollow = /** @type {HTMLButtonElement|null} */ (byId("btn-follow"));
+  const btnUnfollow = /** @type {HTMLButtonElement|null} */ (
+    byId("btn-unfollow")
+  );
+  const btnEdit = /** @type {HTMLAnchorElement|null} */ (byId("btn-edit"));
+  const panelPosts = byId("panel-posts");
+  const panelFollowers = byId("panel-followers");
+  const panelFollowing = byId("panel-following");
+
+  if (!name) {
+    setText(byId("page-msg"), "No profile name provided.");
+    return;
+  }
+
   showLoader();
   try {
-    var profile = await fetchProfile(name);
-    renderProfile(profile);
+    const p = await fetchProfile(name);
+
+    // header fields
+    setText(nameEl, (p && p.name) || "Profile");
+    setText(emailEl, (p && p.email) || "");
+    setText(bioEl, (p && p.bio) || "");
+
+    setImg(
+      avatarEl,
+      p && p.avatar && p.avatar.url ? p.avatar.url : "",
+      (p && p.avatar && p.avatar.alt) || ""
+    );
+    setImg(
+      bannerEl,
+      p && p.banner && p.banner.url ? p.banner.url : "",
+      (p && p.banner && p.banner.alt) || ""
+    );
+
+    setText(cntPosts, String((p && p._count && p._count.posts) || 0));
+    setText(cntFollowers, String((p && p._count && p._count.followers) || 0));
+    setText(cntFollowing, String((p && p._count && p._count.following) || 0));
+
+    // own profile? show Edit, hide follow buttons
+    const myName = getFromLocalStorage("profileName") || "";
+    const isMe = !!(myName && p && p.name && myName === p.name);
+    if (btnEdit) btnEdit.hidden = !isMe;
+    if (btnFollow) btnFollow.style.display = isMe ? "none" : "";
+    if (btnUnfollow) btnUnfollow.style.display = isMe ? "none" : "";
+
+    // wire follow/unfollow
+    if (!isMe) {
+      if (btnFollow) {
+        btnFollow.onclick = async () => {
+          showLoader();
+          try {
+            if (p && p.name) await follow(p.name, "follow");
+            window.alert("Followed.");
+          } catch (err) {
+            // @ts-ignore - runtime message access only
+            window.alert((err && err.message) || "Failed to follow");
+          } finally {
+            hideLoader();
+          }
+        };
+      }
+      if (btnUnfollow) {
+        btnUnfollow.onclick = async () => {
+          showLoader();
+          try {
+            if (p && p.name) await follow(p.name, "unfollow");
+            window.alert("Unfollowed.");
+          } catch (err) {
+            // @ts-ignore - runtime message access only
+            window.alert((err && err.message) || "Failed to unfollow");
+          } finally {
+            hideLoader();
+          }
+        };
+      }
+    }
+
+    // panels (use Array.isArray ternaries to avoid boolean unions)
+    renderPosts(panelPosts, Array.isArray(p?.posts) ? p.posts : []);
+    renderPeople(
+      panelFollowers,
+      Array.isArray(p?.followers) ? p.followers : []
+    );
+    renderPeople(
+      panelFollowing,
+      Array.isArray(p?.following) ? p.following : []
+    );
+
+    // tabs behavior
+    const tabs = document.querySelectorAll(".tabs .tab");
+    const panels = document.querySelectorAll(".tabpanel");
+    tabs.forEach((tabBtn) => {
+      tabBtn.addEventListener("click", () => {
+        tabs.forEach((b) => b.classList.remove("is-active"));
+        tabBtn.classList.add("is-active");
+        const target = tabBtn.getAttribute("data-tab"); // posts|followers|following
+        panels.forEach((pnl) => pnl.classList.add("is-hidden"));
+        const active = byId("panel-" + target);
+        if (active) active.classList.remove("is-hidden");
+      });
+    });
   } catch (e) {
-    var em =
-      e && typeof e === "object" && e !== null && "message" in e
-        ? /** @type {{message?: unknown}} */ (e).message
-        : null;
-    if (display) {
-      display.textContent =
-        typeof em === "string" && em ? em : "Could not load profile.";
+    const msgEl = byId("page-msg");
+    if (msgEl) {
+      msgEl.style.display = "block";
+      msgEl.className = "form-message alert error";
+      // @ts-ignore - runtime message access only
+      msgEl.textContent = (e && e.message) || "Could not load profile.";
+    } else {
+      // @ts-ignore - runtime message access only
+      window.alert((e && e.message) || "Could not load profile.");
     }
   } finally {
     hideLoader();

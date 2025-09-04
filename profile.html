@@ -50,7 +50,68 @@
       class="container"
       style="max-width: 860px; margin: 2rem auto"
     >
-      <div id="display-container" class="grid"></div>
+      <!-- Profile header -->
+      <article
+        id="profile-header"
+        class="card profile-header"
+        aria-live="polite"
+      >
+        <div class="profile-banner"><img id="profile-banner" alt="" /></div>
+
+        <div class="profile-header-body">
+          <img id="profile-avatar" class="profile-avatar" alt="" />
+
+          <div class="profile-meta">
+            <h1 id="profile-name" class="mt-0 mb-0">Profile</h1>
+            <p id="profile-email" class="muted mb-1"></p>
+            <p id="profile-bio" class="mb-1"></p>
+
+            <div class="chip-group">
+              <span class="chip"
+                ><strong id="count-posts">0</strong> Posts</span
+              >
+              <span class="chip"
+                ><strong id="count-followers">0</strong> Followers</span
+              >
+              <span class="chip"
+                ><strong id="count-following">0</strong> Following</span
+              >
+            </div>
+
+            <div class="profile-actions">
+              <button id="btn-follow" class="btn">Follow</button>
+              <button id="btn-unfollow" class="btn btn-outline">
+                Unfollow
+              </button>
+              <a
+                id="btn-edit"
+                class="btn btn-outline"
+                href="edit-profile.html"
+                hidden
+                >Edit profile</a
+              >
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Tabs -->
+      <nav class="tabs" aria-label="Profile sections">
+        <button class="tab is-active" data-tab="posts" type="button">
+          Posts
+        </button>
+        <button class="tab" data-tab="followers" type="button">
+          Followers
+        </button>
+        <button class="tab" data-tab="following" type="button">
+          Following
+        </button>
+      </nav>
+
+      <!-- Panels -->
+      <section id="panel-posts" class="tabpanel"></section>
+      <section id="panel-followers" class="tabpanel is-hidden"></section>
+      <section id="panel-following" class="tabpanel is-hidden"></section>
 
       <div id="app">
         <p

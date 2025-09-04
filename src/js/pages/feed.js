@@ -12,6 +12,11 @@ import { normalizeBearer } from "../shared/auth.js";
 
 var display = document.getElementById("display-container");
 
+/** Build a link to a user's profile page (root-level profile.html) */
+function profileUrl(name) {
+  return "profile.html?name=" + encodeURIComponent(name);
+}
+
 /**
  * Read an integer query param or return a default.
  * @param {string} name
@@ -58,6 +63,7 @@ async function fetchAllPosts() {
   var rawToken = getFromLocalStorage("accessToken") || "";
   var token = normalizeBearer(rawToken);
 
+  // includes authors so we can render username links
   var url = BASE_API_URL + "/social/posts?_author=true&_comments=false";
 
   /** @type {Record<string,string>} */
@@ -158,15 +164,24 @@ function renderListPage(allPosts, page, pageSize) {
     var title = createEl("h3", "", "");
     title.textContent = post && post.title ? post.title : "Untitled";
 
+    // Meta: by <a>Author</a> · date
     var meta = createEl("p", "muted", "");
     var authorName =
       post && post.author && post.author.name ? post.author.name : "Unknown";
     var createdText = post && post.created ? formatDate(post.created) : "";
 
-    meta.textContent =
-      "by " + authorName + (createdText ? " · " + createdText : "");
+    meta.textContent = "by ";
+    if (authorName !== "Unknown") {
+      var a = document.createElement("a");
+      a.href = profileUrl(authorName);
+      a.textContent = authorName;
+      meta.appendChild(a);
+    } else {
+      meta.append(authorName);
+    }
+    if (createdText) meta.append(" · " + createdText);
 
-    // >>> NEW: render media image if present
+    // Media (if present)
     var media = post && post.media ? post.media : null;
     if (media && typeof media.url === "string" && media.url) {
       var img = document.createElement("img");
@@ -176,7 +191,6 @@ function renderListPage(allPosts, page, pageSize) {
       img.className = "post-media";
       item.appendChild(img);
     }
-    // <<< NEW
 
     var body = createEl("p", "", post && post.body ? post.body : "");
     if (body.textContent.length > 260) {

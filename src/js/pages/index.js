@@ -9,7 +9,16 @@ import { formatDate } from "../shared/dates.js";
 import { clear } from "../shared/dom.js";
 
 var displayContainer = document.getElementById("display-container");
-var POSTS_URL = BASE_API_URL + "/social/posts";
+
+// Include authors so we can link usernames
+var POSTS_URL =
+  BASE_API_URL +
+  "/social/posts?_author=true&_comments=false&sort=created&sortOrder=desc";
+
+/** Build a link to a user's profile page (root-level profile.html) */
+function profileUrl(name) {
+  return "profile.html?name=" + encodeURIComponent(name);
+}
 
 /**
  * Render a visible error card to the page.
@@ -79,7 +88,7 @@ async function fetchPosts() {
     data = json;
   }
 
-  // newest → oldest
+  // newest → oldest (API already sorts, but keep as a guard)
   data.sort(function (a, b) {
     var ta = a && a.created ? new Date(a.created).getTime() : 0;
     var tb = b && b.created ? new Date(b.created).getTime() : 0;
@@ -117,18 +126,28 @@ function renderPosts(posts) {
       var h2 = document.createElement("h2");
       h2.textContent = post && post.title ? post.title : "Untitled";
 
+      // Meta: by <a>Author</a> · date
       var meta = document.createElement("p");
       meta.className = "muted";
 
-      var authorName = "Unknown";
-      if (post && post.author && post.author.name) {
-        authorName = String(post.author.name);
-      }
-
+      var authorName =
+        post && post.author && post.author.name
+          ? String(post.author.name)
+          : "Unknown";
       var created = post && post.created ? formatDate(post.created) : "";
-      meta.textContent = "by " + authorName + (created ? " · " + created : "");
 
-      // NEW: media preview if available
+      meta.textContent = "by ";
+      if (authorName !== "Unknown") {
+        var a = document.createElement("a");
+        a.href = profileUrl(authorName);
+        a.textContent = authorName;
+        meta.appendChild(a);
+      } else {
+        meta.append(authorName);
+      }
+      if (created) meta.append(" · " + created);
+
+      // Media preview if available
       var media = post && post.media ? post.media : null;
       if (media && typeof media.url === "string" && media.url) {
         var img = document.createElement("img");

@@ -1,3 +1,9 @@
+// @ts-check
+/** @typedef {import("../types.js").Post} Post */
+/** @typedef {import("../types.js").Comment} Comment */
+/** @typedef {import("../types.js").Profile} Profile */
+/** @typedef {import("../types.js").Media} Media */
+
 import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
@@ -6,6 +12,19 @@ import { normalizeBearer } from "../shared/auth.js";
 
 const display = document.getElementById("display-container");
 
+/**
+ * Build a link to a user's profile page (root-level profile.html).
+ * @param {string} name - Profile name (username).
+ * @returns {string} URL pointing to profile.html with the username.
+ */
+function profileUrl(name) {
+  return `profile.html?name=${encodeURIComponent(name)}`;
+}
+
+/**
+ * Get the `id` query parameter from the current page URL.
+ * @returns {string} The post ID, or an empty string if missing.
+ */
 function getId() {
   try {
     const sp = new URLSearchParams(window.location.search);
@@ -16,6 +35,12 @@ function getId() {
   }
 }
 
+/**
+ * Fetch a single post from the API, including author and comments.
+ * @param {string} id - The post ID to fetch.
+ * @returns {Promise<Post|null>} Resolves with the post object or null if not found.
+ * @throws {Error} If the API request fails.
+ */
 async function fetchPost(id) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
@@ -44,6 +69,12 @@ async function fetchPost(id) {
   return json && json.data ? json.data : null;
 }
 
+/**
+ * Render a single post into the display container.
+ * Includes title, author link, media, body, actions, and comments.
+ * @param {Post|null} post - The post object to render, or null.
+ * @returns {void}
+ */
 function renderPost(post) {
   if (!display) return;
   display.innerHTML = "";
@@ -51,38 +82,50 @@ function renderPost(post) {
   const card = document.createElement("article");
   card.className = "card";
 
+  // Title
   const h = document.createElement("h2");
-  h.textContent = post && post.title ? post.title : "Untitled";
+  h.textContent = post?.title || "Untitled";
 
+  // Meta: by <a>Author</a> · date
   const meta = document.createElement("p");
   meta.className = "muted";
-  const authorName =
-    post && post.author && post.author.name ? post.author.name : "Unknown";
-  const createdText = post && post.created ? formatDate(post.created) : "";
-  meta.textContent =
-    "by " + authorName + (createdText ? " · " + createdText : "");
+  const authorName = post?.author?.name || "Unknown";
+  const createdText = post?.created ? formatDate(post.created) : "";
 
-  // NEW: media preview if present
-  const media = post && post.media ? post.media : null;
+  meta.textContent = "by ";
+  if (authorName !== "Unknown") {
+    const a = document.createElement("a");
+    a.href = profileUrl(authorName);
+    a.textContent = authorName;
+    meta.appendChild(a);
+  } else {
+    meta.append(authorName);
+  }
+  if (createdText) meta.append(" · " + createdText);
+
+  // Media (if present)
+  const media = post?.media || null;
   if (media && typeof media.url === "string" && media.url) {
     const img = document.createElement("img");
     img.src = media.url;
-    img.alt = media && typeof media.alt === "string" ? media.alt : "";
+    img.alt = typeof media.alt === "string" ? media.alt : "";
     img.loading = "lazy";
     img.className = "post-media";
     card.appendChild(img);
   }
 
+  // Body
   const body = document.createElement("p");
-  body.textContent = post && post.body ? post.body : "";
+  body.textContent = post?.body || "";
 
+  // Actions
   const actions = document.createElement("div");
   actions.className = "form-actions";
+  const safeId =
+    post?.id !== undefined && post?.id !== null ? String(post.id) : "";
 
   const edit = document.createElement("a");
   edit.className = "btn btn-outline";
-  const safeId =
-    post && post.id !== undefined && post.id !== null ? String(post.id) : "";
   edit.href = "edit-post.html?id=" + encodeURIComponent(safeId);
   edit.textContent = "Edit";
 
@@ -97,13 +140,13 @@ function renderPost(post) {
   actions.appendChild(edit);
   actions.appendChild(delBtn);
 
+  // Comments
   const commentsWrap = document.createElement("section");
   const cTitle = document.createElement("h3");
   cTitle.textContent = "Comments";
   commentsWrap.appendChild(cTitle);
 
-  const list = Array.isArray(post && post.comments) ? post.comments : [];
-
+  const list = Array.isArray(post?.comments) ? post.comments : [];
   if (list.length > 0) {
     for (let i = 0; i < list.length; i += 1) {
       const c = list[i] || {};
@@ -115,18 +158,29 @@ function renderPost(post) {
       const metaC = document.createElement("p");
       metaC.className = "muted";
 
-      let cAuthor = "Anonymous";
-      if (c && c.author && typeof c.author.name === "string" && c.author.name) {
+      // Prefer v2 author.name, fall back to owner string
+      let cAuthor = null;
+      if (c?.author?.name) {
         cAuthor = c.author.name;
-      } else if (c && typeof c.owner === "string" && c.owner) {
+      } else if (typeof c?.owner === "string" && c.owner) {
         cAuthor = c.owner;
       }
 
-      const cWhen = c && c.created ? formatDate(c.created) : "";
-      metaC.textContent = cAuthor + (cWhen ? " · " + cWhen : "");
+      const cWhen = c?.created ? formatDate(c.created) : "";
+
+      if (cAuthor) {
+        metaC.append("by ");
+        const ca = document.createElement("a");
+        ca.href = profileUrl(cAuthor);
+        ca.textContent = cAuthor;
+        metaC.appendChild(ca);
+      } else {
+        metaC.textContent = "Anonymous";
+      }
+      if (cWhen) metaC.append(" · " + cWhen);
 
       const cBody = document.createElement("p");
-      cBody.textContent = c && c.body ? c.body : "";
+      cBody.textContent = c?.body || "";
 
       cardC.appendChild(metaC);
       cardC.appendChild(cBody);
@@ -139,6 +193,7 @@ function renderPost(post) {
     commentsWrap.appendChild(none);
   }
 
+  // Assemble
   card.appendChild(h);
   card.appendChild(meta);
   card.appendChild(body);
@@ -147,6 +202,12 @@ function renderPost(post) {
   display.appendChild(card);
 }
 
+/**
+ * Delete a post by ID (after user confirmation).
+ * Redirects back to the feed on success.
+ * @param {string} id - The ID of the post to delete.
+ * @returns {Promise<void>}
+ */
 async function onDelete(id) {
   if (!id) return;
   const ok = window.confirm("Delete this post?");
@@ -161,10 +222,7 @@ async function onDelete(id) {
 
   showLoader();
   try {
-    const res = await fetch(url, {
-      method: "DELETE",
-      headers,
-    });
+    const res = await fetch(url, { method: "DELETE", headers });
 
     if (res.status === 204) {
       window.alert("Deleted.");
@@ -184,6 +242,14 @@ async function onDelete(id) {
   }
 }
 
+/**
+ * Bootstrap the single post page:
+ * - Reads post ID from URL
+ * - Fetches the post
+ * - Renders it into the page
+ * - Shows loader overlay during network call
+ * @returns {Promise<void>}
+ */
 async function main() {
   const id = getId();
   if (!id) {

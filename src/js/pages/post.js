@@ -12,10 +12,13 @@ import { normalizeBearer } from "../shared/auth.js";
 
 const display = document.getElementById("display-container");
 
+/** Emoji set to support for reactions */
+const REACTIONS = ["👍", "❤️", "😂", "🎉", "😮", "😢"];
+
 /**
  * Build a link to a user's profile page (root-level profile.html).
- * @param {string} name - Profile name (username).
- * @returns {string} URL pointing to profile.html with the username.
+ * @param {string} name
+ * @returns {string}
  */
 function profileUrl(name) {
   return `profile.html?name=${encodeURIComponent(name)}`;
@@ -23,7 +26,7 @@ function profileUrl(name) {
 
 /**
  * Get the `id` query parameter from the current page URL.
- * @returns {string} The post ID, or an empty string if missing.
+ * @returns {string}
  */
 function getId() {
   try {
@@ -36,10 +39,10 @@ function getId() {
 }
 
 /**
- * Fetch a single post from the API, including author and comments.
- * @param {string} id - The post ID to fetch.
- * @returns {Promise<Post|null>} Resolves with the post object or null if not found.
- * @throws {Error} If the API request fails.
+ * Fetch a single post from the API, including author, comments, and reactions.
+ * @param {string} id
+ * @returns {Promise<Post|null>}
+ * @throws {Error}
  */
 async function fetchPost(id) {
   const rawToken = getFromLocalStorage("accessToken") || "";
@@ -48,7 +51,7 @@ async function fetchPost(id) {
     BASE_API_URL +
     "/social/posts/" +
     encodeURIComponent(id) +
-    "?_author=true&_comments=true";
+    "?_author=true&_comments=true&_reactions=true";
 
   const headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
   if (token) headers.Authorization = "Bearer " + token;
@@ -70,9 +73,114 @@ async function fetchPost(id) {
 }
 
 /**
+ * Create a new comment on a post.
+ * @param {string|number} postId
+ * @param {string} text
+ * @param {number} [replyToId]
+ * @returns {Promise<any>}
+ * @throws {Error}
+ */
+async function createComment(postId, text, replyToId) {
+  const rawToken = getFromLocalStorage("accessToken") || "";
+  const token = normalizeBearer(rawToken);
+  if (!token) throw new Error("You must be logged in to comment.");
+
+  const url =
+    BASE_API_URL +
+    "/social/posts/" +
+    encodeURIComponent(String(postId)) +
+    "/comment";
+
+  /** @type {Record<string,string>} */
+  const headers = {
+    "X-Noroff-API-Key": NOROFF_API_KEY,
+    "Content-Type": "application/json",
+    Authorization: "Bearer " + token,
+  };
+
+  const body = JSON.stringify(
+    typeof replyToId === "number" ? { body: text, replyToId } : { body: text }
+  );
+
+  const res = await fetch(url, { method: "POST", headers, body });
+
+  let json = null;
+  try {
+    json = await res.json();
+  } catch {
+    json = null;
+  }
+
+  if (!res.ok) throw new Error(errorFrom(json, "Failed to post comment"));
+  return (json && json.data) || json || null;
+}
+
+/**
+ * PUT (react) or DELETE (unreact) a symbol on the post.
+ * @param {string|number} postId
+ * @param {string} symbol
+ * @param {boolean} on
+ * @returns {Promise<void>}
+ */
+async function setReaction(postId, symbol, on) {
+  const rawToken = getFromLocalStorage("accessToken") || "";
+  const token = normalizeBearer(rawToken);
+  if (!token) throw new Error("You must be logged in to react.");
+
+  const url =
+    BASE_API_URL +
+    "/social/posts/" +
+    encodeURIComponent(String(postId)) +
+    "/react/" +
+    encodeURIComponent(symbol);
+
+  /** @type {RequestInit} */
+  const req = {
+    method: on ? "PUT" : "DELETE",
+    headers: {
+      "X-Noroff-API-Key": NOROFF_API_KEY,
+      Authorization: "Bearer " + token,
+    },
+  };
+
+  const res = await fetch(url, req);
+
+  let json = null;
+  try {
+    json = await res.json();
+  } catch {
+    json = null;
+  }
+
+  if (!res.ok) {
+    throw new Error(errorFrom(json, "Failed to update reaction"));
+  }
+}
+
+/**
+ * Build a quick map from the post's reactions array for easy lookup.
+ * @param {any} post
+ * @returns {Record<string, {count:number, reacted?:boolean}>}
+ */
+function reactionMap(post) {
+  /** @type {Record<string, {count:number, reacted?:boolean}>} */
+  const map = {};
+  const arr = Array.isArray(post?.reactions) ? post.reactions : [];
+  for (const r of arr) {
+    const sym = typeof r?.symbol === "string" ? r.symbol : "";
+    if (!sym) continue;
+    map[sym] = {
+      count: typeof r?.count === "number" ? r.count : 0,
+      reacted: !!r?.reacted,
+    };
+  }
+  return map;
+}
+
+/**
  * Render a single post into the display container.
- * Includes title, author link, media, body, actions, and comments.
- * @param {Post|null} post - The post object to render, or null.
+ * Includes title, author link, media, body, reactions, (owner-only) actions, comments, and comment form.
+ * @param {Post|null} post
  * @returns {void}
  */
 function renderPost(post) {
@@ -118,29 +226,84 @@ function renderPost(post) {
   const body = document.createElement("p");
   body.textContent = post?.body || "";
 
-  // Actions
-  const actions = document.createElement("div");
-  actions.className = "form-actions";
-  const safeId =
-    post?.id !== undefined && post?.id !== null ? String(post.id) : "";
+  // Reactions bar
+  const rx = document.createElement("div");
+  rx.className = "reactions";
+  const rmap = reactionMap(post);
+  const hasToken = !!normalizeBearer(getFromLocalStorage("accessToken") || "");
+  const pid = post?.id != null ? String(post.id) : "";
 
-  const edit = document.createElement("a");
-  edit.className = "btn btn-outline";
-  edit.href = "edit-post.html?id=" + encodeURIComponent(safeId);
-  edit.textContent = "Edit";
+  for (const sym of REACTIONS) {
+    const count = rmap[sym]?.count || 0;
+    const reacted = !!rmap[sym]?.reacted;
 
-  const delBtn = document.createElement("button");
-  delBtn.className = "btn btn-outline";
-  delBtn.type = "button";
-  delBtn.textContent = "Delete";
-  delBtn.addEventListener("click", function () {
-    onDelete(safeId);
-  });
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "reaction-btn";
+    btn.setAttribute("aria-pressed", reacted ? "true" : "false");
+    btn.title = reacted ? `Remove ${sym}` : `React with ${sym}`;
+    btn.textContent = `${sym} ${count > 0 ? count : ""}`.trim();
 
-  actions.appendChild(edit);
-  actions.appendChild(delBtn);
+    btn.addEventListener("click", async () => {
+      if (!hasToken) {
+        window.alert("Please log in to react.");
+        return;
+      }
+      if (!pid) return;
 
-  // Comments
+      btn.disabled = true;
+      showLoader();
+      try {
+        await setReaction(pid, sym, !reacted);
+        const updated = await fetchPost(pid);
+        renderPost(updated); // refresh counts + pressed state
+      } catch (e) {
+        const msg =
+          e && typeof e === "object" && e !== null && "message" in e
+            ? /** @type {{message?: unknown}} */ (e).message
+            : null;
+        window.alert(
+          typeof msg === "string" && msg ? msg : "Could not update reaction."
+        );
+      } finally {
+        hideLoader();
+        btn.disabled = false;
+      }
+    });
+
+    rx.appendChild(btn);
+  }
+
+  // OWNER-ONLY: Actions (Edit/Delete)
+  const currentUser = getFromLocalStorage("profileName") || "";
+  const isOwner =
+    !!currentUser && authorName !== "Unknown" && currentUser === authorName;
+
+  let actions = null;
+  if (isOwner) {
+    actions = document.createElement("div");
+    actions.className = "form-actions";
+    const safeIdA =
+      post?.id !== undefined && post?.id !== null ? String(post.id) : "";
+
+    const edit = document.createElement("a");
+    edit.className = "btn btn-outline";
+    edit.href = "edit-post.html?id=" + encodeURIComponent(safeIdA);
+    edit.textContent = "Edit";
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "btn btn-outline";
+    delBtn.type = "button";
+    delBtn.textContent = "Delete";
+    delBtn.addEventListener("click", function () {
+      onDelete(safeIdA, authorName);
+    });
+
+    actions.appendChild(edit);
+    actions.appendChild(delBtn);
+  }
+
+  // Comments list
   const commentsWrap = document.createElement("section");
   const cTitle = document.createElement("h3");
   cTitle.textContent = "Comments";
@@ -193,23 +356,117 @@ function renderPost(post) {
     commentsWrap.appendChild(none);
   }
 
+  // Comment form (only when logged in)
+  const commentBlock = document.createElement("section");
+  commentBlock.style.marginTop = "1rem";
+
+  const safeId =
+    post?.id !== undefined && post?.id !== null ? String(post.id) : "";
+
+  if (hasToken && safeId) {
+    const form = document.createElement("form");
+    form.className = "form";
+
+    const fg = document.createElement("div");
+    fg.className = "form-group";
+
+    const label = document.createElement("label");
+    label.setAttribute("for", "comment-body");
+    label.textContent = "Add a comment";
+
+    const ta = document.createElement("textarea");
+    ta.id = "comment-body";
+    ta.name = "comment";
+    ta.placeholder = "Write your comment…";
+    ta.required = true;
+    ta.rows = 3;
+
+    const actionsForm = document.createElement("div");
+    actionsForm.className = "form-actions";
+
+    const submit = document.createElement("button");
+    submit.type = "submit";
+    submit.className = "btn";
+    submit.textContent = "Post comment";
+
+    actionsForm.appendChild(submit);
+    fg.appendChild(label);
+    fg.appendChild(ta);
+    form.appendChild(fg);
+    form.appendChild(actionsForm);
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = ta.value.trim();
+      if (!text) {
+        window.alert("Please write a comment first.");
+        ta.focus();
+        return;
+      }
+      submit.disabled = true;
+      showLoader();
+      try {
+        await createComment(safeId, text);
+        ta.value = "";
+        const updated = await fetchPost(safeId);
+        renderPost(updated); // refresh comments
+      } catch (err) {
+        const msg =
+          err && typeof err === "object" && err !== null && "message" in err
+            ? /** @type {{message?: unknown}} */ (err).message
+            : null;
+        window.alert(
+          typeof msg === "string" && msg ? msg : "Could not post comment."
+        );
+      } finally {
+        hideLoader();
+        submit.disabled = false;
+      }
+    });
+
+    // Ctrl/Cmd + Enter to submit
+    form.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+
+    commentBlock.appendChild(form);
+  } else {
+    const needLogin = document.createElement("p");
+    needLogin.className = "muted";
+    needLogin.innerHTML = `You need to <a href="login.html">log in</a> to comment.`;
+    commentBlock.appendChild(needLogin);
+  }
+
   // Assemble
   card.appendChild(h);
   card.appendChild(meta);
   card.appendChild(body);
-  card.appendChild(actions);
+  card.appendChild(rx);
+  if (actions) card.appendChild(actions);
   card.appendChild(commentsWrap);
+  card.appendChild(commentBlock);
   display.appendChild(card);
 }
 
 /**
- * Delete a post by ID (after user confirmation).
+ * Delete a post by ID, only if the current user is the owner.
  * Redirects back to the feed on success.
- * @param {string} id - The ID of the post to delete.
+ * @param {string} id
+ * @param {string} ownerName
  * @returns {Promise<void>}
  */
-async function onDelete(id) {
+async function onDelete(id, ownerName) {
   if (!id) return;
+
+  const me = getFromLocalStorage("profileName") || "";
+  if (!me || me !== ownerName) {
+    window.alert("You can only delete your own posts.");
+    return;
+  }
+
   const ok = window.confirm("Delete this post?");
   if (!ok) return;
 
@@ -224,18 +481,19 @@ async function onDelete(id) {
   try {
     const res = await fetch(url, { method: "DELETE", headers });
 
-    if (res.status === 204) {
-      window.alert("Deleted.");
-      window.location.href = "feed.html";
-      return;
-    }
-
     let json = null;
     try {
       json = await res.json();
     } catch {
       json = null;
     }
+
+    if (res.status === 204) {
+      window.alert("Deleted.");
+      window.location.href = "feed.html";
+      return;
+    }
+
     window.alert(errorFrom(json, "Failed to delete"));
   } finally {
     hideLoader();
@@ -243,11 +501,7 @@ async function onDelete(id) {
 }
 
 /**
- * Bootstrap the single post page:
- * - Reads post ID from URL
- * - Fetches the post
- * - Renders it into the page
- * - Shows loader overlay during network call
+ * Bootstrap the single post page.
  * @returns {Promise<void>}
  */
 async function main() {

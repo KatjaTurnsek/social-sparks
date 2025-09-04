@@ -148,7 +148,6 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
-
 @media (max-width: 700px) {
   .grid.cols-2 {
     grid-template-columns: 1fr;
@@ -391,11 +390,11 @@ section:has(#latest-posts-heading) #display-container .post-media,
 }
 
 /* Index latest-post cards: pin actions (View button) to bottom */
-.index-post-card {
+section:has(#latest-posts-heading) #display-container > .card {
   display: flex;
   flex-direction: column;
 }
-.index-post-card .form-actions {
+section:has(#latest-posts-heading) #display-container > .card .form-actions {
   margin-top: auto;
 }
 
@@ -436,14 +435,14 @@ section:has(#latest-posts-heading) #display-container .post-media,
 
 /* FULL-WIDTH cards across index, feed, post, and profile pages */
 #main-content {
-  max-width: var(--max-width) !important; /* normalize per-page inline widths */
+  max-width: var(--max-width) !important;
 }
 #display-container > .card,
 #main-content > .card,
 .profile-header.card {
   width: 100%;
   max-width: none;
-  margin-inline: 0; /* no centering margins; use container width */
+  margin-inline: 0; /* use container width */
 }
 
 /* Optional: align top-level forms to full width too */
@@ -966,7 +965,28 @@ fieldset.form-group legend,
   white-space: normal;
   display: -webkit-box;
   line-clamp: 2;
-  -webkit-line-clamp: 2; /* limit to two lines */
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* ========================================================================== */
+/* Index: Latest posts grid responsiveness                                    */
+/* Force one-card-per-row on small screens (override inline styles, if any)   */
+/* ========================================================================== */
+
+section:has(#latest-posts-heading) #display-container {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (max-width: 900px) {
+  section:has(#latest-posts-heading) #display-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 600px) {
+  section:has(#latest-posts-heading) #display-container {
+    grid-template-columns: 1fr !important; /* rows on mobile */
+  }
 }

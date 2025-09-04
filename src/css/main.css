@@ -134,10 +134,34 @@ textarea {
 .grid.cols-2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+/* New: 4-column helper for index latest posts */
+.grid.cols-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  .grid.cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .grid.cols-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 700px) {
   .grid.cols-2 {
     grid-template-columns: 1fr;
   }
+}
+
+/* Optional utility: clamp text to 2 lines with ellipsis */
+.clamp-2 {
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* ========================================================================== */
@@ -244,6 +268,18 @@ p {
   color: var(--color-text-muted);
 }
 
+/* Ensure long usernames wrap and clamp to two lines (avoid overflow) */
+.card .muted a {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* ========================================================================== */
 /* 4) Components: Buttons, Cards, Alerts, Skeletons                           */
 /* ========================================================================== */
@@ -336,12 +372,31 @@ a:focus-visible {
   object-fit: cover;
 }
 
+/* Latest posts (index): uniform image height */
+section:has(#latest-posts-heading) #display-container .post-media,
+.latest-posts-grid .post-media,
+.index-post-image {
+  height: 180px; /* exact height */
+  max-height: none; /* override general max-height */
+  object-fit: cover; /* crop to fill */
+}
+
+/* Cards */
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: clamp(1rem, 2.5vw, 1.5rem);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* Index latest-post cards: pin actions (View button) to bottom */
+.index-post-card {
+  display: flex;
+  flex-direction: column;
+}
+.index-post-card .form-actions {
+  margin-top: auto;
 }
 
 /* --- Reactions (icon-only buttons) --------------------------------------- */
@@ -437,7 +492,6 @@ a:focus-visible {
 /* 5) Components: Forms (incl. create-post & search input)                    */
 /* ========================================================================== */
 
-/* Form wrappers */
 .form,
 .form-inline {
   display: block;
@@ -451,13 +505,11 @@ a:focus-visible {
   gap: 0.75rem;
 }
 
-/* Field block: support `.field` (old) and `.form-group` (new) */
 .field,
 .form-group {
   margin-bottom: 0.9rem;
 }
 
-/* Label */
 .label,
 .form-group > label,
 .field > label {
@@ -467,7 +519,6 @@ a:focus-visible {
   margin-bottom: 0.35rem;
 }
 
-/* Inputs & textareas: classed and plain inside .form/.card */
 .input,
 .textarea,
 .select,
@@ -525,7 +576,6 @@ a:focus-visible {
   background: #fff;
 }
 
-/* Helper text below inputs */
 .help {
   display: block;
   margin-top: 0.35rem;
@@ -533,7 +583,6 @@ a:focus-visible {
   color: var(--color-text-muted);
 }
 
-/* Validation states */
 .input.is-invalid,
 .textarea.is-invalid,
 .select.is-invalid,
@@ -553,13 +602,11 @@ a:focus-visible {
   background: #fff;
 }
 
-/* Inline alert area for form messages */
 .form-message {
   margin-top: 0.5rem;
   font-size: 0.95rem;
 }
 
-/* Actions at the bottom of a form */
 .form-actions {
   display: flex;
   gap: 0.5rem;
@@ -568,7 +615,6 @@ a:focus-visible {
   margin-top: 0.75rem;
 }
 
-/* Checkbox + radio alignment helpers */
 .control {
   display: flex;
   align-items: center;
@@ -580,7 +626,6 @@ a:focus-visible {
   height: 1rem;
 }
 
-/* Fieldset/legend polish */
 fieldset.form-group,
 .form fieldset,
 .card fieldset {
@@ -596,7 +641,6 @@ fieldset.form-group legend,
   color: var(--color-text);
 }
 
-/* Optional two-column layout for grouped small fields */
 .form-row {
   display: grid;
   gap: 0.75rem;
@@ -630,12 +674,10 @@ fieldset.form-group legend,
   gap: 0.75rem;
 }
 
-/* Generic content section */
 .section {
   padding: 2rem 0;
 }
 
-/* Global loader wrapper */
 #global-loader {
   position: fixed;
   inset: 0;
@@ -646,7 +688,6 @@ fieldset.form-group legend,
   z-index: 9999;
 }
 
-/* Spinner */
 .spinner {
   width: 48px;
   height: 48px;
@@ -661,7 +702,6 @@ fieldset.form-group legend,
   }
 }
 
-/* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   .spinner {
     animation-duration: 0.01ms;
@@ -697,7 +737,6 @@ fieldset.form-group legend,
   }
 }
 
-/* Larger screens can slightly increase readable size */
 @media (min-width: 1100px) {
   body {
     font-size: 1.05rem;
@@ -916,4 +955,18 @@ fieldset.form-group legend,
   border-radius: 50%;
   object-fit: cover;
   background: var(--color-border);
+}
+
+/* Ensure long profile names wrap to a max of two lines inside cards */
+.person-card p:first-child {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2; /* limit to two lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

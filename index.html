@@ -73,9 +73,57 @@
         </p>
       </section>
 
+      <!-- Latest posts (4 columns) -->
       <section aria-labelledby="latest-posts-heading" class="section">
         <h2 id="latest-posts-heading" class="mb-2">Latest posts</h2>
-        <div id="display-container" class="grid"></div>
+        <!-- Added classes so CSS enforces 4-col grid and uniform image height -->
+        <div id="display-container" class="grid cols-4 latest-posts-grid"></div>
+      </section>
+
+      <!-- Profiles (search + list + pager) -->
+      <section aria-labelledby="profiles-heading" class="section">
+        <div
+          style="
+            display: flex;
+            align-items: end;
+            gap: 1rem;
+            justify-content: space-between;
+            flex-wrap: wrap;
+          "
+        >
+          <h2 id="profiles-heading" class="mb-2" style="margin: 0">Profiles</h2>
+          <form
+            id="profile-search-form"
+            class="form-inline nav-search"
+            role="search"
+            aria-label="Search profiles"
+          >
+            <label for="profile-q" class="visually-hidden"
+              >Search profiles</label
+            >
+            <input
+              id="profile-q"
+              name="q"
+              type="search"
+              placeholder="Search profiles…"
+            />
+            <button type="submit" class="btn btn-outline">Search</button>
+          </form>
+        </div>
+
+        <div
+          id="profiles-container"
+          class="grid"
+          style="margin-top: 0.75rem"
+        ></div>
+
+        <div
+          id="profiles-pager"
+          class="form-actions"
+          style="justify-content: space-between"
+        >
+          <!-- Prev/Next buttons will be injected -->
+        </div>
       </section>
 
       <div id="app">

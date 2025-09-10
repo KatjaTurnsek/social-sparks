@@ -7,7 +7,7 @@ import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
 import { normalizeBearer } from "../shared/auth.js";
-import { formatDate } from "../shared/dates.js"; // ← FIX: import formatDate
+import { formatDate } from "../shared/dates.js";
 
 /* ----------------------------- helpers ---------------------------------- */
 
@@ -126,6 +126,7 @@ async function follow(name, action) {
     action;
 
   const res = await fetch(url, { method: "PUT", headers });
+
   /** @type {any} */
   let json = null;
   try {
@@ -133,19 +134,20 @@ async function follow(name, action) {
   } catch {
     json = null;
   }
-  if (!res.ok) throw new Error(errorFrom(json, "Failed"));
+
+  if (!res.ok) {
+    const err = new Error(errorFrom(json, "Failed"));
+    // @ts-ignore attach status for callers
+    err.status = res.status;
+    throw err;
+  }
   return (json && json.data) || json || null;
 }
 
 /* ------------------------------ renderers -------------------------------- */
 
 /**
- * Render posts into a panel as preview cards (like feed):
- * - compact image thumbnail (CSS targets `.post-card img`)
- * - title
- * - (optional) created date
- * - short body (clamped)
- * - “View” button
+ * Render posts into a panel as preview cards (feed-like).
  * @param {HTMLElement|null} panelEl
  * @param {Post[]|null|undefined} posts
  */
@@ -164,33 +166,29 @@ function renderPosts(panelEl, posts) {
 
   posts.forEach((post) => {
     const card = document.createElement("article");
-    card.className = "card post-card"; // important: enables CSS thumbnail sizing
+    card.className = "card post-card";
 
     // Title
     const h = document.createElement("h4");
     h.textContent = post && post.title ? post.title : "Untitled";
 
-    // Light meta (created date)
+    // Date (light meta)
     const meta = document.createElement("p");
     meta.className = "muted";
-    if (post && post.created) {
-      meta.textContent = String(formatDate(post.created));
-    } else {
-      meta.textContent = "";
-    }
+    meta.textContent = post?.created ? String(formatDate(post.created)) : "";
 
-    // Media preview (thumbnail height handled by .post-card img CSS)
-    if (post && post.media && post.media.url) {
+    // Media preview (thumbnail height via CSS .post-card img)
+    if (post?.media?.url) {
       const img = document.createElement("img");
       img.loading = "lazy";
       img.src = post.media.url;
-      img.alt = (post.media && post.media.alt) || "";
+      img.alt = post.media.alt || "";
       card.appendChild(img);
     }
 
     // Body (short preview)
     const bodyP = document.createElement("p");
-    bodyP.textContent = post && post.body ? post.body : "";
+    bodyP.textContent = post?.body || "";
     bodyP.className = "clamp-2";
 
     // Actions
@@ -243,9 +241,9 @@ function renderPeople(panelEl, list) {
     avatar.style.width = "40px";
     avatar.style.height = "40px";
     avatar.style.borderRadius = "999px";
-    if (person && person.avatar && person.avatar.url) {
+    if (person?.avatar?.url) {
       avatar.src = person.avatar.url;
-      avatar.alt = (person.avatar && person.avatar.alt) || "";
+      avatar.alt = person.avatar.alt || "";
     } else {
       avatar.style.display = "none";
     }
@@ -254,11 +252,11 @@ function renderPeople(panelEl, list) {
     const nm = document.createElement("p");
     nm.style.margin = "0";
     nm.style.fontWeight = "600";
-    nm.textContent = person && person.name ? person.name : "Unknown";
+    nm.textContent = person?.name || "Unknown";
     const bi = document.createElement("p");
     bi.className = "muted";
     bi.style.margin = "0";
-    bi.textContent = person && person.bio ? person.bio : "";
+    bi.textContent = person?.bio || "";
 
     info.appendChild(nm);
     info.appendChild(bi);
@@ -314,27 +312,19 @@ async function main() {
   try {
     const p = await fetchProfile(name);
 
-    // header fields
-    setText(nameEl, (p && p.name) || "Profile");
-    setText(emailEl, (p && p.email) || "");
-    setText(bioEl, (p && p.bio) || "");
+    // Header fields
+    setText(nameEl, p?.name || "Profile");
+    setText(emailEl, p?.email || "");
+    setText(bioEl, p?.bio || "");
 
-    setImg(
-      avatarEl,
-      p && p.avatar && p.avatar.url ? p.avatar.url : "",
-      (p && p.avatar && p.avatar.alt) || ""
-    );
-    setImg(
-      bannerEl,
-      p && p.banner && p.banner.url ? p.banner.url : "",
-      (p && p.banner && p.banner.alt) || ""
-    );
+    setImg(avatarEl, p?.avatar?.url ? p.avatar.url : "", p?.avatar?.alt || "");
+    setImg(bannerEl, p?.banner?.url ? p.banner.url : "", p?.banner?.alt || "");
 
-    setText(cntPosts, String((p && p._count && p._count.posts) || 0));
-    setText(cntFollowers, String((p && p._count && p._count.followers) || 0));
-    setText(cntFollowing, String((p && p._count && p._count.following) || 0));
+    setText(cntPosts, String(p?._count?.posts ?? 0));
+    setText(cntFollowers, String(p?._count?.followers ?? 0));
+    setText(cntFollowing, String(p?._count?.following ?? 0));
 
-    // Determine ownership (require a token AND same username, case-insensitive)
+    // Ownership
     const rawToken = getFromLocalStorage("accessToken") || "";
     const token = normalizeBearer(rawToken);
     const myName = getFromLocalStorage("profileName") || "";
@@ -352,50 +342,78 @@ async function main() {
       }
     }
 
-    // Follow/Unfollow: only when viewing someone else AND logged in
-    const canFollow = !!token && !isMe;
-    if (btnFollow) {
-      btnFollow.style.display = canFollow ? "" : "none";
-      btnFollow.onclick = null;
-    }
-    if (btnUnfollow) {
-      btnUnfollow.style.display = canFollow ? "" : "none";
-      btnUnfollow.onclick = null;
+    // ----- Follow / Unfollow (single toggle with local count + auth handling) -----
+    const followersArr = Array.isArray(p?.followers) ? p.followers : [];
+    let followerCount =
+      (p && p._count && typeof p._count.followers === "number"
+        ? p._count.followers
+        : followersArr.length) || 0;
+
+    // Am I already following this profile?
+    let iFollow =
+      !!token &&
+      !isMe &&
+      !!myName &&
+      followersArr.some((u) => u?.name && sameUser(String(u.name), myName));
+
+    function updateFollowUI() {
+      if (!btnFollow || !btnUnfollow) return;
+
+      if (!token || isMe) {
+        btnFollow.style.display = "none";
+        btnUnfollow.style.display = "none";
+        return;
+      }
+
+      btnFollow.style.display = iFollow ? "none" : "";
+      btnUnfollow.style.display = iFollow ? "" : "none";
+
+      if (cntFollowers)
+        setText(cntFollowers, String(Math.max(0, followerCount)));
     }
 
-    // wire follow/unfollow
-    if (canFollow) {
-      if (btnFollow) {
-        btnFollow.onclick = async () => {
-          showLoader();
-          try {
-            if (p && p.name) await follow(p.name, "follow");
-            window.alert("Followed.");
-          } catch (err) {
-            // @ts-ignore
-            window.alert((err && err.message) || "Failed to follow");
-          } finally {
-            hideLoader();
-          }
-        };
+    async function handleFollowClick(action) {
+      if (!p?.name) return;
+      if (!token) {
+        window.location.href = "login.html";
+        return;
       }
-      if (btnUnfollow) {
-        btnUnfollow.onclick = async () => {
-          showLoader();
-          try {
-            if (p && p.name) await follow(p.name, "unfollow");
-            window.alert("Unfollowed.");
-          } catch (err) {
-            // @ts-ignore
-            window.alert((err && err.message) || "Failed to unfollow");
-          } finally {
-            hideLoader();
-          }
-        };
+
+      // disable both during the request
+      if (btnFollow) btnFollow.disabled = true;
+      if (btnUnfollow) btnUnfollow.disabled = true;
+      showLoader();
+      try {
+        await follow(p.name, action);
+        if (action === "follow" && !iFollow) {
+          iFollow = true;
+          followerCount += 1;
+        } else if (action === "unfollow" && iFollow) {
+          iFollow = false;
+          followerCount = Math.max(0, followerCount - 1);
+        }
+        updateFollowUI();
+      } catch (err) {
+        const status = /** @type {any} */ (err)?.status;
+        if (status === 401 || status === 403) {
+          window.location.href = "login.html";
+          return;
+        }
+        // @ts-ignore
+        window.alert(err?.message || "Failed to update follow state");
+      } finally {
+        hideLoader();
+        if (btnFollow) btnFollow.disabled = false;
+        if (btnUnfollow) btnUnfollow.disabled = false;
       }
     }
 
-    // panels (posts are rendered as PREVIEWS like the feed)
+    // Wire once & init
+    if (btnFollow) btnFollow.onclick = () => handleFollowClick("follow");
+    if (btnUnfollow) btnUnfollow.onclick = () => handleFollowClick("unfollow");
+    updateFollowUI();
+
+    // Panels (posts shown as PREVIEWS like the feed)
     renderPosts(panelPosts, Array.isArray(p?.posts) ? p.posts : []);
     renderPeople(
       panelFollowers,
@@ -406,7 +424,7 @@ async function main() {
       Array.isArray(p?.following) ? p.following : []
     );
 
-    // tabs behavior
+    // Tabs
     const tabs = document.querySelectorAll(".tabs .tab");
     const panels = document.querySelectorAll(".tabpanel");
     tabs.forEach((tabBtn) => {

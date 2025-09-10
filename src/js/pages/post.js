@@ -5,7 +5,7 @@
 /** @typedef {import("../types.js").Media} Media */
 
 import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
-import { showLoader, hideLoader } from "../boot.js";
+import { showLoader, hideLoader, setFlash } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
 import { formatDate } from "../shared/dates.js";
 import { normalizeBearer } from "../shared/auth.js";
@@ -179,7 +179,7 @@ function reactionMap(post) {
 
 /**
  * Render a single post into the display container.
- * Includes title, author link, media, body, reactions, (owner-only) actions, comments, and comment form.
+ * Includes title, author link, full-height media, body, reactions, (owner-only) actions, comments, and comment form.
  * @param {Post|null} post
  * @returns {void}
  */
@@ -219,7 +219,7 @@ function renderPost(post) {
     img.alt = typeof media.alt === "string" ? media.alt : "";
     img.loading = "lazy";
     img.className = "post-media";
-    // Override global thumbnail cap for single-post page
+    // Full image on the single-post page
     img.style.maxHeight = "none";
     img.style.height = "auto";
     img.style.width = "100%";
@@ -459,7 +459,7 @@ function renderPost(post) {
 
 /**
  * Delete a post by ID, only if the current user is the owner.
- * Redirects back to the feed on success.
+ * Redirects back to the feed on success with a flash message.
  * @param {string} id
  * @param {string} ownerName
  * @returns {Promise<void>}
@@ -495,7 +495,8 @@ async function onDelete(id, ownerName) {
     }
 
     if (res.status === 204) {
-      window.alert("Deleted.");
+      // use string, type, duration signature
+      setFlash("Post deleted.", "success", 2500);
       window.location.href = "feed.html";
       return;
     }
@@ -511,7 +512,7 @@ async function onDelete(id, ownerName) {
  * @returns {Promise<void>}
  */
 async function main() {
-  // Mark page for CSS overrides (optional if you rely solely on inline styles above)
+  // Optional marker for CSS overrides
   document.body.classList.add("post-page");
 
   const id = getId();

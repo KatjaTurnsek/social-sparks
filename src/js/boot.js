@@ -40,6 +40,126 @@ export function hideLoader() {
 }
 
 /* ==========================================================================
+   Toasts + Flash (cross-page)
+   ========================================================================== */
+
+/**
+ * Ensure a toast viewport exists and return it.
+ * @returns {HTMLElement}
+ */
+function ensureToastViewport() {
+  let host = /** @type {HTMLElement|null} */ (
+    document.getElementById("toast-viewport")
+  );
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "toast-viewport";
+    host.setAttribute("aria-live", "polite");
+    // minimal inline to avoid requiring CSS for layout
+    host.style.position = "fixed";
+    host.style.left = "0";
+    host.style.right = "0";
+    host.style.bottom = "1rem";
+    host.style.display = "grid";
+    host.style.placeItems = "center";
+    host.style.gap = "0.5rem";
+    host.style.zIndex = "10000";
+    host.style.pointerEvents = "none";
+    document.body.appendChild(host);
+  }
+  return host;
+}
+
+/**
+ * Show a toast now.
+ * @param {string} message
+ * @param {{type?: 'success'|'error'|'info'|'default', duration?: number}} [opts]
+ */
+export function showToast(message, opts = {}) {
+  const type = opts.type || "default";
+  const duration = Math.max(1200, opts.duration || 2500);
+
+  const host = ensureToastViewport();
+  const el = document.createElement("div");
+  el.className = "toast";
+  // minimal inline styles so it works even without extra CSS
+  el.style.pointerEvents = "auto";
+  el.style.background =
+    type === "success"
+      ? "#166534"
+      : type === "error"
+        ? "#991b1b"
+        : type === "info"
+          ? "#1e3a8a"
+          : "#111827";
+  el.style.color = "#fff";
+  el.style.borderRadius = "0.5rem";
+  el.style.padding = "0.6rem 0.9rem";
+  el.style.fontSize = "0.95rem";
+  el.style.boxShadow = "0 10px 34px rgba(0,0,0,0.18)";
+  el.style.opacity = "0";
+  el.style.transform = "translateY(6px)";
+  el.style.transition = "opacity .18s ease, transform .18s ease";
+  el.textContent = message;
+
+  host.appendChild(el);
+  // animate in
+  requestAnimationFrame(() => {
+    el.style.opacity = "1";
+    el.style.transform = "translateY(0)";
+  });
+
+  const close = () => {
+    el.style.opacity = "0";
+    el.style.transform = "translateY(6px)";
+    window.setTimeout(() => el.remove(), 180);
+  };
+
+  const t = window.setTimeout(close, duration);
+  el.addEventListener("click", () => {
+    clearTimeout(t);
+    close();
+  });
+}
+
+const FLASH_KEY = "flash:message";
+
+/**
+ * Set a flash message to show on next page load.
+ * @param {string} message
+ * @param {'success'|'error'|'info'|'default'} [type]
+ * @param {number} [duration]
+ */
+export function setFlash(message, type = "success", duration = 2500) {
+  try {
+    sessionStorage.setItem(
+      FLASH_KEY,
+      JSON.stringify({ message, type, duration })
+    );
+  } catch (e) {
+    // ignore storage errors
+    console.warn("Could not set flash:", e);
+  }
+}
+
+function maybeShowFlashOnLoad() {
+  try {
+    const raw = sessionStorage.getItem(FLASH_KEY);
+    if (!raw) return;
+    sessionStorage.removeItem(FLASH_KEY);
+    const data = JSON.parse(raw);
+    if (data && data.message) {
+      showToast(String(data.message), {
+        type: /** @type any */ (data.type) || "success",
+        duration: Number(data.duration) || 2500,
+      });
+    }
+  } catch {
+    // ignore parse/storage issues
+  }
+}
+
+/* ==========================================================================
    Nav auth state (Login/Register ⇄ Logout)
    ========================================================================== */
 
@@ -132,7 +252,7 @@ export function setupNavAuthState() {
 
     // Add logout link at the end
     const a = ensureNavLink(navList, "#", "Logout", { "data-role": "logout" });
-    a.addEventListener("click", (ev) => {
+    a.onclick = (ev) => {
       ev.preventDefault();
       try {
         ["accessToken", "profileName", "profileEmail"].forEach((k) =>
@@ -141,11 +261,13 @@ export function setupNavAuthState() {
       } catch (err) {
         console.warn("Failed to clear auth storage:", err);
       } finally {
+        // Set a flash so user sees a toast after navigation
+        setFlash("You have been logged out.", "info", 2200);
         // Rebuild the nav to show Login/Register again, then send home
         setupNavAuthState();
         window.location.href = "index.html";
       }
-    });
+    };
   } else {
     // Ensure login/register exist, and make sure any logout link is gone
     ensureNavLink(navList, "login.html", "Login");
@@ -155,10 +277,13 @@ export function setupNavAuthState() {
 }
 
 /* Auto-run on load (works even if module loads after DOM is ready) */
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", setupNavAuthState, {
-    once: true,
-  });
-} else {
+function boot() {
   setupNavAuthState();
+  maybeShowFlashOnLoad();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot, { once: true });
+} else {
+  boot();
 }

@@ -203,6 +203,7 @@ function attachEmojiButton(field) {
 /**
  * Fetch post data and populate the form fields.
  * Also wires emoji buttons for title & body.
+ * Guards against editing a post you don't own.
  * @returns {Promise<void>}
  */
 async function load() {
@@ -219,7 +220,9 @@ async function load() {
   var headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
   if (token) headers.Authorization = "Bearer " + token;
 
-  var url = BASE_API_URL + "/social/posts/" + encodeURIComponent(id);
+  // Include author so we can confirm ownership
+  var url =
+    BASE_API_URL + "/social/posts/" + encodeURIComponent(id) + "?_author=true";
 
   showLoader();
   try {
@@ -244,11 +247,18 @@ async function load() {
     }
 
     /** @type {any} */
-    var p = {};
-    if (json && json.data) p = json.data;
-    else if (json && typeof json === "object") p = json;
-
+    var p = (json && json.data) || json || {};
     if (!form) return;
+
+    // Ownership guard
+    var me = getFromLocalStorage("profileName") || "";
+    var owner =
+      p && p.author && typeof p.author.name === "string" ? p.author.name : "";
+    if (owner && me && owner !== me) {
+      setMsg("You can only edit your own post.");
+      window.location.href = "post.html?id=" + encodeURIComponent(id);
+      return;
+    }
 
     // Title field
     var tNode = form.querySelector('[name="title"]');
@@ -384,5 +394,6 @@ if (form) {
     }
   });
 
+  // Load initial post data
   load();
 }

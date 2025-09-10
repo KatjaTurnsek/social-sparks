@@ -7,6 +7,7 @@ import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
 import { normalizeBearer } from "../shared/auth.js";
+import { formatDate } from "../shared/dates.js"; // ← FIX: import formatDate
 
 /* ----------------------------- helpers ---------------------------------- */
 
@@ -139,7 +140,12 @@ async function follow(name, action) {
 /* ------------------------------ renderers -------------------------------- */
 
 /**
- * Render posts into a panel as cards.
+ * Render posts into a panel as preview cards (like feed):
+ * - compact image thumbnail (CSS targets `.post-card img`)
+ * - title
+ * - (optional) created date
+ * - short body (clamped)
+ * - “View” button
  * @param {HTMLElement|null} panelEl
  * @param {Post[]|null|undefined} posts
  */
@@ -158,23 +164,36 @@ function renderPosts(panelEl, posts) {
 
   posts.forEach((post) => {
     const card = document.createElement("article");
-    card.className = "card";
+    card.className = "card post-card"; // important: enables CSS thumbnail sizing
 
+    // Title
     const h = document.createElement("h4");
     h.textContent = post && post.title ? post.title : "Untitled";
 
+    // Light meta (created date)
+    const meta = document.createElement("p");
+    meta.className = "muted";
+    if (post && post.created) {
+      meta.textContent = String(formatDate(post.created));
+    } else {
+      meta.textContent = "";
+    }
+
+    // Media preview (thumbnail height handled by .post-card img CSS)
     if (post && post.media && post.media.url) {
       const img = document.createElement("img");
-      img.className = "post-thumb";
       img.loading = "lazy";
       img.src = post.media.url;
       img.alt = (post.media && post.media.alt) || "";
       card.appendChild(img);
     }
 
+    // Body (short preview)
     const bodyP = document.createElement("p");
     bodyP.textContent = post && post.body ? post.body : "";
+    bodyP.className = "clamp-2";
 
+    // Actions
     const actions = document.createElement("div");
     actions.className = "form-actions";
     const view = document.createElement("a");
@@ -184,7 +203,9 @@ function renderPosts(panelEl, posts) {
     view.textContent = "View";
     actions.appendChild(view);
 
+    // Assemble
     card.appendChild(h);
+    card.appendChild(meta);
     card.appendChild(bodyP);
     card.appendChild(actions);
     panelEl.appendChild(card);
@@ -327,7 +348,7 @@ async function main() {
         btnEdit.href = "edit-profile.html";
         btnEdit.onclick = null;
       } else {
-        btnEdit.remove(); // remove entirely so it can't be interacted with
+        btnEdit.remove();
       }
     }
 
@@ -374,7 +395,7 @@ async function main() {
       }
     }
 
-    // panels
+    // panels (posts are rendered as PREVIEWS like the feed)
     renderPosts(panelPosts, Array.isArray(p?.posts) ? p.posts : []);
     renderPeople(
       panelFollowers,

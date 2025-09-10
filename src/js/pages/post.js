@@ -211,7 +211,7 @@ function renderPost(post) {
   }
   if (createdText) meta.append(" · " + createdText);
 
-  // Media (if present)
+  // Media (if present) — show full image (no height cap)
   const media = post?.media || null;
   if (media && typeof media.url === "string" && media.url) {
     const img = document.createElement("img");
@@ -219,6 +219,12 @@ function renderPost(post) {
     img.alt = typeof media.alt === "string" ? media.alt : "";
     img.loading = "lazy";
     img.className = "post-media";
+    // Override global thumbnail cap for single-post page
+    img.style.maxHeight = "none";
+    img.style.height = "auto";
+    img.style.width = "100%";
+    img.style.objectFit = "contain";
+    img.style.display = "block";
     card.appendChild(img);
   }
 
@@ -505,6 +511,9 @@ async function onDelete(id, ownerName) {
  * @returns {Promise<void>}
  */
 async function main() {
+  // Mark page for CSS overrides (optional if you rely solely on inline styles above)
+  document.body.classList.add("post-page");
+
   const id = getId();
   if (!id) {
     if (display) display.textContent = "Missing post id.";

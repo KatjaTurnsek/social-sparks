@@ -1,0 +1,16 @@
+/* Index: latest posts grid */
+section:has(#latest-posts-heading) #display-container {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (max-width: 900px) {
+  section:has(#latest-posts-heading) #display-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+@media (max-width: 600px) {
+  section:has(#latest-posts-heading) #display-container {
+    grid-template-columns: 1fr !important;
+  }
+}

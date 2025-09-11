@@ -24,16 +24,18 @@ function byId(id) {
  * Safely set text content on an element.
  * @param {HTMLElement|null} el
  * @param {string} text
+ * @returns {void}
  */
 function setText(el, text) {
   if (el) el.textContent = text;
 }
 
 /**
- * Safely set an image’s src/alt or hide it if no URL.
+ * Set an image’s src/alt or hide it if no URL.
  * @param {HTMLImageElement|null} imgEl
  * @param {string} url
  * @param {string} [alt]
+ * @returns {void}
  */
 function setImg(imgEl, url, alt) {
   if (!imgEl) return;
@@ -62,13 +64,14 @@ function getProfileName() {
   }
 }
 
-/** Case-insensitive, trimmed equality. */
+/**
+ * Case-insensitive, trimmed equality.
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean}
+ */
 function sameUser(a, b) {
-  return (
-    typeof a === "string" &&
-    typeof b === "string" &&
-    a.trim().toLowerCase() === b.trim().toLowerCase()
-  );
+  return a?.trim().toLowerCase() === b?.trim().toLowerCase();
 }
 
 /* ----------------------------- API calls -------------------------------- */
@@ -77,6 +80,7 @@ function sameUser(a, b) {
  * Fetch a profile with posts/followers/following.
  * @param {string} name
  * @returns {Promise<Profile|null>}
+ * @throws {Error} When the request fails
  */
 async function fetchProfile(name) {
   const rawToken = getFromLocalStorage("accessToken") || "";
@@ -110,10 +114,13 @@ async function fetchProfile(name) {
  * Follow or unfollow a profile.
  * @param {string} name
  * @param {"follow"|"unfollow"} action
+ * @returns {Promise<any>}
+ * @throws {Error & {status?: number}} On failure (status attached)
  */
 async function follow(name, action) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
+
   /** @type {Record<string,string>} */
   const headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
   if (token) headers.Authorization = "Bearer " + token;
@@ -150,6 +157,7 @@ async function follow(name, action) {
  * Render posts into a panel as preview cards (feed-like).
  * @param {HTMLElement|null} panelEl
  * @param {Post[]|null|undefined} posts
+ * @returns {void}
  */
 function renderPosts(panelEl, posts) {
   if (!panelEl) return;
@@ -168,16 +176,13 @@ function renderPosts(panelEl, posts) {
     const card = document.createElement("article");
     card.className = "card post-card";
 
-    // Title
     const h = document.createElement("h4");
-    h.textContent = post && post.title ? post.title : "Untitled";
+    h.textContent = post?.title || "Untitled";
 
-    // Date (light meta)
     const meta = document.createElement("p");
     meta.className = "muted";
     meta.textContent = post?.created ? String(formatDate(post.created)) : "";
 
-    // Media preview (thumbnail height via CSS .post-card img)
     if (post?.media?.url) {
       const img = document.createElement("img");
       img.loading = "lazy";
@@ -186,12 +191,10 @@ function renderPosts(panelEl, posts) {
       card.appendChild(img);
     }
 
-    // Body (short preview)
     const bodyP = document.createElement("p");
     bodyP.textContent = post?.body || "";
     bodyP.className = "clamp-2";
 
-    // Actions
     const actions = document.createElement("div");
     actions.className = "form-actions";
     const view = document.createElement("a");
@@ -201,7 +204,6 @@ function renderPosts(panelEl, posts) {
     view.textContent = "View";
     actions.appendChild(view);
 
-    // Assemble
     card.appendChild(h);
     card.appendChild(meta);
     card.appendChild(bodyP);
@@ -214,6 +216,7 @@ function renderPosts(panelEl, posts) {
  * Render followers/following as a simple vertical list of mini-cards.
  * @param {HTMLElement|null} panelEl
  * @param {Array<{name?: string, bio?: string, avatar?: Media}>|null|undefined} list
+ * @returns {void}
  */
 function renderPeople(panelEl, list) {
   if (!panelEl) return;
@@ -277,7 +280,8 @@ function renderPeople(panelEl, list) {
 /* ------------------------------- main ------------------------------------ */
 
 /**
- * Page bootstrap: fetch profile and render header + panels + tabs.
+ * Bootstrap: fetch profile, wire follow/unfollow, render panels & tabs.
+ * @returns {Promise<void>}
  */
 async function main() {
   const name = getProfileName();
@@ -316,10 +320,8 @@ async function main() {
     setText(nameEl, p?.name || "Profile");
     setText(emailEl, p?.email || "");
     setText(bioEl, p?.bio || "");
-
     setImg(avatarEl, p?.avatar?.url ? p.avatar.url : "", p?.avatar?.alt || "");
     setImg(bannerEl, p?.banner?.url ? p.banner.url : "", p?.banner?.alt || "");
-
     setText(cntPosts, String(p?._count?.posts ?? 0));
     setText(cntFollowers, String(p?._count?.followers ?? 0));
     setText(cntFollowing, String(p?._count?.following ?? 0));
@@ -331,7 +333,7 @@ async function main() {
     const isMe =
       !!token && !!myName && p?.name ? sameUser(myName, p.name) : false;
 
-    // Edit link: only for owner — remove for everyone else
+    // Edit link: owner only
     if (btnEdit) {
       if (isMe) {
         btnEdit.hidden = false;
@@ -342,14 +344,13 @@ async function main() {
       }
     }
 
-    // ----- Follow / Unfollow (single toggle with local count + auth handling) -----
+    // ----- Follow / Unfollow (toggle + local count + 401/403 handling) -----
     const followersArr = Array.isArray(p?.followers) ? p.followers : [];
     let followerCount =
       (p && p._count && typeof p._count.followers === "number"
         ? p._count.followers
         : followersArr.length) || 0;
 
-    // Am I already following this profile?
     let iFollow =
       !!token &&
       !isMe &&
@@ -379,7 +380,6 @@ async function main() {
         return;
       }
 
-      // disable both during the request
       if (btnFollow) btnFollow.disabled = true;
       if (btnUnfollow) btnUnfollow.disabled = true;
       showLoader();
@@ -408,12 +408,11 @@ async function main() {
       }
     }
 
-    // Wire once & init
     if (btnFollow) btnFollow.onclick = () => handleFollowClick("follow");
     if (btnUnfollow) btnUnfollow.onclick = () => handleFollowClick("unfollow");
     updateFollowUI();
 
-    // Panels (posts shown as PREVIEWS like the feed)
+    // Panels
     renderPosts(panelPosts, Array.isArray(p?.posts) ? p.posts : []);
     renderPeople(
       panelFollowers,
@@ -431,7 +430,7 @@ async function main() {
       tabBtn.addEventListener("click", () => {
         tabs.forEach((b) => b.classList.remove("is-active"));
         tabBtn.classList.add("is-active");
-        const target = tabBtn.getAttribute("data-tab"); // posts|followers|following
+        const target = tabBtn.getAttribute("data-tab");
         panels.forEach((pnl) => pnl.classList.add("is-hidden"));
         const active = byId("panel-" + (target || ""));
         if (active) active.classList.remove("is-hidden");
@@ -442,10 +441,10 @@ async function main() {
     if (msgEl) {
       msgEl.style.display = "block";
       msgEl.className = "form-message alert error";
-      // @ts-ignore - runtime message access only
+      // @ts-ignore runtime message access only
       msgEl.textContent = (e && e.message) || "Could not load profile.";
     } else {
-      // @ts-ignore - runtime message access only
+      // @ts-ignore runtime message access only
       window.alert((e && e.message) || "Could not load profile.");
     }
   } finally {

@@ -7,7 +7,7 @@ const loginForm = document.getElementById("login-form");
 const AUTH_LOGIN_URL = BASE_API_URL + "/auth/login";
 
 /**
- * Show an inline message if #login-msg exists; otherwise fallback to alert for errors.
+ * Show an inline message if #login-msg exists; fall back to alert on errors.
  * @param {string} text
  * @param {"error"|"success"} [type="error"]
  * @returns {void}
@@ -16,7 +16,7 @@ function setMsg(text, type = "error") {
   const el = document.getElementById("login-msg");
   if (el) {
     el.style.display = "block";
-    el.className = "form-message alert"; // reset base
+    el.className = "form-message alert";
     el.classList.toggle("success", type === "success");
     el.classList.toggle("error", type !== "success");
     el.textContent = text;
@@ -26,8 +26,8 @@ function setMsg(text, type = "error") {
 }
 
 /**
- * Toggle a form's submitting state: disable controls and set aria-busy.
- * Also swaps the submit button label while submitting.
+ * Toggle submitting state: disables controls, sets aria-busy,
+ * and swaps the submit button text while submitting.
  * @param {HTMLFormElement} form
  * @param {boolean} submitting
  * @returns {void}
@@ -61,13 +61,10 @@ function setFormSubmitting(form, submitting) {
 }
 
 /**
- * Login with email/password against Noroff Auth.
- * - Sends JSON to POST /auth/login
- * - Normalizes server errors
- * - Returns parsed JSON on success
+ * POST /auth/login with credentials and persist accessToken (+name if present).
  * @param {{ email: string, password: string }} userDetails
- * @returns {Promise<any>} Resolves with API response JSON; throws on non-OK.
- * @throws {Error} When the server responds non-OK or token is missing.
+ * @returns {Promise<any>} API response JSON on success; throws on non-OK.
+ * @throws {Error} When the server returns non-OK or no access token is present.
  */
 async function loginUser(userDetails) {
   showLoader();
@@ -91,7 +88,7 @@ async function loginUser(userDetails) {
       throw new Error(errorFrom(json, "Login failed"));
     }
 
-    // Extract token (supports {data:{accessToken}} or {accessToken})
+    /** Extract token from {data:{accessToken}} or {accessToken} */
     let accessToken = "";
     if (json && typeof json === "object") {
       if (json.data && typeof json.data.accessToken === "string") {
@@ -104,7 +101,7 @@ async function loginUser(userDetails) {
 
     addToLocalStorage("accessToken", accessToken);
 
-    // Optional: save profile name for convenience (supports {data:{name}} or {name})
+    /** Optionally persist profile name */
     let name = "";
     if (json && typeof json === "object") {
       if (json.data && typeof json.data.name === "string") {
@@ -122,8 +119,9 @@ async function loginUser(userDetails) {
 }
 
 /**
- * Form submit handler: disables UI, calls login, redirects on success.
+ * Handle login form submit: validate, call login, redirect on success.
  * @param {SubmitEvent} event
+ * @returns {void}
  */
 function onLoginFormSubmit(event) {
   event.preventDefault();
@@ -132,7 +130,6 @@ function onLoginFormSubmit(event) {
   const email = String(fd.get("email") || "");
   const password = String(fd.get("password") || "");
 
-  // Simple client-side validation for clearer errors before hitting the API
   if (!email || email.indexOf("@") === -1) {
     setMsg("Please enter a valid email address.", "error");
     return;
@@ -155,9 +152,7 @@ function onLoginFormSubmit(event) {
     });
 }
 
-// --- Tiny guards / notices for the login page itself ------------------------
-
-// If we arrived here already authenticated, send straight to Feed.
+/** Redirect to feed if already authenticated. */
 (function guardAlreadyAuthenticated() {
   const token = localStorage.getItem("accessToken") || "";
   if (token) {
@@ -165,16 +160,14 @@ function onLoginFormSubmit(event) {
   }
 })();
 
-// If we were redirected from Register, show the success notice (?notice=...)
+/** Show notice from register page if present (?notice=...). */
 (function showRegisterNotice() {
   const params = new URLSearchParams(location.search);
   const notice = params.get("notice");
-  if (notice) {
-    setMsg(notice, "success");
-  }
+  if (notice) setMsg(notice, "success");
 })();
 
-// Wire up the form
+/** Wire up the form submit handler. */
 if (loginForm) {
   loginForm.addEventListener("submit", onLoginFormSubmit);
 }

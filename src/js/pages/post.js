@@ -12,11 +12,11 @@ import { normalizeBearer } from "../shared/auth.js";
 
 const display = document.getElementById("display-container");
 
-/** Emoji set to support for reactions */
+/** Emoji options for reactions. */
 const REACTIONS = ["👍", "❤️", "😂", "🎉", "😮", "😢"];
 
 /**
- * Build a link to a user's profile page (root-level profile.html).
+ * Build a link to a user's profile page.
  * @param {string} name
  * @returns {string}
  */
@@ -25,7 +25,7 @@ function profileUrl(name) {
 }
 
 /**
- * Get the `id` query parameter from the current page URL.
+ * Read the `id` query parameter.
  * @returns {string}
  */
 function getId() {
@@ -39,25 +39,28 @@ function getId() {
 }
 
 /**
- * Fetch a single post from the API, including author, comments, and reactions.
+ * Fetch a single post (with author, comments, reactions).
  * @param {string} id
  * @returns {Promise<Post|null>}
- * @throws {Error}
+ * @throws {Error} When the request fails
  */
 async function fetchPost(id) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
+
   const url =
     BASE_API_URL +
     "/social/posts/" +
     encodeURIComponent(id) +
     "?_author=true&_comments=true&_reactions=true";
 
+  /** @type {Record<string,string>} */
   const headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
   if (token) headers.Authorization = "Bearer " + token;
 
   const res = await fetch(url, { headers });
 
+  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -68,17 +71,16 @@ async function fetchPost(id) {
   if (!res.ok) {
     throw new Error(errorFrom(json, res.statusText || "Failed to load post"));
   }
-
-  return json && json.data ? json.data : null;
+  return (json && json.data) || null;
 }
 
 /**
- * Create a new comment on a post.
+ * Create a new comment.
  * @param {string|number} postId
  * @param {string} text
  * @param {number} [replyToId]
  * @returns {Promise<any>}
- * @throws {Error}
+ * @throws {Error} If not authenticated or request fails
  */
 async function createComment(postId, text, replyToId) {
   const rawToken = getFromLocalStorage("accessToken") || "";
@@ -104,6 +106,7 @@ async function createComment(postId, text, replyToId) {
 
   const res = await fetch(url, { method: "POST", headers, body });
 
+  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -116,11 +119,12 @@ async function createComment(postId, text, replyToId) {
 }
 
 /**
- * PUT (react) or DELETE (unreact) a symbol on the post.
+ * React to or unreact from a post.
  * @param {string|number} postId
  * @param {string} symbol
  * @param {boolean} on
  * @returns {Promise<void>}
+ * @throws {Error} If not authenticated or request fails
  */
 async function setReaction(postId, symbol, on) {
   const rawToken = getFromLocalStorage("accessToken") || "";
@@ -145,6 +149,7 @@ async function setReaction(postId, symbol, on) {
 
   const res = await fetch(url, req);
 
+  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -152,13 +157,11 @@ async function setReaction(postId, symbol, on) {
     json = null;
   }
 
-  if (!res.ok) {
-    throw new Error(errorFrom(json, "Failed to update reaction"));
-  }
+  if (!res.ok) throw new Error(errorFrom(json, "Failed to update reaction"));
 }
 
 /**
- * Build a quick map from the post's reactions array for easy lookup.
+ * Build a lookup map of reactions for a post.
  * @param {any} post
  * @returns {Record<string, {count:number, reacted?:boolean}>}
  */
@@ -178,8 +181,7 @@ function reactionMap(post) {
 }
 
 /**
- * Render a single post into the display container.
- * Includes title, author link, full-height media, body, reactions, (owner-only) actions, comments, and comment form.
+ * Render a single post view (title, meta, media, body, reactions, actions, comments).
  * @param {Post|null} post
  * @returns {void}
  */
@@ -190,11 +192,9 @@ function renderPost(post) {
   const card = document.createElement("article");
   card.className = "card";
 
-  // Title
   const h = document.createElement("h2");
   h.textContent = post?.title || "Untitled";
 
-  // Meta: by <a>Author</a> · date
   const meta = document.createElement("p");
   meta.className = "muted";
   const authorName = post?.author?.name || "Unknown";
@@ -211,7 +211,7 @@ function renderPost(post) {
   }
   if (createdText) meta.append(" · " + createdText);
 
-  // Media (if present) — show full image (no height cap)
+  // Full image on the single-post page (no height cap)
   const media = post?.media || null;
   if (media && typeof media.url === "string" && media.url) {
     const img = document.createElement("img");
@@ -219,7 +219,6 @@ function renderPost(post) {
     img.alt = typeof media.alt === "string" ? media.alt : "";
     img.loading = "lazy";
     img.className = "post-media";
-    // Full image on the single-post page
     img.style.maxHeight = "none";
     img.style.height = "auto";
     img.style.width = "100%";
@@ -228,11 +227,9 @@ function renderPost(post) {
     card.appendChild(img);
   }
 
-  // Body
   const body = document.createElement("p");
   body.textContent = post?.body || "";
 
-  // Reactions bar
   const rx = document.createElement("div");
   rx.className = "reactions";
   const rmap = reactionMap(post);
@@ -251,18 +248,16 @@ function renderPost(post) {
     btn.textContent = `${sym} ${count > 0 ? count : ""}`.trim();
 
     btn.addEventListener("click", async () => {
-      if (!hasToken) {
-        window.alert("Please log in to react.");
+      if (!hasToken || !pid) {
+        if (!hasToken) window.alert("Please log in to react.");
         return;
       }
-      if (!pid) return;
-
       btn.disabled = true;
       showLoader();
       try {
         await setReaction(pid, sym, !reacted);
         const updated = await fetchPost(pid);
-        renderPost(updated); // refresh counts + pressed state
+        renderPost(updated);
       } catch (e) {
         const msg =
           e && typeof e === "object" && e !== null && "message" in e
@@ -280,7 +275,7 @@ function renderPost(post) {
     rx.appendChild(btn);
   }
 
-  // OWNER-ONLY: Actions (Edit/Delete)
+  // Owner-only actions
   const currentUser = getFromLocalStorage("profileName") || "";
   const isOwner =
     !!currentUser && authorName !== "Unknown" && currentUser === authorName;
@@ -309,7 +304,7 @@ function renderPost(post) {
     actions.appendChild(delBtn);
   }
 
-  // Comments list
+  // Comments
   const commentsWrap = document.createElement("section");
   const cTitle = document.createElement("h3");
   cTitle.textContent = "Comments";
@@ -327,13 +322,9 @@ function renderPost(post) {
       const metaC = document.createElement("p");
       metaC.className = "muted";
 
-      // Prefer v2 author.name, fall back to owner string
       let cAuthor = null;
-      if (c?.author?.name) {
-        cAuthor = c.author.name;
-      } else if (typeof c?.owner === "string" && c.owner) {
-        cAuthor = c.owner;
-      }
+      if (c?.author?.name) cAuthor = c.author.name;
+      else if (typeof c?.owner === "string" && c.owner) cAuthor = c.owner;
 
       const cWhen = c?.created ? formatDate(c.created) : "";
 
@@ -362,7 +353,7 @@ function renderPost(post) {
     commentsWrap.appendChild(none);
   }
 
-  // Comment form (only when logged in)
+  // Comment form (only when logged in). Also supports Cmd/Ctrl+Enter.
   const commentBlock = document.createElement("section");
   commentBlock.style.marginTop = "1rem";
 
@@ -415,7 +406,7 @@ function renderPost(post) {
         await createComment(safeId, text);
         ta.value = "";
         const updated = await fetchPost(safeId);
-        renderPost(updated); // refresh comments
+        renderPost(updated);
       } catch (err) {
         const msg =
           err && typeof err === "object" && err !== null && "message" in err
@@ -430,7 +421,6 @@ function renderPost(post) {
       }
     });
 
-    // Ctrl/Cmd + Enter to submit
     form.addEventListener("keydown", (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         e.preventDefault();
@@ -446,7 +436,6 @@ function renderPost(post) {
     commentBlock.appendChild(needLogin);
   }
 
-  // Assemble
   card.appendChild(h);
   card.appendChild(meta);
   card.appendChild(body);
@@ -458,8 +447,7 @@ function renderPost(post) {
 }
 
 /**
- * Delete a post by ID, only if the current user is the owner.
- * Redirects back to the feed on success with a flash message.
+ * Delete a post if you are the owner. Shows confirm, then redirects with flash.
  * @param {string} id
  * @param {string} ownerName
  * @returns {Promise<void>}
@@ -480,6 +468,7 @@ async function onDelete(id, ownerName) {
   const token = normalizeBearer(rawToken);
   const url = BASE_API_URL + "/social/posts/" + encodeURIComponent(id);
 
+  /** @type {Record<string,string>} */
   const headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
   if (token) headers.Authorization = "Bearer " + token;
 
@@ -487,6 +476,7 @@ async function onDelete(id, ownerName) {
   try {
     const res = await fetch(url, { method: "DELETE", headers });
 
+    /** @type {any} */
     let json = null;
     try {
       json = await res.json();
@@ -495,7 +485,6 @@ async function onDelete(id, ownerName) {
     }
 
     if (res.status === 204) {
-      // use string, type, duration signature
       setFlash("Post deleted.", "success", 2500);
       window.location.href = "feed.html";
       return;
@@ -512,9 +501,6 @@ async function onDelete(id, ownerName) {
  * @returns {Promise<void>}
  */
 async function main() {
-  // Optional marker for CSS overrides
-  document.body.classList.add("post-page");
-
   const id = getId();
   if (!id) {
     if (display) display.textContent = "Missing post id.";

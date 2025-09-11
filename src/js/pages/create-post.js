@@ -7,12 +7,10 @@ import { normalizeBearer } from "../shared/auth.js";
 
 var CREATE_URL = BASE_API_URL + "/social/posts";
 
-/** get the form safely */
 var formEl = document.getElementById("create-form");
 /** @type {HTMLFormElement|null} */
 var form = formEl instanceof HTMLFormElement ? formEl : null;
 
-/** message region */
 var msgEl = document.getElementById("create-msg");
 /** @type {HTMLElement|null} */
 var msg = msgEl instanceof HTMLElement ? msgEl : null;
@@ -21,6 +19,7 @@ var msg = msgEl instanceof HTMLElement ? msgEl : null;
  * Show a message in the #create-msg region. Falls back to alert for errors.
  * @param {string} text
  * @param {boolean} [ok=false]
+ * @returns {void}
  */
 function setMsg(text, ok) {
   if (!msg) {
@@ -32,7 +31,11 @@ function setMsg(text, ok) {
   msg.textContent = text;
 }
 
-/** Validate that a string is an http(s) URL. */
+/**
+ * Validate that a string is an http(s) URL.
+ * @param {string} value
+ * @returns {boolean}
+ */
 function isValidHttpUrl(value) {
   try {
     var u = new URL(String(value));
@@ -101,7 +104,7 @@ function createEmojiPalette() {
 
   for (var i = 0; i < EMOJIS.length; i += 1) {
     (function (emo) {
-      var b = document.createElement("button"); // HTMLButtonElement by inference
+      var b = document.createElement("button");
       b.type = "button";
       b.className = "emoji-btn";
       b.textContent = emo;
@@ -137,6 +140,7 @@ function createEmojiPalette() {
  * Show palette near the trigger button and remember active field.
  * @param {HTMLButtonElement} btn
  * @param {HTMLInputElement|HTMLTextAreaElement} field
+ * @returns {void}
  */
 function showEmojiPalette(btn, field) {
   emojiActiveField = field;
@@ -156,6 +160,7 @@ function hideEmojiPalette() {
  * Insert text at the end of the field and refocus.
  * @param {HTMLInputElement|HTMLTextAreaElement} el
  * @param {string} text
+ * @returns {void}
  */
 function insertAtEnd(el, text) {
   try {
@@ -169,6 +174,7 @@ function insertAtEnd(el, text) {
 /**
  * Attach a small “Emoji” button below a field.
  * @param {HTMLInputElement|HTMLTextAreaElement|null} field
+ * @returns {void}
  */
 function attachEmojiButton(field) {
   if (!field || !field.parentElement) return;
@@ -196,12 +202,10 @@ function attachEmojiButton(field) {
 /* -------------------------------------------------------------------------- */
 
 if (form) {
-  // Title field
   var tNode = form.querySelector('[name="title"]');
   /** @type {HTMLInputElement|null} */
   var titleField = tNode instanceof HTMLInputElement ? tNode : null;
 
-  // Body field
   var bNode = form.querySelector('[name="body"]');
   /** @type {HTMLTextAreaElement|null} */
   var bodyField = bNode instanceof HTMLTextAreaElement ? bNode : null;
@@ -209,6 +213,12 @@ if (form) {
   attachEmojiButton(titleField);
   attachEmojiButton(bodyField);
 
+  /**
+   * Handle “Create Post” form submit: validates fields, POSTs to API,
+   * shows status, and redirects to the new post (or feed) on success.
+   * @param {SubmitEvent} e
+   * @returns {Promise<void>}
+   */
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
@@ -233,7 +243,6 @@ if (form) {
       return;
     }
 
-    // Validate media URL if provided
     if (mediaUrl && !isValidHttpUrl(mediaUrl)) {
       setMsg("Image URL must start with http(s) and be publicly accessible.");
       return;

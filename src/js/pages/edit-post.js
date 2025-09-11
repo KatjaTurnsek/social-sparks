@@ -45,7 +45,7 @@ function getId() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Emoji picker (same pattern as create-post.js; visuals handled by CSS)      */
+/* Emoji picker (visuals handled by CSS)                                       */
 /* -------------------------------------------------------------------------- */
 
 /** @type {string[]} */
@@ -119,14 +119,12 @@ function createEmojiPalette() {
   pal.appendChild(grid);
   document.body.appendChild(pal);
 
-  // Close when clicking outside
   document.addEventListener("click", function (e) {
     if (!pal || pal.style.display === "none") return;
     var target = e.target instanceof Node ? e.target : null;
     if (!target || !pal.contains(target)) hideEmojiPalette();
   });
 
-  // ESC to close
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") hideEmojiPalette();
   });
@@ -201,9 +199,8 @@ function attachEmojiButton(field) {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Fetch post data and populate the form fields.
- * Also wires emoji buttons for title & body.
- * Guards against editing a post you don't own.
+ * Fetch post data and populate the form fields (title, body, media).
+ * Confirms ownership and redirects back to the post if user is not the owner.
  * @returns {Promise<void>}
  */
 async function load() {
@@ -220,7 +217,6 @@ async function load() {
   var headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
   if (token) headers.Authorization = "Bearer " + token;
 
-  // Include author so we can confirm ownership
   var url =
     BASE_API_URL + "/social/posts/" + encodeURIComponent(id) + "?_author=true";
 
@@ -260,7 +256,7 @@ async function load() {
       return;
     }
 
-    // Title field
+    // Title
     var tNode = form.querySelector('[name="title"]');
     /** @type {HTMLInputElement|HTMLTextAreaElement|null} */
     var titleField =
@@ -269,7 +265,7 @@ async function load() {
         : null;
     if (titleField) titleField.value = p && p.title ? p.title : "";
 
-    // Body field
+    // Body
     var bNode = form.querySelector('[name="body"]');
     /** @type {HTMLTextAreaElement|HTMLInputElement|null} */
     var bodyField =
@@ -278,7 +274,7 @@ async function load() {
         : null;
     if (bodyField) bodyField.value = p && p.body ? p.body : "";
 
-    // Media fields
+    // Media
     var muNode = form.querySelector('[name="media-url"]');
     var maNode = form.querySelector('[name="media-alt"]');
     /** @type {HTMLInputElement|null} */
@@ -296,7 +292,6 @@ async function load() {
         media && typeof media.alt === "string" ? media.alt : "";
     }
 
-    // Emoji buttons (only once)
     attachEmojiButton(titleField);
     attachEmojiButton(bodyField);
   } catch (e) {
@@ -315,6 +310,12 @@ async function load() {
 /* -------------------------------------------------------------------------- */
 
 if (form) {
+  /**
+   * Handle “Edit Post” submit: validates, PUTs to API, shows status,
+   * and redirects to the updated post on success.
+   * @param {SubmitEvent} e
+   * @returns {Promise<void>}
+   */
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
 

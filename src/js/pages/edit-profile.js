@@ -7,15 +7,29 @@ import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
 import { normalizeBearer } from "../shared/auth.js";
 
-/** Return element by id. */
+/**
+ * Return element by id.
+ * @param {string} id
+ * @returns {HTMLElement|null}
+ */
 function byId(id) {
   return document.getElementById(id);
 }
-/** Set textContent safely. */
+
+/**
+ * Set textContent safely.
+ * @param {HTMLElement|null} el
+ * @param {string} text
+ * @returns {void}
+ */
 function setText(el, text) {
   if (el) el.textContent = text;
 }
-/** Current logged-in profile name (owner). */
+
+/**
+ * Current logged-in profile name (owner).
+ * @returns {string}
+ */
 function getMyName() {
   return getFromLocalStorage("profileName") || "";
 }
@@ -38,6 +52,7 @@ function authGuard() {
  * Fetch the current profile (no posts needed here).
  * @param {string} name
  * @returns {Promise<Profile|null>}
+ * @throws {Error}
  */
 async function fetchProfile(name) {
   const rawToken = getFromLocalStorage("accessToken") || "";
@@ -49,6 +64,7 @@ async function fetchProfile(name) {
   if (token) headers.Authorization = "Bearer " + token;
 
   const res = await fetch(url, { headers });
+
   /** @type {any} */
   let json = null;
   try {
@@ -67,6 +83,7 @@ async function fetchProfile(name) {
  * @param {string} name
  * @param {ProfileUpdate} payload
  * @returns {Promise<Profile|any>}
+ * @throws {Error}
  */
 async function updateProfile(name, payload) {
   const rawToken = getFromLocalStorage("accessToken") || "";
@@ -116,6 +133,7 @@ function wirePreviews() {
   /**
    * @param {HTMLImageElement|null} img
    * @param {string} url
+   * @returns {void}
    */
   function setPreview(img, url) {
     if (!img) return;
@@ -229,8 +247,7 @@ function setMsg(text, ok) {
 }
 
 /**
- * Page bootstrap.
- * Loads current values, wires previews, handles submit.
+ * Page bootstrap: load current values, wire previews, handle submit.
  * @returns {Promise<void>}
  */
 async function main() {
@@ -250,6 +267,7 @@ async function main() {
     fillForm(profile);
     wirePreviews();
   } catch (e) {
+    // @ts-ignore runtime-only
     setMsg((e && e.message) || "Could not load your profile.", false);
   } finally {
     hideLoader();
@@ -299,6 +317,7 @@ async function main() {
           "profile.html?name=" + encodeURIComponent(myName);
       }, 600);
     } catch (e) {
+      // @ts-ignore runtime-only
       setMsg((e && e.message) || "Failed to save profile.", false);
     } finally {
       hideLoader();

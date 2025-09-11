@@ -8,28 +8,27 @@ const registerForm = document.querySelector("#register-form");
 const AUTH_REGISTER_URL = BASE_API_URL + "/auth/register";
 
 /**
- * Show an inline message if #register-msg exists; otherwise fallback to alert for errors.
+ * Show an inline message if #register-msg exists; fallback to alert for errors.
  * @param {string} text
  * @param {"error"|"success"} [type]
+ * @returns {void}
  */
 function setMsg(text, type) {
-  var kind = type === "success" ? "success" : "error";
-  var el = document.getElementById("register-msg");
+  const kind = type === "success" ? "success" : "error";
+  const el = document.getElementById("register-msg");
   if (el) {
     el.style.display = "block";
-    el.className = "form-message alert"; // reset classes
+    el.className = "form-message alert";
     el.classList.add(kind);
     el.textContent = text;
     return;
   }
-  if (kind === "error") {
-    alert(text);
-  }
+  if (kind === "error") alert(text);
 }
 
 /**
- * Toggle a form's submitting state: disable controls and mark aria-busy.
- * Also swaps the submit button label while submitting.
+ * Toggle submitting state: disables controls, sets aria-busy,
+ * and swaps the submit button label while submitting.
  * @param {HTMLFormElement} form
  * @param {boolean} submitting
  * @returns {void}
@@ -66,12 +65,11 @@ function setFormSubmitting(form, submitting) {
 }
 
 /**
- * Basic client-side validation for register form.
- * Adjust rules to match your grading rubric (min lengths, patterns, etc.)
+ * Basic client-side validation for the register form.
  * @param {string} email
  * @param {string} password
  * @param {string} name
- * @returns {string} Empty string when valid; otherwise a user-friendly error.
+ * @returns {string} Empty string if valid; otherwise a user-friendly error.
  */
 function validateRegisterForm(email, password, name) {
   if (!email || email.indexOf("@") === -1) {
@@ -87,10 +85,10 @@ function validateRegisterForm(email, password, name) {
 }
 
 /**
- * Attempt to register a new user.
+ * POST /auth/register with user details; returns JSON or throws on non-OK.
  * @param {{ email: string, password: string, name?: string }} userDetails
- * @returns {Promise<any>} Resolves with API response JSON; throws on non-OK.
- * @throws {Error} When the server responds non-OK. Message is normalized.
+ * @returns {Promise<any>}
+ * @throws {Error} When the server responds non-OK (message normalized).
  */
 async function registerUser(userDetails) {
   showLoader();

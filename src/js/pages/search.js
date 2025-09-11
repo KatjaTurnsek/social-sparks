@@ -1,3 +1,6 @@
+// @ts-check
+/** @typedef {import("../types.js").Post} Post */
+
 import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
@@ -7,6 +10,10 @@ import { normalizeBearer } from "../shared/auth.js";
 
 var display = document.getElementById("display-container");
 
+/**
+ * Read the current "q" query parameter.
+ * @returns {string}
+ */
 function getQuery() {
   try {
     var sp = new URLSearchParams(window.location.search);
@@ -17,6 +24,13 @@ function getQuery() {
   }
 }
 
+/**
+ * Search posts via API using the "q" parameter.
+ * Attaches API key and Authorization (if available).
+ * @param {string} q
+ * @returns {Promise<Post[]>}
+ * @throws {Error} When the API request fails or returns non-OK.
+ */
 async function searchPosts(q) {
   var rawToken = getFromLocalStorage("accessToken") || "";
   var token = normalizeBearer(rawToken);
@@ -39,9 +53,14 @@ async function searchPosts(q) {
   }
 
   var data = json && json.data ? json.data : json;
-  return Array.isArray(data) ? data : [];
+  return Array.isArray(data) ? /** @type {Post[]} */ (data) : [];
 }
 
+/**
+ * Render a minimal empty state message.
+ * @param {string} message
+ * @returns {void}
+ */
 function renderEmpty(message) {
   if (!display) return;
   clear(display);
@@ -52,6 +71,12 @@ function renderEmpty(message) {
   display.appendChild(card);
 }
 
+/**
+ * Render search results list with header/count.
+ * @param {string} q
+ * @param {Post[]} results
+ * @returns {void}
+ */
 function renderResults(q, results) {
   if (!display) return;
   clear(display);
@@ -88,14 +113,13 @@ function renderResults(q, results) {
     meta.textContent =
       "by " + authorName + (createdText ? " · " + createdText : "");
 
-    // NEW: media thumbnail if present
     var media = post && post.media ? post.media : null;
     if (media && typeof media.url === "string" && media.url) {
       var img = document.createElement("img");
       img.src = media.url;
       img.alt = media && typeof media.alt === "string" ? media.alt : "";
       img.loading = "lazy";
-      img.className = "post-thumb"; // styled in CSS
+      img.className = "post-thumb";
       item.appendChild(img);
     }
 
@@ -121,6 +145,10 @@ function renderResults(q, results) {
   }
 }
 
+/**
+ * Bootstrap the search page: parse query, fetch, render.
+ * @returns {Promise<void>}
+ */
 async function main() {
   var q = getQuery();
 

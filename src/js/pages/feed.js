@@ -12,7 +12,11 @@ import { normalizeBearer } from "../shared/auth.js";
 
 var display = document.getElementById("display-container");
 
-/** Build a link to a user's profile page (root-level profile.html) */
+/**
+ * Build a link to a user's profile page.
+ * @param {string} name
+ * @returns {string}
+ */
 function profileUrl(name) {
   return "profile.html?name=" + encodeURIComponent(name);
 }
@@ -63,7 +67,6 @@ async function fetchAllPosts() {
   var rawToken = getFromLocalStorage("accessToken") || "";
   var token = normalizeBearer(rawToken);
 
-  // includes authors so we can render username links
   var url = BASE_API_URL + "/social/posts?_author=true&_comments=false";
 
   /** @type {Record<string,string>} */
@@ -96,7 +99,6 @@ async function fetchAllPosts() {
     return [];
   }
 
-  // Sort newest → oldest by created
   data.sort(function (a, b) {
     var ta = a && a.created ? new Date(a.created).getTime() : 0;
     var tb = b && b.created ? new Date(b.created).getTime() : 0;
@@ -143,7 +145,6 @@ function renderListPage(allPosts, page, pageSize) {
   var endIndex = Math.min(startIndex + pageSize, total);
   var slice = allPosts.slice(startIndex, endIndex);
 
-  // Header with count/range
   var header = createEl("div", "", "");
   var h = createEl("h2", "", "Feed");
 
@@ -155,7 +156,6 @@ function renderListPage(allPosts, page, pageSize) {
   header.appendChild(sub);
   display.appendChild(header);
 
-  // List
   for (var i = 0; i < slice.length; i += 1) {
     var post = slice[i] || {};
 
@@ -164,7 +164,6 @@ function renderListPage(allPosts, page, pageSize) {
     var title = createEl("h3", "", "");
     title.textContent = post && post.title ? post.title : "Untitled";
 
-    // Meta: by <a>Author</a> · date
     var meta = createEl("p", "muted", "");
     var authorName =
       post && post.author && post.author.name ? post.author.name : "Unknown";
@@ -181,7 +180,6 @@ function renderListPage(allPosts, page, pageSize) {
     }
     if (createdText) meta.append(" · " + createdText);
 
-    // Media (if present)
     var media = post && post.media ? post.media : null;
     if (media && typeof media.url === "string" && media.url) {
       var img = document.createElement("img");
@@ -213,7 +211,6 @@ function renderListPage(allPosts, page, pageSize) {
     display.appendChild(item);
   }
 
-  // Pagination controls
   var pager = createEl("div", "form-actions", "");
   pager.style.justifyContent = "space-between";
 
@@ -268,12 +265,14 @@ function buildPageLink(page, pageSize) {
   }
 }
 
-/** Boot the feed page. */
+/**
+ * Boot the feed page: fetch, render, and wire pagination.
+ * @returns {Promise<void>}
+ */
 async function main() {
   var page = getIntParam("page", 1);
   var pageSize = getIntParam("pageSize", 10);
 
-  // Optional: skeletons under the overlay
   if (display) {
     clear(display);
     var skeletonWrap = createEl("div", "grid", "");

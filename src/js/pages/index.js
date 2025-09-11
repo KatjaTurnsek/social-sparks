@@ -107,7 +107,29 @@ function renderPostsError(message) {
 }
 
 /**
+ * Return only the first sentence of a block of text.
+ * Falls back to the first 140 characters if no sentence terminator is found.
+ * @param {string} text
+ * @returns {string}
+ */
+function firstSentence(text) {
+  const s = String(text || "").trim();
+  if (!s) return "";
+  for (let i = 0; i < s.length; i += 1) {
+    const ch = s[i];
+    if (ch === "." || ch === "!" || ch === "?") {
+      return s.slice(0, i + 1).trim();
+    }
+    if (ch === "\n") {
+      return s.slice(0, i).trim();
+    }
+  }
+  return s.length > 140 ? s.slice(0, 140).trim() + "…" : s;
+}
+
+/**
  * Render up to four latest posts in a 4-column grid.
+ * Only the first sentence of the body is shown.
  * @param {Post[]} posts
  * @returns {void}
  */
@@ -169,7 +191,7 @@ function renderPosts(posts) {
     }
 
     const body = document.createElement("p");
-    body.textContent = post && post.body ? post.body : "";
+    body.textContent = firstSentence(post && post.body ? post.body : "");
 
     const actions = document.createElement("div");
     actions.className = "form-actions";
@@ -268,7 +290,7 @@ function renderProfilesError(message) {
 }
 
 /**
- * Render a responsive grid of compact profile cards.
+ * Render a responsive grid of compact profile cards (no bio).
  * @param {Profile[]} profiles
  * @returns {void}
  */
@@ -317,11 +339,6 @@ function renderProfilesList(profiles) {
     nm.style.wordBreak = "break-word";
     nm.textContent = person && person.name ? person.name : "Unknown";
 
-    const bi = document.createElement("p");
-    bi.className = "muted";
-    bi.style.margin = "0";
-    bi.textContent = (person && person.bio) || "";
-
     const actions = document.createElement("div");
     actions.className = "form-actions";
     const btn = document.createElement("a");
@@ -331,7 +348,6 @@ function renderProfilesList(profiles) {
     actions.appendChild(btn);
 
     info.appendChild(nm);
-    info.appendChild(bi);
 
     row.appendChild(avatar);
     row.appendChild(info);

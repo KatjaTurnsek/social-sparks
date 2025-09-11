@@ -15,6 +15,156 @@ const display = document.getElementById("display-container");
 /** Emoji options for reactions. */
 const REACTIONS = ["👍", "❤️", "😂", "🎉", "😮", "😢"];
 
+/* -------------------------------------------------------------------------- */
+/* Emoji picker for the comment textarea                                      */
+/* -------------------------------------------------------------------------- */
+
+/** Compact emoji set for the comment picker. */
+const COMMENT_EMOJIS = [
+  "😀",
+  "😁",
+  "😂",
+  "🤣",
+  "😊",
+  "😍",
+  "😎",
+  "🤩",
+  "🥳",
+  "🙌",
+  "👍",
+  "👏",
+  "🔥",
+  "💯",
+  "✨",
+  "⚡️",
+  "💡",
+  "🎉",
+  "🫶",
+  "🙏",
+  "😅",
+  "😉",
+  "🤔",
+  "🤗",
+  "😴",
+  "😭",
+  "😤",
+  "🙈",
+  "🤝",
+  "💬",
+];
+
+/** @type {HTMLElement|null} */
+let emojiPalette = null;
+/** @type {(HTMLInputElement|HTMLTextAreaElement|null)} */
+let emojiActiveField = null;
+
+/**
+ * Create (once) and return the emoji palette element.
+ * @returns {HTMLElement}
+ */
+function createEmojiPalette() {
+  if (emojiPalette) return emojiPalette;
+
+  const pal = document.createElement("div");
+  pal.className = "emoji-palette";
+  pal.style.display = "none";
+
+  const grid = document.createElement("div");
+  grid.className = "emoji-grid";
+
+  COMMENT_EMOJIS.forEach((emo) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "emoji-btn";
+    b.textContent = emo;
+    b.setAttribute("aria-label", "Insert emoji " + emo);
+    b.addEventListener("click", () => {
+      if (emojiActiveField) insertAtEnd(emojiActiveField, emo);
+      hideEmojiPalette();
+    });
+    grid.appendChild(b);
+  });
+
+  pal.appendChild(grid);
+  document.body.appendChild(pal);
+
+  document.addEventListener("click", (e) => {
+    if (!pal || pal.style.display === "none") return;
+    const t = e.target instanceof Node ? e.target : null;
+    if (!t || !pal.contains(t)) hideEmojiPalette();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") hideEmojiPalette();
+  });
+
+  emojiPalette = pal;
+  return pal;
+}
+
+/**
+ * Show the palette next to a trigger and remember the active field.
+ * @param {HTMLButtonElement} btn
+ * @param {HTMLInputElement|HTMLTextAreaElement} field
+ */
+function showEmojiPalette(btn, field) {
+  emojiActiveField = field;
+  const pal = createEmojiPalette();
+  const rect = btn.getBoundingClientRect();
+  pal.style.left = Math.round(rect.left) + "px";
+  pal.style.top = Math.round(rect.bottom + 6) + "px";
+  pal.style.display = "block";
+}
+
+/** Hide the palette. */
+function hideEmojiPalette() {
+  if (emojiPalette) emojiPalette.style.display = "none";
+}
+
+/**
+ * Append text at end of a field and refocus.
+ * @param {HTMLInputElement|HTMLTextAreaElement} el
+ * @param {string} text
+ */
+function insertAtEnd(el, text) {
+  try {
+    el.value = String(el.value || "") + String(text || "");
+    el.focus();
+  } catch (e) {
+    // ignore
+    void e;
+  }
+}
+
+/**
+ * Attach a small “Emoji” button beneath a field.
+ * @param {HTMLInputElement|HTMLTextAreaElement|null} field
+ */
+function attachEmojiButton(field) {
+  if (!field || !field.parentElement) return;
+
+  const wrap = document.createElement("div");
+  wrap.className = "form-actions";
+  wrap.style.marginTop = "0.5rem";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "btn btn-outline";
+  btn.textContent = "🙂 Emoji";
+  btn.setAttribute("aria-haspopup", "true");
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    showEmojiPalette(btn, field);
+  });
+
+  wrap.appendChild(btn);
+  field.parentElement.appendChild(wrap);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Core post page logic                                                       */
+/* -------------------------------------------------------------------------- */
+
 /**
  * Build a link to a user's profile page.
  * @param {string} name
@@ -391,6 +541,9 @@ function renderPost(post) {
     fg.appendChild(ta);
     form.appendChild(fg);
     form.appendChild(actionsForm);
+
+    /* Add emoji picker button for the comment textarea */
+    attachEmojiButton(ta);
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();

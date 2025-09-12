@@ -59,13 +59,13 @@ async function fetchProfile(name) {
   const token = normalizeBearer(rawToken);
   const url = BASE_API_URL + "/social/profiles/" + encodeURIComponent(name);
 
-  /** @type {Record<string,string>} */
-  const headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
-  if (token) headers.Authorization = "Bearer " + token;
+  const headers = {
+    "X-Noroff-API-Key": NOROFF_API_KEY,
+    ...(token && { Authorization: "Bearer " + token }),
+  };
 
   const res = await fetch(url, { headers });
 
-  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -89,12 +89,11 @@ async function updateProfile(name, payload) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
 
-  /** @type {Record<string,string>} */
   const headers = {
     "Content-Type": "application/json",
     "X-Noroff-API-Key": NOROFF_API_KEY,
+    ...(token && { Authorization: "Bearer " + token }),
   };
-  if (token) headers.Authorization = "Bearer " + token;
 
   const url = BASE_API_URL + "/social/profiles/" + encodeURIComponent(name);
 
@@ -104,7 +103,6 @@ async function updateProfile(name, payload) {
     body: JSON.stringify(payload),
   });
 
-  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -211,7 +209,7 @@ function fillForm(p) {
  */
 function setSubmitting(form, submitting) {
   if (!form) return;
-  const fields = form.querySelectorAll("input, textarea, button, select");
+  const fields = [...form.querySelectorAll("input, textarea, button, select")];
   fields.forEach((el) => {
     /** @type {HTMLInputElement|HTMLTextAreaElement|HTMLButtonElement|HTMLSelectElement} */ (
       el
@@ -286,22 +284,17 @@ async function main() {
     const bannerAlt = String(fd.get("banner-alt") || "").trim();
 
     /** @type {ProfileUpdate} */
-    const payload = {};
-    if (bio) payload.bio = bio;
-    if (avatarUrl) {
-      payload.avatar = { url: avatarUrl };
-      if (avatarAlt) payload.avatar.alt = avatarAlt;
-    }
-    if (bannerUrl) {
-      payload.banner = { url: bannerUrl };
-      if (bannerAlt) payload.banner.alt = bannerAlt;
-    }
+    const payload = {
+      ...(bio && { bio }),
+      ...(avatarUrl && {
+        avatar: { url: avatarUrl, ...(avatarAlt && { alt: avatarAlt }) },
+      }),
+      ...(bannerUrl && {
+        banner: { url: bannerUrl, ...(bannerAlt && { alt: bannerAlt }) },
+      }),
+    };
 
-    if (
-      !("bio" in payload) &&
-      !("avatar" in payload) &&
-      !("banner" in payload)
-    ) {
+    if (Object.keys(payload).length === 0) {
       setMsg("Please change at least one field before saving.", false);
       return;
     }

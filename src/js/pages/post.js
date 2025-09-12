@@ -12,14 +12,8 @@ import { normalizeBearer } from "../shared/auth.js";
 
 const display = document.getElementById("display-container");
 
-/** Emoji options for reactions. */
 const REACTIONS = ["👍", "❤️", "😂", "🎉", "😮", "😢"];
 
-/* -------------------------------------------------------------------------- */
-/* Emoji picker for the comment textarea                                      */
-/* -------------------------------------------------------------------------- */
-
-/** Compact emoji set for the comment picker. */
 const COMMENT_EMOJIS = [
   "😀",
   "😁",
@@ -58,10 +52,6 @@ let emojiPalette = null;
 /** @type {(HTMLInputElement|HTMLTextAreaElement|null)} */
 let emojiActiveField = null;
 
-/**
- * Create (once) and return the emoji palette element.
- * @returns {HTMLElement}
- */
 function createEmojiPalette() {
   if (emojiPalette) return emojiPalette;
 
@@ -72,7 +62,7 @@ function createEmojiPalette() {
   const grid = document.createElement("div");
   grid.className = "emoji-grid";
 
-  COMMENT_EMOJIS.forEach((emo) => {
+  const buttons = COMMENT_EMOJIS.map((emo) => {
     const b = document.createElement("button");
     b.type = "button";
     b.className = "emoji-btn";
@@ -82,9 +72,10 @@ function createEmojiPalette() {
       if (emojiActiveField) insertAtEnd(emojiActiveField, emo);
       hideEmojiPalette();
     });
-    grid.appendChild(b);
+    return b;
   });
 
+  grid.append(...buttons);
   pal.appendChild(grid);
   document.body.appendChild(pal);
 
@@ -102,11 +93,6 @@ function createEmojiPalette() {
   return pal;
 }
 
-/**
- * Show the palette next to a trigger and remember the active field.
- * @param {HTMLButtonElement} btn
- * @param {HTMLInputElement|HTMLTextAreaElement} field
- */
 function showEmojiPalette(btn, field) {
   emojiActiveField = field;
   const pal = createEmojiPalette();
@@ -116,30 +102,19 @@ function showEmojiPalette(btn, field) {
   pal.style.display = "block";
 }
 
-/** Hide the palette. */
 function hideEmojiPalette() {
   if (emojiPalette) emojiPalette.style.display = "none";
 }
 
-/**
- * Append text at end of a field and refocus.
- * @param {HTMLInputElement|HTMLTextAreaElement} el
- * @param {string} text
- */
 function insertAtEnd(el, text) {
   try {
     el.value = String(el.value || "") + String(text || "");
     el.focus();
   } catch (e) {
-    // ignore
     void e;
   }
 }
 
-/**
- * Attach a small “Emoji” button beneath a field.
- * @param {HTMLInputElement|HTMLTextAreaElement|null} field
- */
 function attachEmojiButton(field) {
   if (!field || !field.parentElement) return;
 
@@ -161,23 +136,10 @@ function attachEmojiButton(field) {
   field.parentElement.appendChild(wrap);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Core post page logic                                                       */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Build a link to a user's profile page.
- * @param {string} name
- * @returns {string}
- */
 function profileUrl(name) {
   return `profile.html?name=${encodeURIComponent(name)}`;
 }
 
-/**
- * Read the `id` query parameter.
- * @returns {string}
- */
 function getId() {
   try {
     const sp = new URLSearchParams(window.location.search);
@@ -188,12 +150,6 @@ function getId() {
   }
 }
 
-/**
- * Fetch a single post (with author, comments, reactions).
- * @param {string} id
- * @returns {Promise<Post|null>}
- * @throws {Error} When the request fails
- */
 async function fetchPost(id) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
@@ -204,13 +160,13 @@ async function fetchPost(id) {
     encodeURIComponent(id) +
     "?_author=true&_comments=true&_reactions=true";
 
-  /** @type {Record<string,string>} */
-  const headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
-  if (token) headers.Authorization = "Bearer " + token;
+  const headers = {
+    "X-Noroff-API-Key": NOROFF_API_KEY,
+    ...(token && { Authorization: "Bearer " + token }),
+  };
 
   const res = await fetch(url, { headers });
 
-  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -224,14 +180,6 @@ async function fetchPost(id) {
   return (json && json.data) || null;
 }
 
-/**
- * Create a new comment.
- * @param {string|number} postId
- * @param {string} text
- * @param {number} [replyToId]
- * @returns {Promise<any>}
- * @throws {Error} If not authenticated or request fails
- */
 async function createComment(postId, text, replyToId) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
@@ -243,20 +191,23 @@ async function createComment(postId, text, replyToId) {
     encodeURIComponent(String(postId)) +
     "/comment";
 
-  /** @type {Record<string,string>} */
   const headers = {
     "X-Noroff-API-Key": NOROFF_API_KEY,
     "Content-Type": "application/json",
     Authorization: "Bearer " + token,
   };
 
-  const body = JSON.stringify(
-    typeof replyToId === "number" ? { body: text, replyToId } : { body: text }
-  );
+  const bodyObj = {
+    body: text,
+    ...(typeof replyToId === "number" && { replyToId }),
+  };
 
-  const res = await fetch(url, { method: "POST", headers, body });
+  const res = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(bodyObj),
+  });
 
-  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -268,14 +219,6 @@ async function createComment(postId, text, replyToId) {
   return (json && json.data) || json || null;
 }
 
-/**
- * React to or unreact from a post.
- * @param {string|number} postId
- * @param {string} symbol
- * @param {boolean} on
- * @returns {Promise<void>}
- * @throws {Error} If not authenticated or request fails
- */
 async function setReaction(postId, symbol, on) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
@@ -288,18 +231,16 @@ async function setReaction(postId, symbol, on) {
     "/react/" +
     encodeURIComponent(symbol);
 
-  /** @type {RequestInit} */
   const req = {
     method: on ? "PUT" : "DELETE",
     headers: {
       "X-Noroff-API-Key": NOROFF_API_KEY,
-      Authorization: "Bearer " + token,
+      ...(token && { Authorization: "Bearer " + token }),
     },
   };
 
   const res = await fetch(url, req);
 
-  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -310,31 +251,22 @@ async function setReaction(postId, symbol, on) {
   if (!res.ok) throw new Error(errorFrom(json, "Failed to update reaction"));
 }
 
-/**
- * Build a lookup map of reactions for a post.
- * @param {any} post
- * @returns {Record<string, {count:number, reacted?:boolean}>}
- */
 function reactionMap(post) {
-  /** @type {Record<string, {count:number, reacted?:boolean}>} */
-  const map = {};
   const arr = Array.isArray(post?.reactions) ? post.reactions : [];
-  for (const r of arr) {
+  return arr.reduce((acc, r) => {
     const sym = typeof r?.symbol === "string" ? r.symbol : "";
-    if (!sym) continue;
-    map[sym] = {
-      count: typeof r?.count === "number" ? r.count : 0,
-      reacted: !!r?.reacted,
+    if (!sym) return acc;
+    const next = {
+      ...acc,
+      [sym]: {
+        count: typeof r?.count === "number" ? r.count : 0,
+        reacted: !!r?.reacted,
+      },
     };
-  }
-  return map;
+    return next;
+  }, /** @type {Record<string, {count:number, reacted?:boolean}>} */ ({}));
 }
 
-/**
- * Render a single post view (title, meta, media, body, reactions, actions, comments).
- * @param {Post|null} post
- * @returns {void}
- */
 function renderPost(post) {
   if (!display) return;
   display.innerHTML = "";
@@ -361,7 +293,6 @@ function renderPost(post) {
   }
   if (createdText) meta.append(" · " + createdText);
 
-  // Full image on the single-post page (no height cap)
   const media = post?.media || null;
   if (media && typeof media.url === "string" && media.url) {
     const img = document.createElement("img");
@@ -425,7 +356,6 @@ function renderPost(post) {
     rx.appendChild(btn);
   }
 
-  // Owner-only actions
   const currentUser = getFromLocalStorage("profileName") || "";
   const isOwner =
     !!currentUser && authorName !== "Unknown" && currentUser === authorName;
@@ -454,17 +384,14 @@ function renderPost(post) {
     actions.appendChild(delBtn);
   }
 
-  // Comments
   const commentsWrap = document.createElement("section");
   const cTitle = document.createElement("h3");
   cTitle.textContent = "Comments";
   commentsWrap.appendChild(cTitle);
 
-  const list = Array.isArray(post?.comments) ? post.comments : [];
+  const list = Array.isArray(post?.comments) ? [...post.comments] : [];
   if (list.length > 0) {
-    for (let i = 0; i < list.length; i += 1) {
-      const c = list[i] || {};
-
+    for (const c of list) {
       const cardC = document.createElement("article");
       cardC.className = "card";
       cardC.style.padding = "1rem";
@@ -503,7 +430,6 @@ function renderPost(post) {
     commentsWrap.appendChild(none);
   }
 
-  // Comment form (only when logged in). Also supports Cmd/Ctrl+Enter.
   const commentBlock = document.createElement("section");
   commentBlock.style.marginTop = "1rem";
 
@@ -542,7 +468,6 @@ function renderPost(post) {
     form.appendChild(fg);
     form.appendChild(actionsForm);
 
-    /* Add emoji picker button for the comment textarea */
     attachEmojiButton(ta);
 
     form.addEventListener("submit", async (e) => {
@@ -599,12 +524,6 @@ function renderPost(post) {
   display.appendChild(card);
 }
 
-/**
- * Delete a post if you are the owner. Shows confirm, then redirects with flash.
- * @param {string} id
- * @param {string} ownerName
- * @returns {Promise<void>}
- */
 async function onDelete(id, ownerName) {
   if (!id) return;
 
@@ -621,15 +540,15 @@ async function onDelete(id, ownerName) {
   const token = normalizeBearer(rawToken);
   const url = BASE_API_URL + "/social/posts/" + encodeURIComponent(id);
 
-  /** @type {Record<string,string>} */
-  const headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
-  if (token) headers.Authorization = "Bearer " + token;
+  const headers = {
+    "X-Noroff-API-Key": NOROFF_API_KEY,
+    ...(token && { Authorization: "Bearer " + token }),
+  };
 
   showLoader();
   try {
     const res = await fetch(url, { method: "DELETE", headers });
 
-    /** @type {any} */
     let json = null;
     try {
       json = await res.json();
@@ -649,10 +568,6 @@ async function onDelete(id, ownerName) {
   }
 }
 
-/**
- * Bootstrap the single post page.
- * @returns {Promise<void>}
- */
 async function main() {
   const id = getId();
   if (!id) {

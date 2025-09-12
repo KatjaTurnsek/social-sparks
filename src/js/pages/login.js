@@ -6,12 +6,6 @@ import { errorFrom } from "../shared/errors.js";
 const loginForm = document.getElementById("login-form");
 const AUTH_LOGIN_URL = BASE_API_URL + "/auth/login";
 
-/**
- * Show an inline message if #login-msg exists; fall back to alert on errors.
- * @param {string} text
- * @param {"error"|"success"} [type="error"]
- * @returns {void}
- */
 function setMsg(text, type = "error") {
   const el = document.getElementById("login-msg");
   if (el) {
@@ -25,17 +19,12 @@ function setMsg(text, type = "error") {
   if (type === "error") alert(text);
 }
 
-/**
- * Toggle submitting state: disables controls, sets aria-busy,
- * and swaps the submit button text while submitting.
- * @param {HTMLFormElement} form
- * @param {boolean} submitting
- * @returns {void}
- */
 function setFormSubmitting(form, submitting) {
   form.setAttribute("aria-busy", String(submitting));
 
-  const controls = form.querySelectorAll("input, select, textarea, button");
+  const controls = [
+    ...form.querySelectorAll("input, select, textarea, button"),
+  ];
   controls.forEach((el) => {
     if (
       el instanceof HTMLInputElement ||
@@ -60,22 +49,14 @@ function setFormSubmitting(form, submitting) {
   }
 }
 
-/**
- * POST /auth/login with credentials and persist accessToken (+name if present).
- * @param {{ email: string, password: string }} userDetails
- * @returns {Promise<any>} API response JSON on success; throws on non-OK.
- * @throws {Error} When the server returns non-OK or no access token is present.
- */
 async function loginUser(userDetails) {
   showLoader();
   try {
-    const fetchOptions = {
+    const response = await fetch(AUTH_LOGIN_URL, {
       method: "POST",
       body: JSON.stringify(userDetails),
       headers: { "Content-Type": "application/json" },
-    };
-
-    const response = await fetch(AUTH_LOGIN_URL, fetchOptions);
+    });
 
     let json = null;
     try {
@@ -88,28 +69,17 @@ async function loginUser(userDetails) {
       throw new Error(errorFrom(json, "Login failed"));
     }
 
-    /** Extract token from {data:{accessToken}} or {accessToken} */
-    let accessToken = "";
-    if (json && typeof json === "object") {
-      if (json.data && typeof json.data.accessToken === "string") {
-        accessToken = json.data.accessToken;
-      } else if (typeof json.accessToken === "string") {
-        accessToken = json.accessToken;
-      }
-    }
-    if (!accessToken) throw new Error("No access token returned.");
+    const merged = {
+      ...(json || {}),
+      ...(json && typeof json.data === "object" ? json.data : {}),
+    };
 
+    const accessToken =
+      typeof merged.accessToken === "string" ? merged.accessToken : "";
+    if (!accessToken) throw new Error("No access token returned.");
     addToLocalStorage("accessToken", accessToken);
 
-    /** Optionally persist profile name */
-    let name = "";
-    if (json && typeof json === "object") {
-      if (json.data && typeof json.data.name === "string") {
-        name = json.data.name;
-      } else if (typeof json.name === "string") {
-        name = json.name;
-      }
-    }
+    const name = typeof merged.name === "string" ? merged.name : "";
     if (name) addToLocalStorage("profileName", name);
 
     return json;
@@ -118,11 +88,6 @@ async function loginUser(userDetails) {
   }
 }
 
-/**
- * Handle login form submit: validate, call login, redirect on success.
- * @param {SubmitEvent} event
- * @returns {void}
- */
 function onLoginFormSubmit(event) {
   event.preventDefault();
   const form = /** @type {HTMLFormElement} */ (event.target);
@@ -152,7 +117,6 @@ function onLoginFormSubmit(event) {
     });
 }
 
-/** Redirect to feed if already authenticated. */
 (function guardAlreadyAuthenticated() {
   const token = localStorage.getItem("accessToken") || "";
   if (token) {
@@ -160,14 +124,12 @@ function onLoginFormSubmit(event) {
   }
 })();
 
-/** Show notice from register page if present (?notice=...). */
 (function showRegisterNotice() {
   const params = new URLSearchParams(location.search);
   const notice = params.get("notice");
   if (notice) setMsg(notice, "success");
 })();
 
-/** Wire up the form submit handler. */
 if (loginForm) {
   loginForm.addEventListener("submit", onLoginFormSubmit);
 }

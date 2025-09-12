@@ -23,37 +23,22 @@ const POSTS_URL =
   BASE_API_URL +
   "/social/posts?_author=true&_comments=false&sort=created&sortOrder=desc";
 
-/**
- * Build a link to a user's profile page.
- * @param {string} name
- * @returns {string}
- */
 function profileUrl(name) {
   return "profile.html?name=" + encodeURIComponent(name);
 }
 
-/**
- * Build common headers with API key and optional bearer token.
- * @returns {Record<string,string>}
- */
 function buildHeaders() {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
-  /** @type {Record<string,string>} */
-  const headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
-  if (token) headers.Authorization = "Bearer " + token;
-  return headers;
+  return {
+    "X-Noroff-API-Key": NOROFF_API_KEY,
+    ...(token && { Authorization: "Bearer " + token }),
+  };
 }
 
-/**
- * Fetch latest posts (author included).
- * @returns {Promise<Post[]>}
- * @throws {Error}
- */
 async function fetchPosts() {
   const res = await fetch(POSTS_URL, { headers: buildHeaders() });
 
-  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -65,25 +50,17 @@ async function fetchPosts() {
     throw new Error(errorFrom(json, res.statusText || "Failed to load posts"));
   }
 
-  /** @type {Post[]} */
   let data = [];
   if (json && Array.isArray(json.data)) data = json.data;
   else if (Array.isArray(json)) data = json;
 
-  data.sort((a, b) => {
+  return [...data].sort((a, b) => {
     const ta = a && a.created ? new Date(a.created).getTime() : 0;
     const tb = b && b.created ? new Date(b.created).getTime() : 0;
     return tb - ta;
   });
-
-  return data;
 }
 
-/**
- * Render an error card for posts.
- * @param {string} message
- * @returns {void}
- */
 function renderPostsError(message) {
   if (!postsEl) return;
   clear(postsEl);
@@ -106,12 +83,6 @@ function renderPostsError(message) {
   postsEl.appendChild(moreWrap);
 }
 
-/**
- * Return only the first sentence of a block of text.
- * Falls back to the first 140 characters if no sentence terminator is found.
- * @param {string} text
- * @returns {string}
- */
 function firstSentence(text) {
   const s = String(text || "").trim();
   if (!s) return "";
@@ -127,12 +98,6 @@ function firstSentence(text) {
   return s.length > 140 ? s.slice(0, 140).trim() + "…" : s;
 }
 
-/**
- * Render up to four latest posts in a 4-column grid.
- * Only the first sentence of the body is shown.
- * @param {Post[]} posts
- * @returns {void}
- */
 function renderPosts(posts) {
   if (!postsEl) return;
   clear(postsEl);
@@ -142,7 +107,7 @@ function renderPosts(posts) {
   postsEl.style.gridTemplateColumns = "repeat(4, minmax(0, 1fr))";
   postsEl.style.gap = "1rem";
 
-  const latest = Array.isArray(posts) ? posts.slice(0, 4) : [];
+  const latest = Array.isArray(posts) ? [...posts].slice(0, 4) : [];
 
   if (!latest.length) {
     const p = document.createElement("p");
@@ -152,9 +117,7 @@ function renderPosts(posts) {
     return;
   }
 
-  for (let i = 0; i < latest.length; i += 1) {
-    const post = latest[i] || {};
-
+  for (const post of latest) {
     const card = document.createElement("article");
     card.className = "card";
 
@@ -203,11 +166,7 @@ function renderPosts(posts) {
     view.textContent = "View";
     actions.appendChild(view);
 
-    card.appendChild(h2);
-    card.appendChild(meta);
-    card.appendChild(body);
-    card.appendChild(actions);
-
+    card.append(h2, meta, body, actions);
     postsEl.appendChild(card);
   }
 
@@ -228,12 +187,6 @@ function renderPosts(posts) {
  * @typedef {{ list: Profile[], meta: Meta }} ProfilesResult
  */
 
-/**
- * Fetch profiles (optionally search) with pagination.
- * @param {{ q?: string, page?: number, limit?: number, sort?: string, sortOrder?: "asc"|"desc" }} [opts]
- * @returns {Promise<ProfilesResult>}
- * @throws {Error}
- */
 async function fetchProfiles(opts = {}) {
   const q = opts.q || "";
   const page = Math.max(1, opts.page || 1);
@@ -252,7 +205,6 @@ async function fetchProfiles(opts = {}) {
   const url = BASE_API_URL + path + "?" + sp.toString();
   const res = await fetch(url, { headers: buildHeaders() });
 
-  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -261,18 +213,11 @@ async function fetchProfiles(opts = {}) {
   }
   if (!res.ok) throw new Error(errorFrom(json, "Failed to load profiles"));
 
-  /** @type {Profile[]} */
   const list = (json && Array.isArray(json.data) ? json.data : []) || [];
-  /** @type {Meta} */
   const meta = (json && json.meta) || {};
-  return { list, meta };
+  return { list: [...list], meta: { ...meta } };
 }
 
-/**
- * Render an error card for profiles.
- * @param {string} message
- * @returns {void}
- */
 function renderProfilesError(message) {
   if (!profilesEl) return;
   clear(profilesEl);
@@ -289,11 +234,6 @@ function renderProfilesError(message) {
   }
 }
 
-/**
- * Render a responsive grid of compact profile cards (no bio).
- * @param {Profile[]} profiles
- * @returns {void}
- */
 function renderProfilesList(profiles) {
   if (!profilesEl) return;
   clear(profilesEl);
@@ -311,7 +251,8 @@ function renderProfilesList(profiles) {
     return;
   }
 
-  profiles.forEach((person) => {
+  const items = [...profiles];
+  for (const person of items) {
     const card = document.createElement("article");
     card.className = "card";
 
@@ -349,22 +290,14 @@ function renderProfilesList(profiles) {
 
     info.appendChild(nm);
 
-    row.appendChild(avatar);
-    row.appendChild(info);
+    row.append(avatar, info);
 
-    card.appendChild(row);
-    card.appendChild(actions);
+    card.append(row, actions);
 
     profilesEl.appendChild(card);
-  });
+  }
 }
 
-/**
- * Render pager controls.
- * @param {Meta} meta
- * @param {(page:number)=>void} go
- * @returns {void}
- */
 function renderPager(meta, go) {
   if (!pagerEl) return;
   clear(pagerEl);
@@ -409,25 +342,17 @@ function renderPager(meta, go) {
   }
 
   left.appendChild(prev);
-  right.appendChild(info);
-  right.appendChild(next);
+  right.append(info, next);
 
-  pagerEl.appendChild(left);
-  pagerEl.appendChild(right);
+  pagerEl.append(left, right);
 }
 
-/* --------------------------------- bootstrap -------------------------------- */
-
-const state = {
+let state = {
   q: "",
   page: 1,
   limit: 12,
 };
 
-/**
- * Load and render the profiles list and pager for current state.
- * @returns {Promise<void>}
- */
 async function loadProfiles() {
   try {
     const { list, meta } = await fetchProfiles({
@@ -439,7 +364,7 @@ async function loadProfiles() {
     });
     renderProfilesList(list);
     renderPager(meta, (newPage) => {
-      state.page = newPage;
+      state = { ...state, page: newPage };
       showLoader();
       loadProfiles().finally(hideLoader);
     });
@@ -454,10 +379,6 @@ async function loadProfiles() {
   }
 }
 
-/**
- * Initialize the index page (latest posts + profiles list).
- * @returns {Promise<void>}
- */
 async function main() {
   if (postsEl) {
     clear(postsEl);
@@ -465,12 +386,13 @@ async function main() {
     skWrap.style.display = "grid";
     skWrap.style.gridTemplateColumns = "repeat(4, minmax(0, 1fr))";
     skWrap.style.gap = "1rem";
-    for (let i = 0; i < 4; i++) {
+    const skeletons = [...Array(4)].map(() => {
       const sk = document.createElement("div");
       sk.className = "card skeleton";
       sk.style.height = "160px";
-      skWrap.appendChild(sk);
-    }
+      return sk;
+    });
+    skWrap.append(...skeletons);
     postsEl.appendChild(skWrap);
   }
   if (profilesEl) {
@@ -501,8 +423,7 @@ async function main() {
   if (searchForm && searchInput) {
     searchForm.addEventListener("submit", (ev) => {
       ev.preventDefault();
-      state.q = searchInput.value.trim();
-      state.page = 1;
+      state = { ...state, q: searchInput.value.trim(), page: 1 };
       showLoader();
       loadProfiles().finally(hideLoader);
     });

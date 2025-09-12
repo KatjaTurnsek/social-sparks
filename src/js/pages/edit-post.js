@@ -5,21 +5,14 @@ import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
 import { normalizeBearer } from "../shared/auth.js";
 
-/** Get form & message elements safely */
-var formEl = document.getElementById("edit-form");
+const formEl = document.getElementById("edit-form");
 /** @type {HTMLFormElement|null} */
-var form = formEl instanceof HTMLFormElement ? formEl : null;
+const form = formEl instanceof HTMLFormElement ? formEl : null;
 
-var msgEl = document.getElementById("edit-msg");
+const msgEl = document.getElementById("edit-msg");
 /** @type {HTMLElement|null} */
-var msg = msgEl instanceof HTMLElement ? msgEl : null;
+const msg = msgEl instanceof HTMLElement ? msgEl : null;
 
-/**
- * Show a message in the page message area. Falls back to alert for errors.
- * @param {string} text
- * @param {boolean} [ok=false]
- * @returns {void}
- */
 function setMsg(text, ok) {
   if (!msg) {
     if (!ok) window.alert(text);
@@ -30,26 +23,18 @@ function setMsg(text, ok) {
   msg.textContent = text;
 }
 
-/**
- * Read the `id` query param or empty string.
- * @returns {string}
- */
 function getId() {
   try {
-    var sp = new URLSearchParams(window.location.search);
-    var v = sp.get("id");
+    const sp = new URLSearchParams(window.location.search);
+    const v = sp.get("id");
     return v ? v : "";
   } catch {
     return "";
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* Emoji picker (visuals handled by CSS)                                       */
-/* -------------------------------------------------------------------------- */
-
 /** @type {string[]} */
-var EMOJIS = [
+const EMOJIS = [
   "😀",
   "😁",
   "😂",
@@ -83,49 +68,44 @@ var EMOJIS = [
 ];
 
 /** @type {HTMLElement|null} */
-var emojiPalette = null;
+let emojiPalette = null;
 /** @type {(HTMLInputElement|HTMLTextAreaElement|null)} */
-var emojiActiveField = null;
+let emojiActiveField = null;
 
-/**
- * Create (once) and return the emoji palette element.
- * @returns {HTMLElement}
- */
 function createEmojiPalette() {
   if (emojiPalette) return emojiPalette;
 
-  var pal = document.createElement("div");
+  const pal = document.createElement("div");
   pal.className = "emoji-palette";
   pal.style.display = "none";
 
-  var grid = document.createElement("div");
+  const grid = document.createElement("div");
   grid.className = "emoji-grid";
 
-  for (var i = 0; i < EMOJIS.length; i += 1) {
-    (function (emo) {
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "emoji-btn";
-      b.textContent = emo;
-      b.setAttribute("aria-label", "Insert emoji " + emo);
-      b.addEventListener("click", function () {
-        if (emojiActiveField) insertAtEnd(emojiActiveField, emo);
-        hideEmojiPalette();
-      });
-      grid.appendChild(b);
-    })(EMOJIS[i]);
-  }
+  const buttons = EMOJIS.map((emo) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "emoji-btn";
+    b.textContent = emo;
+    b.setAttribute("aria-label", "Insert emoji " + emo);
+    b.addEventListener("click", () => {
+      if (emojiActiveField) insertAtEnd(emojiActiveField, emo);
+      hideEmojiPalette();
+    });
+    return b;
+  });
+  grid.append(...buttons);
 
   pal.appendChild(grid);
   document.body.appendChild(pal);
 
-  document.addEventListener("click", function (e) {
+  document.addEventListener("click", (e) => {
     if (!pal || pal.style.display === "none") return;
-    var target = e.target instanceof Node ? e.target : null;
+    const target = e.target instanceof Node ? e.target : null;
     if (!target || !pal.contains(target)) hideEmojiPalette();
   });
 
-  document.addEventListener("keydown", function (e) {
+  document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") hideEmojiPalette();
   });
 
@@ -133,32 +113,19 @@ function createEmojiPalette() {
   return pal;
 }
 
-/**
- * Show palette near the trigger button and remember active field.
- * @param {HTMLButtonElement} btn
- * @param {HTMLInputElement|HTMLTextAreaElement} field
- * @returns {void}
- */
 function showEmojiPalette(btn, field) {
   emojiActiveField = field;
-  var pal = createEmojiPalette();
-  var rect = btn.getBoundingClientRect();
+  const pal = createEmojiPalette();
+  const rect = btn.getBoundingClientRect();
   pal.style.left = Math.round(rect.left) + "px";
   pal.style.top = Math.round(rect.bottom + 6) + "px";
   pal.style.display = "block";
 }
 
-/** Hide the palette. */
 function hideEmojiPalette() {
   if (emojiPalette) emojiPalette.style.display = "none";
 }
 
-/**
- * Insert text at the end of the field and refocus.
- * @param {HTMLInputElement|HTMLTextAreaElement} el
- * @param {string} text
- * @returns {void}
- */
 function insertAtEnd(el, text) {
   try {
     el.value = String(el.value || "") + String(text || "");
@@ -168,24 +135,19 @@ function insertAtEnd(el, text) {
   }
 }
 
-/**
- * Attach a small “Emoji” button under a field.
- * @param {HTMLInputElement|HTMLTextAreaElement|null} field
- * @returns {void}
- */
 function attachEmojiButton(field) {
   if (!field || !field.parentElement) return;
 
-  var wrap = document.createElement("div");
+  const wrap = document.createElement("div");
   wrap.className = "form-actions";
   wrap.style.marginTop = "0.5rem";
 
-  var btn = document.createElement("button");
+  const btn = document.createElement("button");
   btn.type = "button";
   btn.className = "btn btn-outline";
   btn.textContent = "🙂 Emoji";
   btn.setAttribute("aria-haspopup", "true");
-  btn.addEventListener("click", function (e) {
+  btn.addEventListener("click", (e) => {
     e.stopPropagation();
     showEmojiPalette(btn, field);
   });
@@ -194,43 +156,34 @@ function attachEmojiButton(field) {
   field.parentElement.appendChild(wrap);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Load existing post data into the form                                      */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Fetch post data and populate the form fields (title, body, media).
- * Confirms ownership and redirects back to the post if user is not the owner.
- * @returns {Promise<void>}
- */
 async function load() {
-  var id = getId();
+  const id = getId();
   if (!id) {
     setMsg("Missing post id.");
     return;
   }
 
-  var rawToken = getFromLocalStorage("accessToken") || "";
-  var token = normalizeBearer(rawToken);
+  const rawToken = getFromLocalStorage("accessToken") || "";
+  const token = normalizeBearer(rawToken);
 
-  /** @type {Record<string,string>} */
-  var headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
-  if (token) headers.Authorization = "Bearer " + token;
+  const headers = {
+    "X-Noroff-API-Key": NOROFF_API_KEY,
+    ...(token && { Authorization: "Bearer " + token }),
+  };
 
-  var url =
+  const url =
     BASE_API_URL + "/social/posts/" + encodeURIComponent(id) + "?_author=true";
 
   showLoader();
   try {
-    var res = await fetch(url, { headers: headers });
+    const res = await fetch(url, { headers });
 
     if (res.status === 401 && !token) {
       setMsg("You must be logged in to edit this post.");
       return;
     }
 
-    /** @type {any} */
-    var json = null;
+    let json = null;
     try {
       json = await res.json();
     } catch {
@@ -242,13 +195,11 @@ async function load() {
       return;
     }
 
-    /** @type {any} */
-    var p = (json && json.data) || json || {};
+    const p = (json && json.data) || json || {};
     if (!form) return;
 
-    // Ownership guard
-    var me = getFromLocalStorage("profileName") || "";
-    var owner =
+    const me = getFromLocalStorage("profileName") || "";
+    const owner =
       p && p.author && typeof p.author.name === "string" ? p.author.name : "";
     if (owner && me && owner !== me) {
       setMsg("You can only edit your own post.");
@@ -256,33 +207,30 @@ async function load() {
       return;
     }
 
-    // Title
-    var tNode = form.querySelector('[name="title"]');
+    const tNode = form.querySelector('[name="title"]');
     /** @type {HTMLInputElement|HTMLTextAreaElement|null} */
-    var titleField =
+    const titleField =
       tNode instanceof HTMLInputElement || tNode instanceof HTMLTextAreaElement
         ? tNode
         : null;
     if (titleField) titleField.value = p && p.title ? p.title : "";
 
-    // Body
-    var bNode = form.querySelector('[name="body"]');
+    const bNode = form.querySelector('[name="body"]');
     /** @type {HTMLTextAreaElement|HTMLInputElement|null} */
-    var bodyField =
+    const bodyField =
       bNode instanceof HTMLTextAreaElement || bNode instanceof HTMLInputElement
         ? bNode
         : null;
     if (bodyField) bodyField.value = p && p.body ? p.body : "";
 
-    // Media
-    var muNode = form.querySelector('[name="media-url"]');
-    var maNode = form.querySelector('[name="media-alt"]');
+    const muNode = form.querySelector('[name="media-url"]');
+    const maNode = form.querySelector('[name="media-alt"]');
     /** @type {HTMLInputElement|null} */
-    var mediaUrlField = muNode instanceof HTMLInputElement ? muNode : null;
+    const mediaUrlField = muNode instanceof HTMLInputElement ? muNode : null;
     /** @type {HTMLInputElement|null} */
-    var mediaAltField = maNode instanceof HTMLInputElement ? maNode : null;
+    const mediaAltField = maNode instanceof HTMLInputElement ? maNode : null;
 
-    var media = p && p.media ? p.media : null;
+    const media = p && p.media ? p.media : null;
     if (mediaUrlField) {
       mediaUrlField.value =
         media && typeof media.url === "string" ? media.url : "";
@@ -295,7 +243,7 @@ async function load() {
     attachEmojiButton(titleField);
     attachEmojiButton(bodyField);
   } catch (e) {
-    var em =
+    const em =
       e && typeof e === "object" && e !== null && "message" in e
         ? /** @type {{message?: unknown}} */ (e).message
         : null;
@@ -305,72 +253,63 @@ async function load() {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* Submit handler                                                             */
-/* -------------------------------------------------------------------------- */
-
 if (form) {
-  /**
-   * Handle “Edit Post” submit: validates, PUTs to API, shows status,
-   * and redirects to the updated post on success.
-   * @param {SubmitEvent} e
-   * @returns {Promise<void>}
-   */
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
 
-    var id = getId();
+    const id = getId();
     if (!id) {
       setMsg("Missing post id.");
       return;
     }
 
     if (!(e.currentTarget instanceof HTMLFormElement)) return;
-    var f = e.currentTarget;
+    const f = e.currentTarget;
 
-    var fd = new FormData(f);
-    var title = String(fd.get("title") || "").trim();
-    var body = String(fd.get("body") || "").trim();
-    var mediaUrl = String(fd.get("media-url") || "").trim();
-    var mediaAlt = String(fd.get("media-alt") || "").trim();
+    const fd = new FormData(f);
+    const title = String(fd.get("title") || "").trim();
+    const body = String(fd.get("body") || "").trim();
+    const mediaUrl = String(fd.get("media-url") || "").trim();
+    const mediaAlt = String(fd.get("media-alt") || "").trim();
 
     if (!title) {
       setMsg("Title is required.");
       return;
     }
 
-    var rawToken = getFromLocalStorage("accessToken") || "";
-    var token = normalizeBearer(rawToken);
+    const rawToken = getFromLocalStorage("accessToken") || "";
+    const token = normalizeBearer(rawToken);
     if (!token) {
       setMsg("You must be logged in to save changes.");
       return;
     }
 
-    /** @type {{title:string, body:string, media?: {url: string, alt?: string}}} */
-    var payload = { title: title, body: body };
-    if (mediaUrl) {
-      payload.media = { url: mediaUrl };
-      if (mediaAlt) payload.media.alt = mediaAlt;
-    }
+    const payload = {
+      title,
+      body,
+      ...(mediaUrl && {
+        media: { url: mediaUrl, ...(mediaAlt && { alt: mediaAlt }) },
+      }),
+    };
 
-    var headers = {
+    const headers = {
       "Content-Type": "application/json",
       "X-Noroff-API-Key": NOROFF_API_KEY,
-      Authorization: "Bearer " + token,
+      ...(token && { Authorization: "Bearer " + token }),
     };
 
     showLoader();
     try {
-      var res = await fetch(
+      const res = await fetch(
         BASE_API_URL + "/social/posts/" + encodeURIComponent(id),
         {
           method: "PUT",
-          headers: headers,
+          headers,
           body: JSON.stringify(payload),
         }
       );
 
-      var json = null;
+      let json = null;
       try {
         json = await res.json();
       } catch {
@@ -384,7 +323,7 @@ if (form) {
       setMsg("Saved!", true);
       window.location.href = "post.html?id=" + encodeURIComponent(id);
     } catch (err) {
-      var em2 =
+      const em2 =
         err && typeof err === "object" && err !== null && "message" in err
           ? /** @type {{message?: unknown}} */ (err).message
           : null;
@@ -395,6 +334,5 @@ if (form) {
     }
   });
 
-  // Load initial post data
   load();
 }

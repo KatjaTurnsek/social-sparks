@@ -7,12 +7,6 @@ import { errorFrom } from "../shared/errors.js";
 const registerForm = document.querySelector("#register-form");
 const AUTH_REGISTER_URL = BASE_API_URL + "/auth/register";
 
-/**
- * Show an inline message if #register-msg exists; fallback to alert for errors.
- * @param {string} text
- * @param {"error"|"success"} [type]
- * @returns {void}
- */
 function setMsg(text, type) {
   const kind = type === "success" ? "success" : "error";
   const el = document.getElementById("register-msg");
@@ -26,17 +20,12 @@ function setMsg(text, type) {
   if (kind === "error") alert(text);
 }
 
-/**
- * Toggle submitting state: disables controls, sets aria-busy,
- * and swaps the submit button label while submitting.
- * @param {HTMLFormElement} form
- * @param {boolean} submitting
- * @returns {void}
- */
 function setFormSubmitting(form, submitting) {
   form.setAttribute("aria-busy", String(submitting));
 
-  const controls = form.querySelectorAll("input, select, textarea, button");
+  const controls = [
+    ...form.querySelectorAll("input, select, textarea, button"),
+  ];
   controls.forEach((el) => {
     if (
       el instanceof HTMLInputElement ||
@@ -64,13 +53,6 @@ function setFormSubmitting(form, submitting) {
   }
 }
 
-/**
- * Basic client-side validation for the register form.
- * @param {string} email
- * @param {string} password
- * @param {string} name
- * @returns {string} Empty string if valid; otherwise a user-friendly error.
- */
 function validateRegisterForm(email, password, name) {
   if (!email || email.indexOf("@") === -1) {
     return "Please enter a valid email address.";
@@ -84,22 +66,14 @@ function validateRegisterForm(email, password, name) {
   return "";
 }
 
-/**
- * POST /auth/register with user details; returns JSON or throws on non-OK.
- * @param {{ email: string, password: string, name?: string }} userDetails
- * @returns {Promise<any>}
- * @throws {Error} When the server responds non-OK (message normalized).
- */
 async function registerUser(userDetails) {
   showLoader();
   try {
-    const fetchOptions = {
+    const response = await fetch(AUTH_REGISTER_URL, {
       method: "POST",
       body: JSON.stringify(userDetails),
       headers: { "Content-Type": "application/json" },
-    };
-
-    const response = await fetch(AUTH_REGISTER_URL, fetchOptions);
+    });
 
     let json = null;
     try {
@@ -118,11 +92,6 @@ async function registerUser(userDetails) {
   }
 }
 
-/**
- * Handle register form submit: validate, disable UI, call API, redirect on success.
- * @param {SubmitEvent} event
- * @returns {void}
- */
 function onRegisterFormSubmit(event) {
   event.preventDefault();
   const form = /** @type {HTMLFormElement} */ (event.target);
@@ -139,8 +108,7 @@ function onRegisterFormSubmit(event) {
     return;
   }
 
-  /** @type {{ email: string, password: string, name?: string }} */
-  const payload = name ? { email, password, name } : { email, password };
+  const payload = { email, password, ...(name && { name }) };
 
   setFormSubmitting(form, true);
   registerUser(payload)

@@ -8,40 +8,31 @@ import { formatDate } from "../shared/dates.js";
 import { clear, createEl } from "../shared/dom.js";
 import { normalizeBearer } from "../shared/auth.js";
 
-var display = document.getElementById("display-container");
+const display = document.getElementById("display-container");
 
-/**
- * Read the current "q" query parameter.
- * @returns {string}
- */
 function getQuery() {
   try {
-    var sp = new URLSearchParams(window.location.search);
-    var v = sp.get("q");
+    const sp = new URLSearchParams(window.location.search);
+    const v = sp.get("q");
     return v ? String(v) : "";
   } catch {
     return "";
   }
 }
 
-/**
- * Search posts via API using the "q" parameter.
- * Attaches API key and Authorization (if available).
- * @param {string} q
- * @returns {Promise<Post[]>}
- * @throws {Error} When the API request fails or returns non-OK.
- */
 async function searchPosts(q) {
-  var rawToken = getFromLocalStorage("accessToken") || "";
-  var token = normalizeBearer(rawToken);
-  var url = BASE_API_URL + "/social/posts/search?q=" + encodeURIComponent(q);
+  const rawToken = getFromLocalStorage("accessToken") || "";
+  const token = normalizeBearer(rawToken);
+  const url = BASE_API_URL + "/social/posts/search?q=" + encodeURIComponent(q);
 
-  var headers = { "X-Noroff-API-Key": NOROFF_API_KEY };
-  if (token) headers.Authorization = "Bearer " + token;
+  const headers = {
+    "X-Noroff-API-Key": NOROFF_API_KEY,
+    ...(token && { Authorization: "Bearer " + token }),
+  };
 
-  var res = await fetch(url, { headers });
+  const res = await fetch(url, { headers });
 
-  var json = null;
+  let json = null;
   try {
     json = await res.json();
   } catch {
@@ -52,70 +43,58 @@ async function searchPosts(q) {
     throw new Error(errorFrom(json, "Failed to search posts"));
   }
 
-  var data = json && json.data ? json.data : json;
-  return Array.isArray(data) ? /** @type {Post[]} */ (data) : [];
+  const data = json && json.data ? json.data : json;
+  const arr = Array.isArray(data) ? /** @type {Post[]} */ (data) : [];
+  return [...arr];
 }
 
-/**
- * Render a minimal empty state message.
- * @param {string} message
- * @returns {void}
- */
 function renderEmpty(message) {
   if (!display) return;
   clear(display);
 
-  var card = createEl("article", "card", "");
-  var p = createEl("p", "muted", message || "No results.");
+  const card = createEl("article", "card", "");
+  const p = createEl("p", "muted", message || "No results.");
   card.appendChild(p);
   display.appendChild(card);
 }
 
-/**
- * Render search results list with header/count.
- * @param {string} q
- * @param {Post[]} results
- * @returns {void}
- */
 function renderResults(q, results) {
   if (!display) return;
   clear(display);
 
-  var header = createEl("div", "", "");
-  var h = createEl("h2", "", "Search");
+  const header = createEl("div", "", "");
+  const h = createEl("h2", "", "Search");
 
-  var countLabel = results.length === 1 ? " result" : " results";
-  var subText = 'Query: "' + q + '" · ' + String(results.length) + countLabel;
+  const countLabel = results.length === 1 ? " result" : " results";
+  const subText = 'Query: "' + q + '" · ' + String(results.length) + countLabel;
 
-  var sub = createEl("p", "muted", subText);
-  header.appendChild(h);
-  header.appendChild(sub);
+  const sub = createEl("p", "muted", subText);
+  header.append(h, sub);
   display.appendChild(header);
 
   if (!results.length) {
-    var none = createEl("p", "muted", "No posts matched your search.");
+    const none = createEl("p", "muted", "No posts matched your search.");
     display.appendChild(none);
     return;
   }
 
-  for (var i = 0; i < results.length; i += 1) {
-    var post = results[i] || {};
+  const items = [...results];
+  for (const post of items) {
+    const item = createEl("article", "card", "");
 
-    var item = createEl("article", "card", "");
-
-    var title = createEl("h3", "", "");
+    const title = createEl("h3", "", "");
     title.textContent = post && post.title ? post.title : "Untitled";
 
-    var meta = createEl("p", "muted", "");
-    var authorName =
+    const meta = createEl("p", "muted", "");
+    const authorName =
       post && post.author && post.author.name ? post.author.name : "Unknown";
-    var createdText = post && post.created ? formatDate(post.created) : "";
+    const createdText = post && post.created ? formatDate(post.created) : "";
     meta.textContent =
       "by " + authorName + (createdText ? " · " + createdText : "");
 
-    var media = post && post.media ? post.media : null;
+    const media = post && post.media ? post.media : null;
     if (media && typeof media.url === "string" && media.url) {
-      var img = document.createElement("img");
+      const img = document.createElement("img");
       img.src = media.url;
       img.alt = media && typeof media.alt === "string" ? media.alt : "";
       img.loading = "lazy";
@@ -123,34 +102,25 @@ function renderResults(q, results) {
       item.appendChild(img);
     }
 
-    var body = createEl("p", "", post && post.body ? post.body : "");
-    if (body.textContent.length > 240) {
-      body.textContent = body.textContent.slice(0, 237) + "...";
+    const body = createEl("p", "", post && post.body ? post.body : "");
+    if ((body.textContent || "").length > 240) {
+      body.textContent = (body.textContent || "").slice(0, 237) + "...";
     }
 
-    var actions = createEl("div", "form-actions", "");
-    var view = createEl("a", "btn btn-outline", "View");
-    var pid = "";
-    if (post && post.id !== undefined && post.id !== null) {
-      pid = String(post.id);
-    }
+    const actions = createEl("div", "form-actions", "");
+    const view = createEl("a", "btn btn-outline", "View");
+    const pid =
+      post && post.id !== undefined && post.id !== null ? String(post.id) : "";
     view.href = "post.html?id=" + encodeURIComponent(pid);
     actions.appendChild(view);
 
-    item.appendChild(title);
-    item.appendChild(meta);
-    item.appendChild(body);
-    item.appendChild(actions);
+    item.append(title, meta, body, actions);
     display.appendChild(item);
   }
 }
 
-/**
- * Bootstrap the search page: parse query, fetch, render.
- * @returns {Promise<void>}
- */
 async function main() {
-  var q = getQuery();
+  const q = getQuery();
 
   if (!q) {
     renderEmpty("Enter a search term, e.g. search.html?q=dogs");
@@ -159,21 +129,22 @@ async function main() {
 
   if (display) {
     clear(display);
-    var skeletonWrap = createEl("div", "grid", "");
-    for (var i = 0; i < 3; i += 1) {
-      var sk = createEl("div", "card skeleton", "");
+    const skeletonWrap = createEl("div", "grid", "");
+    const skeletons = [...Array(3)].map(() => {
+      const sk = createEl("div", "card skeleton", "");
       sk.style.height = "140px";
-      skeletonWrap.appendChild(sk);
-    }
+      return sk;
+    });
+    skeletonWrap.append(...skeletons);
     display.appendChild(skeletonWrap);
   }
 
   showLoader();
   try {
-    var results = await searchPosts(q);
+    const results = await searchPosts(q);
     renderResults(q, results);
   } catch (e) {
-    var msg =
+    const msg =
       e && typeof e === "object" && e !== null && "message" in e
         ? /** @type {{message?: unknown}} */ (e).message
         : null;

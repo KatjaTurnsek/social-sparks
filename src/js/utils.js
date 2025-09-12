@@ -23,31 +23,43 @@ export const NOROFF_API_KEY = "3e0a65ee-1d88-4fb0-9962-797226b01b32";
  * @throws {Error} When the response is non-OK (message normalized via `errorFrom`).
  */
 export async function request(path, options = {}) {
+  const {
+    json: jsonBody,
+    auth,
+    headers: optHeaders,
+    body: optBody,
+    ...rest
+  } = options;
+
   const isAbsolute = /^https?:\/\//i.test(path);
   const url = isAbsolute
     ? path
     : BASE_API_URL + (path.startsWith("/") ? path : "/" + path);
 
-  const headers = new Headers(options.headers || {});
-  headers.set("X-Noroff-API-Key", NOROFF_API_KEY);
+  const normalizedHeaderObj =
+    optHeaders instanceof Headers
+      ? Object.fromEntries(optHeaders.entries())
+      : optHeaders || {};
 
-  if (options.auth) {
-    const raw = localStorage.getItem("accessToken") || "";
-    const token = normalizeBearer(raw);
-    if (token) headers.set("Authorization", "Bearer " + token);
-  }
+  const hasContentType = Object.keys(normalizedHeaderObj).some(
+    (k) => k.toLowerCase() === "content-type"
+  );
 
-  /** @type {BodyInit | undefined} */
-  let body = options.body ?? undefined;
+  const raw = auth ? localStorage.getItem("accessToken") || "" : "";
+  const token = auth ? normalizeBearer(raw) : "";
 
-  if (options.json !== undefined) {
-    if (!headers.has("Content-Type")) {
-      headers.set("Content-Type", "application/json");
-    }
-    body = JSON.stringify(options.json);
-  }
+  const headers = {
+    ...normalizedHeaderObj,
+    ...(auth && token && { Authorization: "Bearer " + token }),
+    ...(jsonBody !== undefined &&
+      !hasContentType && { "Content-Type": "application/json" }),
+    "X-Noroff-API-Key": NOROFF_API_KEY,
+  };
 
-  const res = await fetch(url, { ...options, headers, body });
+  let body = optBody ?? undefined;
+  if (jsonBody !== undefined) body = JSON.stringify(jsonBody);
+
+  const res = await fetch(url, { ...rest, headers, body });
 
   /** @type {any} */
   let json = null;

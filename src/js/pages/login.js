@@ -3,22 +3,36 @@ import { BASE_API_URL, addToLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
 
-const loginForm = document.getElementById("login-form");
-const AUTH_LOGIN_URL = BASE_API_URL + "/auth/login";
+const AUTH_LOGIN_URL = `${BASE_API_URL}/auth/login`;
+/** @type {HTMLFormElement|null} */
+const loginForm = /** @type {any} */ (document.getElementById("login-form"));
 
+/** A minimal payload for the login endpoint. */
+/** @typedef {{ email: string, password: string }} LoginDetails */
+
+/**
+ * Show (or fallback-alert) a status message in the login page.
+ * @param {string} text
+ * @param {"success"|"error"} [type="error"]
+ * @returns {void}
+ */
 function setMsg(text, type = "error") {
   const el = document.getElementById("login-msg");
   if (el) {
     el.style.display = "block";
-    el.className = "form-message alert";
-    el.classList.toggle("success", type === "success");
-    el.classList.toggle("error", type !== "success");
+    el.className = `form-message alert ${type === "success" ? "success" : "error"}`;
     el.textContent = text;
     return;
   }
   if (type === "error") alert(text);
 }
 
+/**
+ * Toggle form submitting state: disables controls and swaps the submit label.
+ * @param {HTMLFormElement} form
+ * @param {boolean} submitting
+ * @returns {void}
+ */
 function setFormSubmitting(form, submitting) {
   form.setAttribute("aria-busy", String(submitting));
 
@@ -49,6 +63,12 @@ function setFormSubmitting(form, submitting) {
   }
 }
 
+/**
+ * POST credentials to the API, store the access token (and name), and return the JSON.
+ * @param {LoginDetails} userDetails
+ * @returns {Promise<any>}
+ * @throws {Error} When the response is non-OK or missing a token
+ */
 async function loginUser(userDetails) {
   showLoader();
   try {
@@ -58,6 +78,7 @@ async function loginUser(userDetails) {
       headers: { "Content-Type": "application/json" },
     });
 
+    /** @type {any} */
     let json = null;
     try {
       json = await response.json();
@@ -70,16 +91,16 @@ async function loginUser(userDetails) {
     }
 
     const merged = {
-      ...(json ?? {}),
-      ...(typeof json?.data === "object" ? json.data : {}),
+      ...(json || {}),
+      ...(json && typeof json.data === "object" ? json.data : {}),
     };
 
     const accessToken =
-      typeof merged?.accessToken === "string" ? merged.accessToken : "";
+      typeof merged.accessToken === "string" ? merged.accessToken : "";
     if (!accessToken) throw new Error("No access token returned.");
     addToLocalStorage("accessToken", accessToken);
 
-    const name = typeof merged?.name === "string" ? merged.name : "";
+    const name = typeof merged.name === "string" ? merged.name : "";
     if (name) addToLocalStorage("profileName", name);
 
     return json;
@@ -88,6 +109,11 @@ async function loginUser(userDetails) {
   }
 }
 
+/**
+ * Handle the login form submit: validate, call API, route on success.
+ * @param {SubmitEvent} event
+ * @returns {void}
+ */
 function onLoginFormSubmit(event) {
   event.preventDefault();
   const form = /** @type {HTMLFormElement} */ (event.target);
@@ -95,7 +121,7 @@ function onLoginFormSubmit(event) {
   const email = String(fd.get("email") || "");
   const password = String(fd.get("password") || "");
 
-  if (!email || email.indexOf("@") === -1) {
+  if (!email || !email.includes("@")) {
     setMsg("Please enter a valid email address.", "error");
     return;
   }
@@ -106,17 +132,18 @@ function onLoginFormSubmit(event) {
 
   setFormSubmitting(form, true);
   loginUser({ email, password })
-    .then(function () {
+    .then(() => {
       window.location.href = "feed.html";
     })
-    .catch(function (err) {
-      setMsg(err?.message || "Login failed", "error");
+    .catch((err) => {
+      setMsg((err && err.message) || "Login failed", "error");
     })
-    .finally(function () {
+    .finally(() => {
       setFormSubmitting(form, false);
     });
 }
 
+/* Guard: if already authenticated, skip login page. */
 (function guardAlreadyAuthenticated() {
   const token = localStorage.getItem("accessToken") || "";
   if (token) {
@@ -124,6 +151,7 @@ function onLoginFormSubmit(event) {
   }
 })();
 
+/* Optional success notice when redirected from register page. */
 (function showRegisterNotice() {
   const params = new URLSearchParams(location.search);
   const notice = params.get("notice");

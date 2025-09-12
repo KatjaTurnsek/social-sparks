@@ -15,12 +15,7 @@
     <header class="site-header">
       <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
-        <ul class="nav-links">
-          <li><a href="feed.html">Feed</a></li>
-          <li><a href="profile.html">Profile</a></li>
-          <li><a href="login.html">Login</a></li>
-          <li><a href="register.html">Register</a></li>
-        </ul>
+        <ul class="nav-links"></ul>
 
         <!-- Search form -->
         <form
@@ -42,15 +37,17 @@
       </nav>
     </header>
 
-    <main id="main-content" class="container">
-      <section class="card" style="max-width: 520px; margin: 2rem auto">
+    <main id="main-content" class="container" data-page="register">
+      <section
+        class="card"
+        style="max-width: 520px; margin: 2rem auto; padding: 1.5rem"
+      >
         <h1 class="mt-0 mb-2">Create account</h1>
 
         <form class="form" id="register-form" novalidate>
-          <div class="field">
-            <label class="label" for="name">Name</label>
+          <div class="form-group">
+            <label for="name">Name</label>
             <input
-              class="input"
               type="text"
               id="name"
               name="name"
@@ -63,10 +60,9 @@
             </small>
           </div>
 
-          <div class="field">
-            <label class="label" for="email">Email</label>
+          <div class="form-group">
+            <label for="email">Email</label>
             <input
-              class="input"
               type="email"
               id="email"
               name="email"
@@ -82,10 +78,9 @@
             </small>
           </div>
 
-          <div class="field">
-            <label class="label" for="password">Password</label>
+          <div class="form-group">
+            <label for="password">Password</label>
             <input
-              class="input"
               type="password"
               id="password"
               name="password"
@@ -100,9 +95,7 @@
           </div>
 
           <div class="form-actions">
-            <button class="btn" id="submitBtn" type="submit">
-              Create account
-            </button>
+            <button class="btn" type="submit">Create account</button>
             <a href="login.html" class="btn btn-outline"
               >I already have an account</a
             >
@@ -113,7 +106,7 @@
             class="form-message alert"
             role="status"
             aria-live="polite"
-            style="display: none"
+            hidden
           ></p>
         </form>
       </section>
@@ -123,7 +116,7 @@
           id="page-msg"
           class="form-message alert"
           aria-live="polite"
-          style="display: none"
+          hidden
         ></p>
       </div>
     </main>

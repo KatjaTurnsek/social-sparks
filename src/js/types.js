@@ -43,8 +43,18 @@
  */
 
 /**
+ * Aggregated reaction info for a post.
+ * `symbol` is the emoji; `count` is total; `reacted` indicates if the current user reacted.
+ * @typedef {{
+ *   symbol: string,
+ *   count?: number,
+ *   reacted?: boolean
+ * }} Reaction
+ */
+
+/**
  * A social post object returned by the API.
- * Includes optional media and author details.
+ * Includes optional media, author details, comments, and reactions.
  * @typedef {{
  *   id: string|number,
  *   title?: string,
@@ -53,6 +63,7 @@
  *   author?: ProfileSummary,
  *   media?: Media,
  *   comments?: Comment[],
+ *   reactions?: Reaction[],
  *   _count?: PostCount
  * }} Post
  */

@@ -57,15 +57,16 @@ function authGuard() {
 async function fetchProfile(name) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
-  const url = BASE_API_URL + "/social/profiles/" + encodeURIComponent(name);
+  const url = `${BASE_API_URL}/social/profiles/${encodeURIComponent(name)}`;
 
   const headers = {
     "X-Noroff-API-Key": NOROFF_API_KEY,
-    ...(token && { Authorization: "Bearer " + token }),
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
   const res = await fetch(url, { headers });
 
+  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -92,10 +93,10 @@ async function updateProfile(name, payload) {
   const headers = {
     "Content-Type": "application/json",
     "X-Noroff-API-Key": NOROFF_API_KEY,
-    ...(token && { Authorization: "Bearer " + token }),
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
-  const url = BASE_API_URL + "/social/profiles/" + encodeURIComponent(name);
+  const url = `${BASE_API_URL}/social/profiles/${encodeURIComponent(name)}`;
 
   const res = await fetch(url, {
     method: "PUT",
@@ -103,6 +104,7 @@ async function updateProfile(name, payload) {
     body: JSON.stringify(payload),
   });
 
+  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -237,7 +239,7 @@ function setMsg(text, ok) {
   const el = byId("edit-profile-msg");
   if (el) {
     el.style.display = "block";
-    el.className = "form-message alert" + (ok ? " success" : " error");
+    el.className = `form-message alert${ok ? " success" : " error"}`;
     el.textContent = text;
   } else if (!ok) {
     alert(text);
@@ -256,7 +258,7 @@ async function main() {
   const headingName = byId("heading-name");
   const cancelLink = /** @type {HTMLAnchorElement|null} */ (byId("btn-cancel"));
   if (cancelLink)
-    cancelLink.href = "profile.html?name=" + encodeURIComponent(myName);
+    cancelLink.href = `profile.html?name=${encodeURIComponent(myName)}`;
 
   showLoader();
   try {
@@ -306,8 +308,7 @@ async function main() {
       await updateProfile(myName, payload);
       setMsg("Profile updated!", true);
       setTimeout(() => {
-        window.location.href =
-          "profile.html?name=" + encodeURIComponent(myName);
+        window.location.href = `profile.html?name=${encodeURIComponent(myName)}`;
       }, 600);
     } catch (e) {
       // @ts-ignore runtime-only

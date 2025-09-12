@@ -10,12 +10,24 @@ import { formatDate } from "../shared/dates.js";
 import { clear, createEl } from "../shared/dom.js";
 import { normalizeBearer } from "../shared/auth.js";
 
+/** @type {HTMLElement|null} */
 const display = document.getElementById("display-container");
 
+/**
+ * Build a profile page URL for a given profile name.
+ * @param {string} name
+ * @returns {string}
+ */
 function profileUrl(name) {
-  return "profile.html?name=" + encodeURIComponent(name);
+  return `profile.html?name=${encodeURIComponent(name)}`;
 }
 
+/**
+ * Read a positive integer query parameter (fallback to default if missing/invalid).
+ * @param {string} name
+ * @param {number} def
+ * @returns {number}
+ */
 function getIntParam(name, def) {
   try {
     const sp = new URLSearchParams(window.location.search);
@@ -27,6 +39,12 @@ function getIntParam(name, def) {
   }
 }
 
+/**
+ * Update the current URL (without navigation) with page and pageSize.
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {void}
+ */
 function setPageInUrl(page, pageSize) {
   try {
     const sp = new URLSearchParams(window.location.search);
@@ -34,58 +52,96 @@ function setPageInUrl(page, pageSize) {
     sp.set("pageSize", String(pageSize));
     const qs = sp.toString();
     const base = window.location.pathname;
-    window.history.replaceState(null, "", base + (qs ? "?" + qs : ""));
+    const href = qs ? `${base}?${qs}` : base;
+    window.history.replaceState(null, "", href);
   } catch {
     // ignore
   }
 }
 
+/**
+ * Whether the user appears authenticated (has a non-empty bearer token).
+ * @returns {boolean}
+ */
 function isAuthenticated() {
   const raw = getFromLocalStorage("accessToken") || "";
   return !!normalizeBearer(raw);
 }
 
+/**
+ * Ensure feed list container uses a single-column row layout with consistent gaps.
+ * @returns {void}
+ */
+function applyListContainer() {
+  if (!display) return;
+  display.classList.add("grid");
+  display.style.display = "grid";
+  display.style.gridTemplateColumns = "1fr"; // single-column rows
+  display.style.gap = "1rem";
+}
+
+/**
+ * Render a login call-to-action in place of the feed.
+ * @param {HTMLElement|null} container
+ * @param {string} [msg]
+ * @returns {void}
+ */
 function renderLoginGate(
   container,
   msg = "You need to be logged in to view the feed."
 ) {
   if (!container) return;
   clear(container);
+  applyListContainer();
+
   const card = document.createElement("article");
   card.className = "card";
+  card.style.gridColumn = "1 / -1";
+
   const h = document.createElement("h2");
   h.textContent = "Please log in";
+
   const p = document.createElement("p");
   p.className = "muted";
   p.textContent = msg;
+
   const actions = document.createElement("div");
   actions.className = "form-actions";
+
   const login = document.createElement("a");
   login.className = "btn";
   login.href = "login.html";
   login.textContent = "Log in";
+
   const reg = document.createElement("a");
   reg.className = "btn btn-outline";
   reg.href = "register.html";
   reg.textContent = "Create account";
+
   actions.append(login, reg);
   card.append(h, p, actions);
   container.appendChild(card);
 }
 
+/**
+ * Fetch all posts (author included, comments excluded), newest first.
+ * @returns {Promise<Post[]>}
+ * @throws {Error}
+ */
 async function fetchAllPosts() {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
 
-  const url = BASE_API_URL + "/social/posts?_author=true&_comments=false";
+  const url = `${BASE_API_URL}/social/posts?_author=true&_comments=false`;
 
   const headers = {
     "X-Noroff-API-Key": NOROFF_API_KEY,
-    ...(token && { Authorization: "Bearer " + token }),
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
   const res = await fetch(url, { headers });
 
+  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -97,30 +153,46 @@ async function fetchAllPosts() {
     throw new Error(errorFrom(json, "Failed to load feed"));
   }
 
+  /** @type {any[]} */
   const data = json?.data ?? (Array.isArray(json) ? json : []);
-  if (!Array.isArray(data)) {
-    return [];
-  }
+  if (!Array.isArray(data)) return [];
 
-  return [...data].sort(function (a, b) {
+  return [...data].sort((a, b) => {
     const ta = a?.created ? new Date(a.created).getTime() : 0;
     const tb = b?.created ? new Date(b.created).getTime() : 0;
     return tb - ta;
   });
 }
 
+/**
+ * Render a one-card empty/feed-error message with consistent spacing.
+ * @param {string} message
+ * @returns {void}
+ */
 function renderEmpty(message) {
   if (!display) return;
   clear(display);
+  applyListContainer();
+
   const card = createEl("article", "card", "");
+  card.style.gridColumn = "1 / -1";
+
   const p = createEl("p", "muted", message || "No posts yet.");
   card.appendChild(p);
   display.appendChild(card);
 }
 
+/**
+ * Render the paginated feed page (rows layout) with header and pager.
+ * @param {Post[]} allPosts
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {void}
+ */
 function renderListPage(allPosts, page, pageSize) {
   if (!display) return;
   clear(display);
+  applyListContainer();
 
   if (!allPosts.length) {
     renderEmpty("No posts yet.");
@@ -130,20 +202,23 @@ function renderListPage(allPosts, page, pageSize) {
   const total = allPosts.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   if (page > totalPages) page = totalPages;
+
   const startIndex = (page - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, total);
   const slice = [...allPosts].slice(startIndex, endIndex);
 
+  // Header (full width)
   const header = createEl("div", "", "");
+  header.style.gridColumn = "1 / -1";
+
   const h = createEl("h2", "", "Feed");
-
-  let rangeText = "Showing " + String(startIndex + 1) + "-" + String(endIndex);
-  rangeText += " of " + String(total);
-
+  const rangeText = `Showing ${startIndex + 1}-${endIndex} of ${total}`;
   const sub = createEl("p", "muted", rangeText);
+
   header.append(h, sub);
   display.appendChild(header);
 
+  // Posts (single-column rows)
   for (const post of slice) {
     const item = createEl("article", "card", "");
 
@@ -163,7 +238,7 @@ function renderListPage(allPosts, page, pageSize) {
     } else {
       meta.append(authorName);
     }
-    if (createdText) meta.append(" · " + createdText);
+    if (createdText) meta.append(` · ${createdText}`);
 
     const media = post?.media || null;
     if (typeof media?.url === "string" && media.url) {
@@ -177,20 +252,22 @@ function renderListPage(allPosts, page, pageSize) {
 
     const body = createEl("p", "", post?.body || "");
     if ((body.textContent || "").length > 260) {
-      body.textContent = (body.textContent || "").slice(0, 257) + "...";
+      body.textContent = `${(body.textContent || "").slice(0, 257)}...`;
     }
 
     const actions = createEl("div", "form-actions", "");
     const view = createEl("a", "btn btn-outline", "View");
     const pid = post?.id != null ? String(post.id) : "";
-    view.href = "post.html?id=" + encodeURIComponent(pid);
+    view.href = `post.html?id=${encodeURIComponent(pid)}`;
     actions.appendChild(view);
 
     item.append(title, meta, body, actions);
     display.appendChild(item);
   }
 
+  // Pager (full width)
   const pager = createEl("div", "form-actions", "");
+  pager.style.gridColumn = "1 / -1";
   pager.style.justifyContent = "space-between";
 
   const left = createEl("div", "", "");
@@ -200,10 +277,9 @@ function renderListPage(allPosts, page, pageSize) {
   const nextBtn = createEl("a", "btn btn-outline", "Next →");
 
   const info = createEl("span", "muted", "");
-  info.textContent = "Page " + String(page) + " of " + String(totalPages);
+  info.textContent = `Page ${page} of ${totalPages}`;
 
   if (page <= 1) {
-    prevBtn.className = "btn btn-outline";
     prevBtn.style.pointerEvents = "none";
     prevBtn.style.opacity = "0.6";
   } else {
@@ -211,7 +287,6 @@ function renderListPage(allPosts, page, pageSize) {
   }
 
   if (page >= totalPages) {
-    nextBtn.className = "btn btn-outline";
     nextBtn.style.pointerEvents = "none";
     nextBtn.style.opacity = "0.6";
   } else {
@@ -225,17 +300,27 @@ function renderListPage(allPosts, page, pageSize) {
   display.appendChild(pager);
 }
 
+/**
+ * Build a link for a given page/pageSize, preserving other query params if present.
+ * @param {number} page
+ * @param {number} pageSize
+ * @returns {string}
+ */
 function buildPageLink(page, pageSize) {
   try {
     const sp = new URLSearchParams(window.location.search);
     sp.set("page", String(page));
     sp.set("pageSize", String(pageSize));
-    return window.location.pathname + "?" + sp.toString();
+    return `${window.location.pathname}?${sp.toString()}`;
   } catch {
-    return "feed.html?page=" + String(page) + "&pageSize=" + String(pageSize);
+    return `feed.html?page=${String(page)}&pageSize=${String(pageSize)}`;
   }
 }
 
+/**
+ * Initialize the feed page: guard, skeletons, fetch, render, pager wiring.
+ * @returns {Promise<void>}
+ */
 async function main() {
   if (!isAuthenticated()) {
     renderLoginGate(display);
@@ -247,14 +332,21 @@ async function main() {
 
   if (display) {
     clear(display);
-    const skeletonWrap = createEl("div", "grid", "");
-    const skeletons = [...Array(Math.min(pageSize, 5))].map(() => {
+    applyListContainer();
+
+    // Header skeleton
+    const header = createEl("div", "", "");
+    header.style.gridColumn = "1 / -1";
+    header.append(createEl("h2", "", "Feed"));
+    header.append(createEl("p", "muted", "Loading…"));
+    display.appendChild(header);
+
+    // Row skeletons
+    [...Array(Math.min(pageSize, 5))].forEach(() => {
       const sk = createEl("div", "card skeleton", "");
       sk.style.height = "140px";
-      return sk;
+      display.appendChild(sk);
     });
-    skeletonWrap.append(...skeletons);
-    display.appendChild(skeletonWrap);
   }
 
   showLoader();

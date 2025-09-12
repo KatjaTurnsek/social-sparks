@@ -3,6 +3,21 @@ export function clear(node) {
   while (node.firstChild) node.removeChild(node.firstChild);
 }
 
+export function esc(v) {
+  const s = String(v ?? "");
+  return s.replace(/[&<>"']/g, (ch) =>
+    ch === "&"
+      ? "&amp;"
+      : ch === "<"
+        ? "&lt;"
+        : ch === ">"
+          ? "&gt;"
+          : ch === '"'
+            ? "&quot;"
+            : "&#39;"
+  );
+}
+
 export function createEl(tag, className, text) {
   const n = document.createElement(tag);
   if (className) {

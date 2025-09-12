@@ -2,6 +2,7 @@
 /** @typedef {import("../types.js").Profile} Profile */
 /** @typedef {import("../types.js").Post} Post */
 /** @typedef {import("../types.js").Media} Media */
+/** @typedef {import("../types.js").ProfileSummary} ProfileSummary */
 
 import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
@@ -9,14 +10,32 @@ import { errorFrom } from "../shared/errors.js";
 import { normalizeBearer } from "../shared/auth.js";
 import { formatDate } from "../shared/dates.js";
 
+/**
+ * Get element by id.
+ * @param {string} id
+ * @returns {HTMLElement|null}
+ */
 function byId(id) {
   return document.getElementById(id);
 }
 
+/**
+ * Safely set textContent on an element.
+ * @param {HTMLElement|null} el
+ * @param {string} text
+ * @returns {void}
+ */
 function setText(el, text) {
   if (el) el.textContent = text;
 }
 
+/**
+ * Set (or clear) an <img>'s src/alt and visibility.
+ * @param {HTMLImageElement|null} imgEl
+ * @param {string} url
+ * @param {string} [alt]
+ * @returns {void}
+ */
 function setImg(imgEl, url, alt) {
   if (!imgEl) return;
   if (url) {
@@ -30,6 +49,10 @@ function setImg(imgEl, url, alt) {
   }
 }
 
+/**
+ * Resolve profile name to display: querystring ?name=... or current user.
+ * @returns {string}
+ */
 function getProfileName() {
   try {
     const sp = new URLSearchParams(window.location.search || "");
@@ -40,23 +63,33 @@ function getProfileName() {
   }
 }
 
+/**
+ * Case-insensitive name equality (trimmed).
+ * @param {string|undefined|null} a
+ * @param {string|undefined|null} b
+ * @returns {boolean}
+ */
 function sameUser(a, b) {
   return a?.trim().toLowerCase() === b?.trim().toLowerCase();
 }
 
+/**
+ * Fetch full profile with posts/followers/following included.
+ * @param {string} name
+ * @returns {Promise<Profile|null>}
+ * @throws {Error} When request fails or non-OK response.
+ */
 async function fetchProfile(name) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
 
-  const url =
-    BASE_API_URL +
-    "/social/profiles/" +
-    encodeURIComponent(name) +
-    "?_posts=true&_followers=true&_following=true";
+  const url = `${BASE_API_URL}/social/profiles/${encodeURIComponent(
+    name
+  )}?_posts=true&_followers=true&_following=true`;
 
   const headers = {
     "X-Noroff-API-Key": NOROFF_API_KEY,
-    ...(token && { Authorization: "Bearer " + token }),
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
   const res = await fetch(url, { headers });
@@ -72,21 +105,25 @@ async function fetchProfile(name) {
   return json?.data || null;
 }
 
+/**
+ * Follow/unfollow a profile.
+ * @param {string} name
+ * @param {"follow"|"unfollow"} action
+ * @returns {Promise<Profile|any>}
+ * @throws {Error} With attached status on failure.
+ */
 async function follow(name, action) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
 
   const headers = {
     "X-Noroff-API-Key": NOROFF_API_KEY,
-    ...(token && { Authorization: "Bearer " + token }),
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
-  const url =
-    BASE_API_URL +
-    "/social/profiles/" +
-    encodeURIComponent(name) +
-    "/" +
-    action;
+  const url = `${BASE_API_URL}/social/profiles/${encodeURIComponent(
+    name
+  )}/${action}`;
 
   const res = await fetch(url, { method: "PUT", headers });
 
@@ -99,13 +136,19 @@ async function follow(name, action) {
 
   if (!res.ok) {
     const err = new Error(errorFrom(json, "Failed"));
-    // @ts-ignore
+    // @ts-ignore - attach status for callers
     err.status = res.status;
     throw err;
   }
   return json?.data || json || null;
 }
 
+/**
+ * Render a grid of the user's posts into a panel element.
+ * @param {HTMLElement|null} panelEl
+ * @param {Post[]|null|undefined} posts
+ * @returns {void}
+ */
 function renderPosts(panelEl, posts) {
   if (!panelEl) return;
   panelEl.innerHTML = "";
@@ -148,7 +191,7 @@ function renderPosts(panelEl, posts) {
     const view = document.createElement("a");
     view.className = "btn btn-outline";
     const pid = post?.id != null ? String(post.id) : "";
-    view.href = "post.html?id=" + encodeURIComponent(pid);
+    view.href = `post.html?id=${encodeURIComponent(pid)}`;
     view.textContent = "View";
     actions.appendChild(view);
 
@@ -157,6 +200,12 @@ function renderPosts(panelEl, posts) {
   });
 }
 
+/**
+ * Render follower/following lists as cards with avatar + link.
+ * @param {HTMLElement|null} panelEl
+ * @param {ProfileSummary[]|null|undefined} list
+ * @returns {void}
+ */
 function renderPeople(panelEl, list) {
   if (!panelEl) return;
   panelEl.innerHTML = "";
@@ -206,15 +255,18 @@ function renderPeople(panelEl, list) {
     const go = document.createElement("a");
     go.className = "btn btn-outline";
     go.textContent = "View";
-    go.href = "profile.html?name=" + encodeURIComponent(person?.name || "");
+    go.href = `profile.html?name=${encodeURIComponent(person?.name || "")}`;
 
-    const rowChildren = [avatar, info, go];
-    row.append(...rowChildren);
+    row.append(avatar, info, go);
     line.appendChild(row);
     panelEl.appendChild(line);
   });
 }
 
+/**
+ * Page bootstrap: load profile, wire actions/tabs, render panels.
+ * @returns {Promise<void>}
+ */
 async function main() {
   const name = getProfileName();
 
@@ -365,7 +417,7 @@ async function main() {
         tabBtn.classList.add("is-active");
         const target = tabBtn.getAttribute("data-tab");
         panels.forEach((pnl) => pnl.classList.add("is-hidden"));
-        const active = byId("panel-" + (target || ""));
+        const active = byId(`panel-${target || ""}`);
         if (active) active.classList.remove("is-hidden");
       });
     });

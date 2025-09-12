@@ -9,35 +9,52 @@ import { normalizeBearer } from "../shared/auth.js";
 import { formatDate } from "../shared/dates.js";
 import { clear } from "../shared/dom.js";
 
-const postsEl = document.getElementById("display-container");
-const profilesEl = document.getElementById("profiles-container");
-const pagerEl = document.getElementById("profiles-pager");
-const searchForm = /** @type {HTMLFormElement|null} */ (
+/** @type {HTMLElement|null} */ const postsEl =
+  document.getElementById("display-container");
+/** @type {HTMLElement|null} */ const profilesEl =
+  document.getElementById("profiles-container");
+/** @type {HTMLElement|null} */ const pagerEl =
+  document.getElementById("profiles-pager");
+/** @type {HTMLFormElement|null} */ const searchForm = /** @type {any} */ (
   document.getElementById("profile-search-form")
 );
-const searchInput = /** @type {HTMLInputElement|null} */ (
+/** @type {HTMLInputElement|null} */ const searchInput = /** @type {any} */ (
   document.getElementById("profile-q")
 );
 
-const POSTS_URL =
-  BASE_API_URL +
-  "/social/posts?_author=true&_comments=false&sort=created&sortOrder=desc";
+const POSTS_URL = `${BASE_API_URL}/social/posts?_author=true&_comments=false&sort=created&sortOrder=desc`;
 
+/**
+ * Build a profile link for a given user name.
+ * @param {string} name
+ * @returns {string}
+ */
 function profileUrl(name) {
-  return "profile.html?name=" + encodeURIComponent(name);
+  return `profile.html?name=${encodeURIComponent(name)}`;
 }
 
+/**
+ * True if we have a non-empty bearer token in storage.
+ * @returns {boolean}
+ */
 function isAuthenticated() {
   const raw = getFromLocalStorage("accessToken") || "";
   return !!normalizeBearer(raw);
 }
 
+/**
+ * Render a login CTA card into the given container.
+ * @param {HTMLElement|null} container
+ * @param {string} [msg]
+ * @returns {void}
+ */
 function renderLoginGate(
   container,
   msg = "You need to be logged in to view posts and profiles."
 ) {
   if (!container) return;
   clear(container);
+
   if (container.parentElement)
     container.parentElement.style.gridColumn = "1 / -1";
   container.classList.remove("grid");
@@ -47,42 +64,59 @@ function renderLoginGate(
   container.style.gridColumn = "1 / -1";
   container.style.width = "100%";
   container.style.maxWidth = "none";
+
   const card = document.createElement("article");
   card.className = "card";
   card.style.width = "100%";
   card.style.margin = "0";
+
   const h = document.createElement("h2");
   h.textContent = "Please log in";
+
   const p = document.createElement("p");
   p.className = "muted";
   p.textContent = msg;
+
   const actions = document.createElement("div");
   actions.className = "form-actions";
+
   const login = document.createElement("a");
   login.className = "btn";
   login.href = "login.html";
   login.textContent = "Log in";
+
   const reg = document.createElement("a");
   reg.className = "btn btn-outline";
   reg.href = "register.html";
   reg.textContent = "Create account";
+
   actions.append(login, reg);
   card.append(h, p, actions);
   container.appendChild(card);
 }
 
+/**
+ * Build default API headers including API key and optional bearer token.
+ * @returns {Record<string, string>}
+ */
 function buildHeaders() {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
   return {
     "X-Noroff-API-Key": NOROFF_API_KEY,
-    ...(token && { Authorization: "Bearer " + token }),
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 }
 
+/**
+ * Fetch latest posts (author included, comments excluded), newest first.
+ * @returns {Promise<Post[]>}
+ * @throws {Error}
+ */
 async function fetchPosts() {
   const res = await fetch(POSTS_URL, { headers: buildHeaders() });
 
+  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -94,6 +128,7 @@ async function fetchPosts() {
     throw new Error(errorFrom(json, res.statusText || "Failed to load posts"));
   }
 
+  /** @type {any[]} */
   let data = [];
   if (Array.isArray(json?.data)) data = json.data;
   else if (Array.isArray(json)) data = json;
@@ -105,28 +140,43 @@ async function fetchPosts() {
   });
 }
 
+/**
+ * Show an error card + “View more posts” link.
+ * @param {string} message
+ * @returns {void}
+ */
 function renderPostsError(message) {
   if (!postsEl) return;
   clear(postsEl);
+
   const card = document.createElement("article");
   card.className = "card";
+
   const p = document.createElement("p");
   p.className = "alert error";
   p.textContent = message || "Something went wrong.";
   card.appendChild(p);
+
   postsEl.appendChild(card);
 
   const moreWrap = document.createElement("div");
   moreWrap.className = "form-actions";
   moreWrap.style.justifyContent = "center";
+
   const more = document.createElement("a");
   more.className = "btn btn-outline";
   more.href = "feed.html";
   more.textContent = "View more posts";
+
   moreWrap.appendChild(more);
   postsEl.appendChild(moreWrap);
 }
 
+/**
+ * Grab the first sentence (or a short fallback) for card snippets.
+ * @param {string} text
+ * @returns {string}
+ */
 function firstSentence(text) {
   const s = String(text || "").trim();
   if (!s) return "";
@@ -139,9 +189,14 @@ function firstSentence(text) {
       return s.slice(0, i).trim();
     }
   }
-  return s.length > 140 ? s.slice(0, 140).trim() + "…" : s;
+  return s.length > 140 ? `${s.slice(0, 140).trim()}…` : s;
 }
 
+/**
+ * Render the “Latest posts” 4-up grid with a “View more posts” CTA.
+ * @param {Post[]} posts
+ * @returns {void}
+ */
 function renderPosts(posts) {
   if (!postsEl) return;
   clear(postsEl);
@@ -171,10 +226,12 @@ function renderPosts(posts) {
     const meta = document.createElement("p");
     meta.className = "muted";
     meta.style.wordBreak = "break-word";
+
     const authorName = post?.author?.name
       ? String(post.author.name)
       : "Unknown";
     const created = post?.created ? formatDate(post.created) : "";
+
     meta.textContent = "by ";
     if (authorName !== "Unknown") {
       const a = document.createElement("a");
@@ -184,7 +241,7 @@ function renderPosts(posts) {
     } else {
       meta.append(authorName);
     }
-    if (created) meta.append(" · " + created);
+    if (created) meta.append(` · ${created}`);
 
     const media = post?.media || null;
     if (typeof media?.url === "string" && media.url) {
@@ -205,7 +262,7 @@ function renderPosts(posts) {
     const view = document.createElement("a");
     view.className = "btn btn-outline";
     const id = post?.id != null ? post.id : "";
-    view.href = "post.html?id=" + encodeURIComponent(String(id));
+    view.href = `post.html?id=${encodeURIComponent(String(id))}`;
     view.textContent = "View";
     actions.appendChild(view);
 
@@ -217,19 +274,42 @@ function renderPosts(posts) {
   moreWrap.className = "form-actions";
   moreWrap.style.gridColumn = "1/-1";
   moreWrap.style.justifyContent = "center";
+
   const more = document.createElement("a");
   more.className = "btn btn-outline";
   more.href = "feed.html";
   more.textContent = "View more posts";
+
   moreWrap.appendChild(more);
   postsEl.appendChild(moreWrap);
 }
 
 /**
+ * Profile list API metadata.
  * @typedef {{ isFirstPage?: boolean, isLastPage?: boolean, currentPage?: number, previousPage?: number|null, nextPage?: number|null, pageCount?: number, totalCount?: number }} Meta
+ */
+
+/**
+ * Profiles response shape.
  * @typedef {{ list: Profile[], meta: Meta }} ProfilesResult
  */
 
+/**
+ * Options for fetching profiles.
+ * @typedef {Object} FetchProfilesOptions
+ * @property {string} [q]
+ * @property {number} [page]
+ * @property {number} [limit]
+ * @property {"created"|"name"|"updated"} [sort]
+ * @property {"asc"|"desc"} [sortOrder]
+ */
+
+/**
+ * Fetch paginated profiles (optionally searching).
+ * @param {FetchProfilesOptions} [opts]
+ * @returns {Promise<ProfilesResult>}
+ * @throws {Error}
+ */
 async function fetchProfiles(opts = {}) {
   const q = opts.q || "";
   const page = Math.max(1, opts.page || 1);
@@ -245,9 +325,10 @@ async function fetchProfiles(opts = {}) {
   sp.set("sortOrder", sortOrder);
   if (q) sp.set("q", q);
 
-  const url = BASE_API_URL + path + "?" + sp.toString();
+  const url = `${BASE_API_URL}${path}?${sp.toString()}`;
   const res = await fetch(url, { headers: buildHeaders() });
 
+  /** @type {any} */
   let json = null;
   try {
     json = await res.json();
@@ -256,20 +337,30 @@ async function fetchProfiles(opts = {}) {
   }
   if (!res.ok) throw new Error(errorFrom(json, "Failed to load profiles"));
 
+  /** @type {Profile[]} */
   const list = (Array.isArray(json?.data) ? json.data : []) || [];
+  /** @type {Meta} */
   const meta = json?.meta || {};
   return { list: [...list], meta: { ...meta } };
 }
 
+/**
+ * Show an error card in the profiles panel and clear pager.
+ * @param {string} message
+ * @returns {void}
+ */
 function renderProfilesError(message) {
   if (!profilesEl) return;
   clear(profilesEl);
+
   const card = document.createElement("article");
   card.className = "card";
+
   const p = document.createElement("p");
   p.className = "alert error";
   p.textContent = message || "Could not load profiles.";
   card.appendChild(p);
+
   profilesEl.appendChild(card);
 
   if (pagerEl) {
@@ -277,6 +368,11 @@ function renderProfilesError(message) {
   }
 }
 
+/**
+ * Render a responsive grid of profile cards.
+ * @param {Profile[]} profiles
+ * @returns {void}
+ */
 function renderProfilesList(profiles) {
   if (!profilesEl) return;
   clear(profilesEl);
@@ -332,15 +428,18 @@ function renderProfilesList(profiles) {
     actions.appendChild(btn);
 
     info.appendChild(nm);
-
     row.append(avatar, info);
-
     card.append(row, actions);
-
     profilesEl.appendChild(card);
   }
 }
 
+/**
+ * Render a Previous/Next pager for profiles.
+ * @param {Meta} meta
+ * @param {(page:number)=>void} go
+ * @returns {void}
+ */
 function renderPager(meta, go) {
   if (!pagerEl) return;
   clear(pagerEl);
@@ -390,12 +489,13 @@ function renderPager(meta, go) {
   pagerEl.append(left, right);
 }
 
-let state = {
-  q: "",
-  page: 1,
-  limit: 12,
-};
+/** @type {{ q: string, page: number, limit: number }} */
+let state = { q: "", page: 1, limit: 12 };
 
+/**
+ * Fetch + render profiles for current state (and wire the pager).
+ * @returns {Promise<void>}
+ */
 async function loadProfiles() {
   try {
     const { list, meta } = await fetchProfiles({
@@ -422,6 +522,10 @@ async function loadProfiles() {
   }
 }
 
+/**
+ * Bootstrap the home page: gate by auth, show skeletons, fetch posts & profiles, wire search.
+ * @returns {Promise<void>}
+ */
 async function main() {
   if (!isAuthenticated()) {
     if (profilesEl) profilesEl.style.display = "none";
@@ -430,6 +534,7 @@ async function main() {
     return;
   }
 
+  // Skeletons
   if (postsEl) {
     clear(postsEl);
     const skWrap = document.createElement("div");
@@ -470,6 +575,7 @@ async function main() {
     hideLoader();
   }
 
+  // Profile search
   if (searchForm && searchInput) {
     searchForm.addEventListener("submit", (ev) => {
       ev.preventDefault();

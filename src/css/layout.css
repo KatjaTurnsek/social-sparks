@@ -129,3 +129,44 @@
 #main-content {
   max-width: var(--max-width) !important;
 }
+
+/* Index – Profiles header row (was inline styles) */
+.section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Profiles grid + spacing */
+#profiles-container.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+/* Pager alignment */
+#profiles-pager.pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Latest posts – 4 columns (responsive) */
+.latest-posts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (max-width: 900px) {
+  .latest-posts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .latest-posts-grid {
+    grid-template-columns: 1fr;
+  }
+}

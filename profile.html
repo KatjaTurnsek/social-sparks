@@ -18,12 +18,7 @@
     <header class="site-header">
       <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
-        <ul class="nav-links">
-          <li><a href="feed.html">Feed</a></li>
-          <li><a href="profile.html">Profile</a></li>
-          <li><a href="login.html">Login</a></li>
-          <li><a href="register.html">Register</a></li>
-        </ul>
+        <ul class="nav-links"></ul>
 
         <!-- Search form -->
         <form
@@ -79,8 +74,8 @@
             </div>
 
             <div class="profile-actions">
-              <button id="btn-follow" class="btn">Follow</button>
-              <button id="btn-unfollow" class="btn btn-outline">
+              <button id="btn-follow" class="btn" hidden>Follow</button>
+              <button id="btn-unfollow" class="btn btn-outline" hidden>
                 Unfollow
               </button>
               <a
@@ -96,22 +91,66 @@
       </article>
 
       <!-- Tabs -->
-      <nav class="tabs" aria-label="Profile sections">
-        <button class="tab is-active" data-tab="posts" type="button">
+      <nav class="tabs" aria-label="Profile sections" role="tablist">
+        <button
+          class="tab is-active"
+          id="tab-posts"
+          data-tab="posts"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-posts"
+        >
           Posts
         </button>
-        <button class="tab" data-tab="followers" type="button">
+        <button
+          class="tab"
+          id="tab-followers"
+          data-tab="followers"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-followers"
+        >
           Followers
         </button>
-        <button class="tab" data-tab="following" type="button">
+        <button
+          class="tab"
+          id="tab-following"
+          data-tab="following"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-following"
+        >
           Following
         </button>
       </nav>
 
       <!-- Panels -->
-      <section id="panel-posts" class="tabpanel"></section>
-      <section id="panel-followers" class="tabpanel is-hidden"></section>
-      <section id="panel-following" class="tabpanel is-hidden"></section>
+      <section
+        id="panel-posts"
+        class="tabpanel"
+        role="tabpanel"
+        tabindex="0"
+        aria-labelledby="tab-posts"
+      ></section>
+
+      <section
+        id="panel-followers"
+        class="tabpanel is-hidden"
+        role="tabpanel"
+        tabindex="0"
+        aria-labelledby="tab-followers"
+      ></section>
+
+      <section
+        id="panel-following"
+        class="tabpanel is-hidden"
+        role="tabpanel"
+        tabindex="0"
+        aria-labelledby="tab-following"
+      ></section>
 
       <div id="app">
         <p

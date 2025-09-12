@@ -1,5 +1,7 @@
 // @ts-check
 
+/** @typedef {import("../types.js").Media} Media */
+
 import { BASE_API_URL, NOROFF_API_KEY, getFromLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
@@ -13,16 +15,26 @@ const msgEl = document.getElementById("edit-msg");
 /** @type {HTMLElement|null} */
 const msg = msgEl instanceof HTMLElement ? msgEl : null;
 
-function setMsg(text, ok) {
+/**
+ * Show a success/error message inline (falls back to alert on error).
+ * @param {string} text
+ * @param {boolean} [ok=false]
+ * @returns {void}
+ */
+function setMsg(text, ok = false) {
   if (!msg) {
     if (!ok) window.alert(text);
     return;
   }
   msg.style.display = "block";
-  msg.className = "form-message alert" + (ok ? " success" : " error");
+  msg.className = `form-message alert${ok ? " success" : " error"}`;
   msg.textContent = text;
 }
 
+/**
+ * Read the post id from the query string.
+ * @returns {string} id or empty string if missing
+ */
 function getId() {
   try {
     const sp = new URLSearchParams(window.location.search);
@@ -33,7 +45,7 @@ function getId() {
   }
 }
 
-/** @type {string[]} */
+/** Emoji palette content. @type {string[]} */
 const EMOJIS = [
   "😀",
   "😁",
@@ -72,6 +84,10 @@ let emojiPalette = null;
 /** @type {(HTMLInputElement|HTMLTextAreaElement|null)} */
 let emojiActiveField = null;
 
+/**
+ * Lazily create (and cache) the emoji palette element and its listeners.
+ * @returns {HTMLElement} Palette root element
+ */
 function createEmojiPalette() {
   if (emojiPalette) return emojiPalette;
 
@@ -87,7 +103,7 @@ function createEmojiPalette() {
     b.type = "button";
     b.className = "emoji-btn";
     b.textContent = emo;
-    b.setAttribute("aria-label", "Insert emoji " + emo);
+    b.setAttribute("aria-label", `Insert emoji ${emo}`);
     b.addEventListener("click", () => {
       if (emojiActiveField) insertAtEnd(emojiActiveField, emo);
       hideEmojiPalette();
@@ -99,12 +115,14 @@ function createEmojiPalette() {
   pal.appendChild(grid);
   document.body.appendChild(pal);
 
+  // Dismiss on outside click
   document.addEventListener("click", (e) => {
     if (!pal || pal.style.display === "none") return;
     const target = e.target instanceof Node ? e.target : null;
     if (!target || !pal.contains(target)) hideEmojiPalette();
   });
 
+  // Dismiss on Escape
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") hideEmojiPalette();
   });
@@ -113,28 +131,49 @@ function createEmojiPalette() {
   return pal;
 }
 
+/**
+ * Position and show the emoji palette near a button.
+ * @param {HTMLElement} btn
+ * @param {HTMLInputElement|HTMLTextAreaElement} field
+ * @returns {void}
+ */
 function showEmojiPalette(btn, field) {
   emojiActiveField = field;
   const pal = createEmojiPalette();
   const rect = btn.getBoundingClientRect();
-  pal.style.left = Math.round(rect.left) + "px";
-  pal.style.top = Math.round(rect.bottom + 6) + "px";
+  pal.style.left = `${Math.round(rect.left)}px`;
+  pal.style.top = `${Math.round(rect.bottom + 6)}px`;
   pal.style.display = "block";
 }
 
+/**
+ * Hide the emoji palette if present.
+ * @returns {void}
+ */
 function hideEmojiPalette() {
   if (emojiPalette) emojiPalette.style.display = "none";
 }
 
+/**
+ * Append text at the end of an input or textarea, preserving focus.
+ * @param {HTMLInputElement|HTMLTextAreaElement} el
+ * @param {string} text
+ * @returns {void}
+ */
 function insertAtEnd(el, text) {
   try {
-    el.value = String(el.value || "") + String(text || "");
+    el.value = `${String(el.value || "")}${String(text || "")}`;
     el.focus();
   } catch {
     // ignore
   }
 }
 
+/**
+ * Attach a small "Emoji" button under a given input/textarea that opens the palette.
+ * @param {HTMLInputElement|HTMLTextAreaElement|null} field
+ * @returns {void}
+ */
 function attachEmojiButton(field) {
   if (!field || !field.parentElement) return;
 
@@ -156,6 +195,11 @@ function attachEmojiButton(field) {
   field.parentElement.appendChild(wrap);
 }
 
+/**
+ * Load the existing post data, authorize, and hydrate the form.
+ * Also attaches emoji helpers after data loads.
+ * @returns {Promise<void>}
+ */
 async function load() {
   const id = getId();
   if (!id) {
@@ -168,11 +212,10 @@ async function load() {
 
   const headers = {
     "X-Noroff-API-Key": NOROFF_API_KEY,
-    ...(token && { Authorization: "Bearer " + token }),
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
-  const url =
-    BASE_API_URL + "/social/posts/" + encodeURIComponent(id) + "?_author=true";
+  const url = `${BASE_API_URL}/social/posts/${encodeURIComponent(id)}?_author=true`;
 
   showLoader();
   try {
@@ -183,6 +226,7 @@ async function load() {
       return;
     }
 
+    /** @type {any} */
     let json = null;
     try {
       json = await res.json();
@@ -202,7 +246,7 @@ async function load() {
     const owner = typeof p?.author?.name === "string" ? p.author.name : "";
     if (owner && me && owner !== me) {
       setMsg("You can only edit your own post.");
-      window.location.href = "post.html?id=" + encodeURIComponent(id);
+      window.location.href = `post.html?id=${encodeURIComponent(id)}`;
       return;
     }
 
@@ -250,6 +294,16 @@ async function load() {
   }
 }
 
+/**
+ * Payload sent to the edit post endpoint.
+ * All fields are optional except `title` which we validate before sending.
+ * @typedef {{
+ *   title: string,
+ *   body?: string,
+ *   media?: Media
+ * }} UpdatePostPayload
+ */
+
 if (form) {
   form.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -281,9 +335,10 @@ if (form) {
       return;
     }
 
+    /** @type {UpdatePostPayload} */
     const payload = {
       title,
-      body,
+      ...(body && { body }),
       ...(mediaUrl && {
         media: { url: mediaUrl, ...(mediaAlt && { alt: mediaAlt }) },
       }),
@@ -292,13 +347,13 @@ if (form) {
     const headers = {
       "Content-Type": "application/json",
       "X-Noroff-API-Key": NOROFF_API_KEY,
-      ...(token && { Authorization: "Bearer " + token }),
+      ...(token && { Authorization: `Bearer ${token}` }),
     };
 
     showLoader();
     try {
       const res = await fetch(
-        BASE_API_URL + "/social/posts/" + encodeURIComponent(id),
+        `${BASE_API_URL}/social/posts/${encodeURIComponent(id)}`,
         {
           method: "PUT",
           headers,
@@ -306,6 +361,7 @@ if (form) {
         }
       );
 
+      /** @type {any} */
       let json = null;
       try {
         json = await res.json();
@@ -318,7 +374,7 @@ if (form) {
       }
 
       setMsg("Saved!", true);
-      window.location.href = "post.html?id=" + encodeURIComponent(id);
+      window.location.href = `post.html?id=${encodeURIComponent(id)}`;
     } catch (err) {
       const em2 =
         err && typeof err === "object" && err !== null && "message" in err

@@ -18,14 +18,8 @@
     <header class="site-header">
       <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
-        <ul class="nav-links">
-          <li><a href="feed.html">Feed</a></li>
-          <li><a href="profile.html">Profile</a></li>
-          <li><a href="login.html">Login</a></li>
-          <li><a href="register.html">Register</a></li>
-        </ul>
+        <ul class="nav-links"></ul>
 
-        <!-- Search form -->
         <form
           action="search.html"
           method="get"
@@ -45,7 +39,7 @@
       </nav>
     </header>
 
-    <main id="main-content" class="container">
+    <main id="main-content" class="container" data-page="index">
       <section class="hero">
         <h1 class="hero-title">Welcome to Social Sparks</h1>
         <p class="hero-text">
@@ -62,25 +56,21 @@
         </p>
       </section>
 
-      <!-- Latest posts (4 columns) -->
-      <section aria-labelledby="latest-posts-heading" class="section">
+      <!-- Latest posts -->
+      <section
+        id="latest-posts"
+        class="section"
+        aria-labelledby="latest-posts-heading"
+        data-limit="4"
+      >
         <h2 id="latest-posts-heading" class="mb-2">Latest posts</h2>
-        <!-- Added classes so CSS enforces 4-col grid and uniform image height -->
-        <div id="display-container" class="grid cols-4 latest-posts-grid"></div>
+        <div id="display-container" class="latest-posts-grid"></div>
       </section>
 
       <!-- Profiles (search + list + pager) -->
-      <section aria-labelledby="profiles-heading" class="section">
-        <div
-          style="
-            display: flex;
-            align-items: end;
-            gap: 1rem;
-            justify-content: space-between;
-            flex-wrap: wrap;
-          "
-        >
-          <h2 id="profiles-heading" class="mb-2" style="margin: 0">Profiles</h2>
+      <section id="profiles" class="section" aria-labelledby="profiles-heading">
+        <div class="section-header">
+          <h2 id="profiles-heading" class="mb-2">Profiles</h2>
           <form
             id="profile-search-form"
             class="form-inline nav-search"
@@ -100,19 +90,8 @@
           </form>
         </div>
 
-        <div
-          id="profiles-container"
-          class="grid"
-          style="margin-top: 0.75rem"
-        ></div>
-
-        <div
-          id="profiles-pager"
-          class="form-actions"
-          style="justify-content: space-between"
-        >
-          <!-- Prev/Next buttons will be injected -->
-        </div>
+        <div id="profiles-container" class="grid"></div>
+        <div id="profiles-pager" class="form-actions pager"></div>
       </section>
 
       <div id="app">
@@ -120,7 +99,7 @@
           id="page-msg"
           class="form-message alert"
           aria-live="polite"
-          style="display: none"
+          hidden
         ></p>
       </div>
     </main>

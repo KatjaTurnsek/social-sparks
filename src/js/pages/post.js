@@ -52,6 +52,10 @@ let emojiPalette = null;
 /** @type {(HTMLInputElement|HTMLTextAreaElement|null)} */
 let emojiActiveField = null;
 
+/**
+ * Create (or reuse) the global emoji palette element.
+ * @returns {HTMLElement} The palette root element
+ */
 function createEmojiPalette() {
   if (emojiPalette) return emojiPalette;
 
@@ -67,7 +71,7 @@ function createEmojiPalette() {
     b.type = "button";
     b.className = "emoji-btn";
     b.textContent = emo;
-    b.setAttribute("aria-label", "Insert emoji " + emo);
+    b.setAttribute("aria-label", `Insert emoji ${emo}`);
     b.addEventListener("click", () => {
       if (emojiActiveField) insertAtEnd(emojiActiveField, emo);
       hideEmojiPalette();
@@ -93,19 +97,32 @@ function createEmojiPalette() {
   return pal;
 }
 
+/**
+ * Position and show the emoji palette near a button.
+ * @param {HTMLElement} btn
+ * @param {HTMLInputElement|HTMLTextAreaElement} field
+ * @returns {void}
+ */
 function showEmojiPalette(btn, field) {
   emojiActiveField = field;
   const pal = createEmojiPalette();
   const rect = btn.getBoundingClientRect();
-  pal.style.left = Math.round(rect.left) + "px";
-  pal.style.top = Math.round(rect.bottom + 6) + "px";
+  pal.style.left = `${Math.round(rect.left)}px`;
+  pal.style.top = `${Math.round(rect.bottom + 6)}px`;
   pal.style.display = "block";
 }
 
+/** Hide the emoji palette, if present. */
 function hideEmojiPalette() {
   if (emojiPalette) emojiPalette.style.display = "none";
 }
 
+/**
+ * Append text at the end of a form control (input/textarea).
+ * @param {HTMLInputElement|HTMLTextAreaElement} el
+ * @param {string} text
+ * @returns {void}
+ */
 function insertAtEnd(el, text) {
   try {
     el.value = String(el.value || "") + String(text || "");
@@ -115,6 +132,11 @@ function insertAtEnd(el, text) {
   }
 }
 
+/**
+ * Add a small "Emoji" helper button below a form field.
+ * @param {HTMLInputElement|HTMLTextAreaElement|null} field
+ * @returns {void}
+ */
 function attachEmojiButton(field) {
   if (!field?.parentElement) return;
 
@@ -136,10 +158,19 @@ function attachEmojiButton(field) {
   field.parentElement.appendChild(wrap);
 }
 
+/**
+ * Build a link to a profile by name.
+ * @param {string} name
+ * @returns {string}
+ */
 function profileUrl(name) {
   return `profile.html?name=${encodeURIComponent(name)}`;
 }
 
+/**
+ * Read the post id from the page query string.
+ * @returns {string}
+ */
 function getId() {
   try {
     const sp = new URLSearchParams(window.location.search);
@@ -150,15 +181,19 @@ function getId() {
   }
 }
 
+/**
+ * Load a single post (with author, comments, reactions).
+ * @param {string} id
+ * @returns {Promise<Post|null>}
+ * @throws {Error} if the request fails
+ */
 async function fetchPost(id) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
 
-  const url =
-    BASE_API_URL +
-    "/social/posts/" +
-    encodeURIComponent(id) +
-    "?_author=true&_comments=true&_reactions=true";
+  const url = `${BASE_API_URL}/social/posts/${encodeURIComponent(
+    id
+  )}?_author=true&_comments=true&_reactions=true`;
 
   const headers = {
     "X-Noroff-API-Key": NOROFF_API_KEY,
@@ -180,21 +215,27 @@ async function fetchPost(id) {
   return json?.data || null;
 }
 
+/**
+ * Create a new comment on a post.
+ * @param {string|number} postId
+ * @param {string} text
+ * @param {number} [replyToId]
+ * @returns {Promise<Comment|any>}
+ * @throws {Error} if unauthenticated or request fails
+ */
 async function createComment(postId, text, replyToId) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
   if (!token) throw new Error("You must be logged in to comment.");
 
-  const url =
-    BASE_API_URL +
-    "/social/posts/" +
-    encodeURIComponent(String(postId)) +
-    "/comment";
+  const url = `${BASE_API_URL}/social/posts/${encodeURIComponent(
+    String(postId)
+  )}/comment`;
 
   const headers = {
     "X-Noroff-API-Key": NOROFF_API_KEY,
     "Content-Type": "application/json",
-    Authorization: "Bearer " + token,
+    Authorization: `Bearer ${token}`,
   };
 
   const bodyObj = {
@@ -219,23 +260,28 @@ async function createComment(postId, text, replyToId) {
   return json?.data || json || null;
 }
 
+/**
+ * Add or remove a reaction for the current user.
+ * @param {string|number} postId
+ * @param {string} symbol
+ * @param {boolean} on - true to add, false to remove
+ * @returns {Promise<void>}
+ * @throws {Error} if unauthenticated or request fails
+ */
 async function setReaction(postId, symbol, on) {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
   if (!token) throw new Error("You must be logged in to react.");
 
-  const url =
-    BASE_API_URL +
-    "/social/posts/" +
-    encodeURIComponent(String(postId)) +
-    "/react/" +
-    encodeURIComponent(symbol);
+  const url = `${BASE_API_URL}/social/posts/${encodeURIComponent(
+    String(postId)
+  )}/react/${encodeURIComponent(symbol)}`;
 
   const req = {
     method: on ? "PUT" : "DELETE",
     headers: {
       "X-Noroff-API-Key": NOROFF_API_KEY,
-      ...(token && { Authorization: "Bearer " + token }),
+      ...(token && { Authorization: `Bearer ${token}` }),
     },
   };
 
@@ -251,6 +297,13 @@ async function setReaction(postId, symbol, on) {
   if (!res.ok) throw new Error(errorFrom(json, "Failed to update reaction"));
 }
 
+/** @typedef {Record<string, { count: number, reacted?: boolean }>} ReactionMap */
+
+/**
+ * Convert API reactions array into a quick lookup map.
+ * @param {Post} post
+ * @returns {ReactionMap}
+ */
 function reactionMap(post) {
   const arr = Array.isArray(post?.reactions) ? post.reactions : [];
   return arr.reduce((acc, r) => {
@@ -264,9 +317,14 @@ function reactionMap(post) {
       },
     };
     return next;
-  }, /** @type {Record<string, {count:number, reacted?:boolean}>} */ ({}));
+  }, /** @type {ReactionMap} */ ({}));
 }
 
+/**
+ * Render the full post view, including media, reactions, and comments.
+ * @param {Post|null} post
+ * @returns {void}
+ */
 function renderPost(post) {
   if (!display) return;
   display.innerHTML = "";
@@ -291,7 +349,7 @@ function renderPost(post) {
   } else {
     meta.append(authorName);
   }
-  if (createdText) meta.append(" · " + createdText);
+  if (createdText) meta.append(` · ${createdText}`);
 
   const media = post?.media || null;
   if (typeof media?.url === "string" && media.url) {
@@ -313,7 +371,7 @@ function renderPost(post) {
 
   const rx = document.createElement("div");
   rx.className = "reactions";
-  const rmap = reactionMap(post);
+  const rmap = reactionMap(/** @type {Post} */ (post));
   const hasToken = !!normalizeBearer(getFromLocalStorage("accessToken") || "");
   const pid = post?.id != null ? String(post.id) : "";
 
@@ -360,6 +418,7 @@ function renderPost(post) {
   const isOwner =
     !!currentUser && authorName !== "Unknown" && currentUser === authorName;
 
+  /** @type {HTMLDivElement|null} */
   let actions = null;
   if (isOwner) {
     actions = document.createElement("div");
@@ -369,7 +428,7 @@ function renderPost(post) {
 
     const edit = document.createElement("a");
     edit.className = "btn btn-outline";
-    edit.href = "edit-post.html?id=" + encodeURIComponent(safeIdA);
+    edit.href = `edit-post.html?id=${encodeURIComponent(safeIdA)}`;
     edit.textContent = "Edit";
 
     const delBtn = document.createElement("button");
@@ -384,6 +443,7 @@ function renderPost(post) {
     actions.appendChild(delBtn);
   }
 
+  // Comments
   const commentsWrap = document.createElement("section");
   const cTitle = document.createElement("h3");
   cTitle.textContent = "Comments";
@@ -414,7 +474,7 @@ function renderPost(post) {
       } else {
         metaC.textContent = "Anonymous";
       }
-      if (cWhen) metaC.append(" · " + cWhen);
+      if (cWhen) metaC.append(` · ${cWhen}`);
 
       const cBody = document.createElement("p");
       cBody.textContent = c?.body || "";
@@ -430,6 +490,7 @@ function renderPost(post) {
     commentsWrap.appendChild(none);
   }
 
+  // Comment form
   const commentBlock = document.createElement("section");
   commentBlock.style.marginTop = "1rem";
 
@@ -524,6 +585,12 @@ function renderPost(post) {
   display.appendChild(card);
 }
 
+/**
+ * Delete a post if the current user is the owner; then redirect to feed.
+ * @param {string} id
+ * @param {string} ownerName
+ * @returns {Promise<void>}
+ */
 async function onDelete(id, ownerName) {
   if (!id) return;
 
@@ -538,11 +605,11 @@ async function onDelete(id, ownerName) {
 
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
-  const url = BASE_API_URL + "/social/posts/" + encodeURIComponent(id);
+  const url = `${BASE_API_URL}/social/posts/${encodeURIComponent(id)}`;
 
   const headers = {
     "X-Noroff-API-Key": NOROFF_API_KEY,
-    ...(token && { Authorization: "Bearer " + token }),
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
   showLoader();
@@ -568,6 +635,10 @@ async function onDelete(id, ownerName) {
   }
 }
 
+/**
+ * Page bootstrap: load the post by id and render it.
+ * @returns {Promise<void>}
+ */
 async function main() {
   const id = getId();
   if (!id) {

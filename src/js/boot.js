@@ -1,7 +1,14 @@
 // @ts-check
 
+/** @typedef {'success'|'error'|'info'|'default'} ToastType */
+/** @typedef {{ type?: ToastType, duration?: number }} ToastOptions */
+
 let loaderEl = /** @type {HTMLElement|null} */ (null);
 
+/**
+ * Create the full-page loading overlay element.
+ * @returns {HTMLElement}
+ */
 function createLoader() {
   const wrap = document.createElement("div");
   wrap.id = "global-loader";
@@ -24,17 +31,23 @@ function createLoader() {
   return wrap;
 }
 
+/** Show the full-page loader overlay. */
 export function showLoader() {
   if (!loaderEl) loaderEl = createLoader();
   if (!document.body.contains(loaderEl)) document.body.appendChild(loaderEl);
 }
 
+/** Hide the full-page loader overlay. */
 export function hideLoader() {
   if (loaderEl && document.body.contains(loaderEl)) {
     document.body.removeChild(loaderEl);
   }
 }
 
+/**
+ * Ensure there is a toast viewport attached to the document.
+ * @returns {HTMLElement} The viewport element.
+ */
 function ensureToastViewport() {
   let host = /** @type {HTMLElement|null} */ (
     document.getElementById("toast-viewport")
@@ -59,6 +72,13 @@ function ensureToastViewport() {
   return host;
 }
 
+/**
+ * Show a toast message.
+ * Click to dismiss early; otherwise auto-hides after `duration` ms.
+ * @param {string} message
+ * @param {ToastOptions} [opts]
+ * @returns {void}
+ */
 export function showToast(message, opts = {}) {
   const { type, duration } = { type: "default", duration: 2500, ...opts };
   const dur = Math.max(1200, Number(duration) || 2500);
@@ -73,8 +93,12 @@ export function showToast(message, opts = {}) {
       error: "#991b1b",
       info: "#1e3a8a",
       default: "#111827",
-    }[String(type)] || "#111827";
-  const baseStyle = {
+    }[
+      /** @type {Record<ToastType, string>} */
+      /** @type {ToastType} */ (String(type))
+    ] || "#111827";
+
+  Object.assign(el.style, {
     pointerEvents: "auto",
     color: "#fff",
     borderRadius: "0.5rem",
@@ -84,8 +108,8 @@ export function showToast(message, opts = {}) {
     opacity: "0",
     transform: "translateY(6px)",
     transition: "opacity .18s ease, transform .18s ease",
-  };
-  Object.assign(el.style, { ...baseStyle, background: bg });
+    background: bg,
+  });
   el.textContent = message;
 
   host.appendChild(el);
@@ -109,6 +133,14 @@ export function showToast(message, opts = {}) {
 
 const FLASH_KEY = "flash:message";
 
+/**
+ * Store a transient “flash” message in sessionStorage for display
+ * on the next page load.
+ * @param {string} message
+ * @param {ToastType} [type="success"]
+ * @param {number} [duration=2500]
+ * @returns {void}
+ */
 export function setFlash(message, type = "success", duration = 2500) {
   try {
     sessionStorage.setItem(
@@ -120,6 +152,10 @@ export function setFlash(message, type = "success", duration = 2500) {
   }
 }
 
+/**
+ * If a flash message is present in sessionStorage, display it and clear it.
+ * @returns {void}
+ */
 function maybeShowFlashOnLoad() {
   try {
     const raw = sessionStorage.getItem(FLASH_KEY);
@@ -137,90 +173,108 @@ function maybeShowFlashOnLoad() {
   }
 }
 
-function ensureNavLink(listEl, href, text, attrs) {
-  let a = /** @type {HTMLAnchorElement|null} */ (
-    listEl.querySelector(`a[href$="${href}"]`)
-  );
-  if (!a) {
-    const li = document.createElement("li");
-    a = document.createElement("a");
-    a.href = href;
-    a.textContent = text;
-    if (attrs) {
-      for (const [k, v] of Object.entries(attrs)) {
-        a.setAttribute(k, v);
-      }
-    }
-    li.appendChild(a);
-    listEl.appendChild(li);
-  } else {
-    a.textContent = text;
-    if (attrs) {
-      for (const [k, v] of Object.entries(attrs)) {
-        a.setAttribute(k, v);
-      }
-    }
-  }
-  return a;
-}
-
-function removeNavLink(listEl, selector) {
-  const a = /** @type {HTMLAnchorElement|null} */ (
-    listEl.querySelector(selector)
-  );
-  if (a && a.parentElement && a.parentElement.tagName === "LI") {
-    a.parentElement.remove();
-  } else if (a) {
-    a.remove();
-  }
-}
-
+/**
+ * Whether an auth token is present in localStorage.
+ * @returns {boolean}
+ */
 function hasToken() {
   try {
     const t = localStorage.getItem("accessToken");
     return !!(t && String(t).trim());
-  } catch (err) {
-    console.warn("Unable to read accessToken from localStorage:", err);
+  } catch {
     return false;
   }
 }
 
+/**
+ * Get the current user's profile name from localStorage.
+ * @returns {string}
+ */
+function getProfileName() {
+  try {
+    return localStorage.getItem("profileName")?.trim() || "";
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Create a list item with an anchor for the top nav.
+ * @param {string} href
+ * @param {string} text
+ * @param {Record<string, string>} [attrs]
+ * @returns {HTMLLIElement}
+ */
+function makeNavItem(href, text, attrs = {}) {
+  const li = document.createElement("li");
+  const a = document.createElement("a");
+  a.href = href;
+  a.textContent = text;
+  for (const [k, v] of Object.entries(attrs)) a.setAttribute(k, String(v));
+  li.appendChild(a);
+  return li;
+}
+
+/**
+ * Build the auth-aware nav (Login/Register ↔ My Profile/Logout).
+ * Re-runs on storage changes.
+ * @returns {void}
+ */
 export function setupNavAuthState() {
   const navList = /** @type {HTMLElement|null} */ (
     document.querySelector(".nav .nav-links")
   );
   if (!navList) return;
 
+  navList.innerHTML = "";
+
   const loggedIn = hasToken();
+  const name = getProfileName();
 
-  removeNavLink(navList, 'a[data-role="logout"]');
+  // Always-visible links
+  navList.appendChild(makeNavItem("feed.html", "Feed"));
 
-  if (loggedIn) {
-    removeNavLink(navList, 'a[href$="login.html"]');
-    removeNavLink(navList, 'a[href$="register.html"]');
+  if (loggedIn && name) {
+    navList.appendChild(
+      makeNavItem(`profile.html?name=${encodeURIComponent(name)}`, "My Profile")
+    );
 
-    const a = ensureNavLink(navList, "#", "Logout", { "data-role": "logout" });
-    a.onclick = (ev) => {
-      ev.preventDefault();
-      try {
-        ["accessToken", "profileName", "profileEmail"].forEach((k) =>
-          localStorage.removeItem(k)
-        );
-      } catch (err) {
-        console.warn("Failed to clear auth storage:", err);
-      } finally {
-        setFlash("You have been logged out.", "info", 2200);
-        setupNavAuthState();
-        window.location.href = "index.html";
-      }
-    };
+    const logout = makeNavItem("#", "Logout", { "data-role": "logout" });
+    const logoutLink = logout.querySelector("a");
+    if (logoutLink) {
+      logoutLink.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        try {
+          ["accessToken", "profileName", "profileEmail"].forEach((k) =>
+            localStorage.removeItem(k)
+          );
+        } catch (err) {
+          console.warn("Failed to clear auth storage:", err);
+        } finally {
+          setFlash("You have been logged out.", "info", 2200);
+          setupNavAuthState();
+          window.location.href = "index.html";
+        }
+      });
+    }
+
+    navList.appendChild(logout);
   } else {
-    ensureNavLink(navList, "login.html", "Login");
-    ensureNavLink(navList, "register.html", "Register");
-    removeNavLink(navList, 'a[data-role="logout"]');
+    navList.appendChild(makeNavItem("login.html", "Login"));
+    navList.appendChild(makeNavItem("register.html", "Register"));
   }
 }
 
+window.addEventListener("storage", (e) => {
+  if (e.key === "accessToken" || e.key === "profileName") {
+    setupNavAuthState();
+  }
+});
+
+/**
+ * App bootstrap: build auth nav and show any queued flash message.
+ * @returns {void}
+ */
 function boot() {
   setupNavAuthState();
   maybeShowFlashOnLoad();

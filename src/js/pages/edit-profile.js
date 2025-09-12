@@ -73,7 +73,7 @@ async function fetchProfile(name) {
     json = null;
   }
   if (!res.ok) throw new Error(errorFrom(json, "Failed to load profile"));
-  return (json && json.data) || null;
+  return json?.data || null;
 }
 
 /** @typedef {{ bio?: string, avatar?: Media, banner?: Media }} ProfileUpdate */
@@ -111,7 +111,7 @@ async function updateProfile(name, payload) {
   }
 
   if (!res.ok) throw new Error(errorFrom(json, "Failed to save profile"));
-  return (json && json.data) || json || null;
+  return json?.data || json || null;
 }
 
 /**
@@ -175,14 +175,14 @@ function fillForm(p) {
     byId("banner-preview")
   );
 
-  if (bio) bio.value = (p && p.bio) || "";
-  if (aUrl) aUrl.value = (p && p.avatar && p.avatar.url) || "";
-  if (aAlt) aAlt.value = (p && p.avatar && p.avatar.alt) || "";
-  if (bUrl) bUrl.value = (p && p.banner && p.banner.url) || "";
-  if (bAlt) bAlt.value = (p && p.banner && p.banner.alt) || "";
+  if (bio) bio.value = p?.bio || "";
+  if (aUrl) aUrl.value = p?.avatar?.url || "";
+  if (aAlt) aAlt.value = p?.avatar?.alt || "";
+  if (bUrl) bUrl.value = p?.banner?.url || "";
+  if (bAlt) bAlt.value = p?.banner?.alt || "";
 
   if (avatarPrev) {
-    const url = (p && p.avatar && p.avatar.url) || "";
+    const url = p?.avatar?.url || "";
     if (url) {
       avatarPrev.src = url;
       avatarPrev.style.display = "";
@@ -191,7 +191,7 @@ function fillForm(p) {
     }
   }
   if (bannerPrev) {
-    const url = (p && p.banner && p.banner.url) || "";
+    const url = p?.banner?.url || "";
     if (url) {
       bannerPrev.src = url;
       bannerPrev.style.display = "";
@@ -261,12 +261,12 @@ async function main() {
   showLoader();
   try {
     const profile = await fetchProfile(myName);
-    setText(headingName, (profile && profile.name) || myName);
+    setText(headingName, profile?.name || myName);
     fillForm(profile);
     wirePreviews();
   } catch (e) {
     // @ts-ignore runtime-only
-    setMsg((e && e.message) || "Could not load your profile.", false);
+    setMsg(e?.message || "Could not load your profile.", false);
   } finally {
     hideLoader();
   }
@@ -311,7 +311,7 @@ async function main() {
       }, 600);
     } catch (e) {
       // @ts-ignore runtime-only
-      setMsg((e && e.message) || "Failed to save profile.", false);
+      setMsg(e?.message || "Failed to save profile.", false);
     } finally {
       hideLoader();
       setSubmitting(form, false);

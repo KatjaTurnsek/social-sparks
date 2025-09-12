@@ -117,7 +117,7 @@ function onRegisterFormSubmit(event) {
       window.location.href = "login.html?registered=1&notice=" + notice;
     })
     .catch(function (err) {
-      setMsg((err && err.message) || "Could not register.", "error");
+      setMsg(err?.message || "Could not register.", "error");
     })
     .finally(function () {
       setFormSubmitting(form, false);

@@ -136,7 +136,7 @@ function insertAtEnd(el, text) {
 }
 
 function attachEmojiButton(field) {
-  if (!field || !field.parentElement) return;
+  if (!field?.parentElement) return;
 
   const wrap = document.createElement("div");
   wrap.className = "form-actions";
@@ -232,11 +232,8 @@ if (form) {
 
       setMsg("Post created!", true);
 
-      const merged = {
-        ...(json || {}),
-        ...(json && typeof json.data === "object" ? json.data : {}),
-      };
-      const id = merged && merged.id ? String(merged.id) : "";
+      const idVal = json?.data?.id ?? json?.id;
+      const id = idVal != null ? String(idVal) : "";
 
       setTimeout(function () {
         if (id) location.href = "post.html?id=" + encodeURIComponent(id);

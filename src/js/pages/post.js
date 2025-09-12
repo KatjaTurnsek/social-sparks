@@ -116,7 +116,7 @@ function insertAtEnd(el, text) {
 }
 
 function attachEmojiButton(field) {
-  if (!field || !field.parentElement) return;
+  if (!field?.parentElement) return;
 
   const wrap = document.createElement("div");
   wrap.className = "form-actions";
@@ -177,7 +177,7 @@ async function fetchPost(id) {
   if (!res.ok) {
     throw new Error(errorFrom(json, res.statusText || "Failed to load post"));
   }
-  return (json && json.data) || null;
+  return json?.data || null;
 }
 
 async function createComment(postId, text, replyToId) {
@@ -216,7 +216,7 @@ async function createComment(postId, text, replyToId) {
   }
 
   if (!res.ok) throw new Error(errorFrom(json, "Failed to post comment"));
-  return (json && json.data) || json || null;
+  return json?.data || json || null;
 }
 
 async function setReaction(postId, symbol, on) {
@@ -294,10 +294,10 @@ function renderPost(post) {
   if (createdText) meta.append(" · " + createdText);
 
   const media = post?.media || null;
-  if (media && typeof media.url === "string" && media.url) {
+  if (typeof media?.url === "string" && media.url) {
     const img = document.createElement("img");
     img.src = media.url;
-    img.alt = typeof media.alt === "string" ? media.alt : "";
+    img.alt = typeof media?.alt === "string" ? media.alt : "";
     img.loading = "lazy";
     img.className = "post-media";
     img.style.maxHeight = "none";

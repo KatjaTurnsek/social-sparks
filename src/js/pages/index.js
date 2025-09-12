@@ -95,12 +95,12 @@ async function fetchPosts() {
   }
 
   let data = [];
-  if (json && Array.isArray(json.data)) data = json.data;
+  if (Array.isArray(json?.data)) data = json.data;
   else if (Array.isArray(json)) data = json;
 
   return [...data].sort((a, b) => {
-    const ta = a && a.created ? new Date(a.created).getTime() : 0;
-    const tb = b && b.created ? new Date(b.created).getTime() : 0;
+    const ta = a?.created ? new Date(a.created).getTime() : 0;
+    const tb = b?.created ? new Date(b.created).getTime() : 0;
     return tb - ta;
   });
 }
@@ -166,16 +166,15 @@ function renderPosts(posts) {
     card.className = "card";
 
     const h2 = document.createElement("h2");
-    h2.textContent = post && post.title ? post.title : "Untitled";
+    h2.textContent = post?.title || "Untitled";
 
     const meta = document.createElement("p");
     meta.className = "muted";
     meta.style.wordBreak = "break-word";
-    const authorName =
-      post && post.author && post.author.name
-        ? String(post.author.name)
-        : "Unknown";
-    const created = post && post.created ? formatDate(post.created) : "";
+    const authorName = post?.author?.name
+      ? String(post.author.name)
+      : "Unknown";
+    const created = post?.created ? formatDate(post.created) : "";
     meta.textContent = "by ";
     if (authorName !== "Unknown") {
       const a = document.createElement("a");
@@ -187,25 +186,25 @@ function renderPosts(posts) {
     }
     if (created) meta.append(" · " + created);
 
-    const media = post && post.media ? post.media : null;
-    if (media && typeof media.url === "string" && media.url) {
+    const media = post?.media || null;
+    if (typeof media?.url === "string" && media.url) {
       const img = document.createElement("img");
       img.src = media.url;
-      img.alt = media && typeof media.alt === "string" ? media.alt : "";
+      img.alt = typeof media?.alt === "string" ? media.alt : "";
       img.loading = "lazy";
       img.className = "post-media index-post-image";
       card.appendChild(img);
     }
 
     const body = document.createElement("p");
-    body.textContent = firstSentence(post && post.body ? post.body : "");
+    body.textContent = firstSentence(post?.body || "");
 
     const actions = document.createElement("div");
     actions.className = "form-actions";
 
     const view = document.createElement("a");
     view.className = "btn btn-outline";
-    const id = post && post.id != null ? post.id : "";
+    const id = post?.id != null ? post.id : "";
     view.href = "post.html?id=" + encodeURIComponent(String(id));
     view.textContent = "View";
     actions.appendChild(view);
@@ -257,8 +256,8 @@ async function fetchProfiles(opts = {}) {
   }
   if (!res.ok) throw new Error(errorFrom(json, "Failed to load profiles"));
 
-  const list = (json && Array.isArray(json.data) ? json.data : []) || [];
-  const meta = (json && json.meta) || {};
+  const list = (Array.isArray(json?.data) ? json.data : []) || [];
+  const meta = json?.meta || {};
   return { list: [...list], meta: { ...meta } };
 }
 
@@ -310,7 +309,7 @@ function renderProfilesList(profiles) {
     avatar.style.height = "48px";
     avatar.style.borderRadius = "999px";
     avatar.style.objectFit = "cover";
-    if (person && person.avatar && person.avatar.url) {
+    if (person?.avatar?.url) {
       avatar.src = person.avatar.url;
       avatar.alt = person.avatar.alt || "";
     } else {
@@ -322,7 +321,7 @@ function renderProfilesList(profiles) {
     nm.style.margin = "0";
     nm.style.fontWeight = "600";
     nm.style.wordBreak = "break-word";
-    nm.textContent = person && person.name ? person.name : "Unknown";
+    nm.textContent = person?.name || "Unknown";
 
     const actions = document.createElement("div");
     actions.className = "form-actions";

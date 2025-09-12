@@ -199,8 +199,7 @@ async function load() {
     if (!form) return;
 
     const me = getFromLocalStorage("profileName") || "";
-    const owner =
-      p && p.author && typeof p.author.name === "string" ? p.author.name : "";
+    const owner = typeof p?.author?.name === "string" ? p.author.name : "";
     if (owner && me && owner !== me) {
       setMsg("You can only edit your own post.");
       window.location.href = "post.html?id=" + encodeURIComponent(id);
@@ -213,7 +212,7 @@ async function load() {
       tNode instanceof HTMLInputElement || tNode instanceof HTMLTextAreaElement
         ? tNode
         : null;
-    if (titleField) titleField.value = p && p.title ? p.title : "";
+    if (titleField) titleField.value = p?.title || "";
 
     const bNode = form.querySelector('[name="body"]');
     /** @type {HTMLTextAreaElement|HTMLInputElement|null} */
@@ -221,7 +220,7 @@ async function load() {
       bNode instanceof HTMLTextAreaElement || bNode instanceof HTMLInputElement
         ? bNode
         : null;
-    if (bodyField) bodyField.value = p && p.body ? p.body : "";
+    if (bodyField) bodyField.value = p?.body || "";
 
     const muNode = form.querySelector('[name="media-url"]');
     const maNode = form.querySelector('[name="media-alt"]');
@@ -230,14 +229,12 @@ async function load() {
     /** @type {HTMLInputElement|null} */
     const mediaAltField = maNode instanceof HTMLInputElement ? maNode : null;
 
-    const media = p && p.media ? p.media : null;
+    const media = p?.media || null;
     if (mediaUrlField) {
-      mediaUrlField.value =
-        media && typeof media.url === "string" ? media.url : "";
+      mediaUrlField.value = typeof media?.url === "string" ? media.url : "";
     }
     if (mediaAltField) {
-      mediaAltField.value =
-        media && typeof media.alt === "string" ? media.alt : "";
+      mediaAltField.value = typeof media?.alt === "string" ? media.alt : "";
     }
 
     attachEmojiButton(titleField);

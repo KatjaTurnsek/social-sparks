@@ -69,7 +69,7 @@ async function fetchProfile(name) {
   }
 
   if (!res.ok) throw new Error(errorFrom(json, "Failed to load profile"));
-  return (json && json.data) || null;
+  return json?.data || null;
 }
 
 async function follow(name, action) {
@@ -103,7 +103,7 @@ async function follow(name, action) {
     err.status = res.status;
     throw err;
   }
-  return (json && json.data) || json || null;
+  return json?.data || json || null;
 }
 
 function renderPosts(panelEl, posts) {
@@ -135,7 +135,7 @@ function renderPosts(panelEl, posts) {
       const img = document.createElement("img");
       img.loading = "lazy";
       img.src = post.media.url;
-      img.alt = post.media.alt || "";
+      img.alt = post.media?.alt || "";
       card.appendChild(img);
     }
 
@@ -147,7 +147,7 @@ function renderPosts(panelEl, posts) {
     actions.className = "form-actions";
     const view = document.createElement("a");
     view.className = "btn btn-outline";
-    const pid = post && post.id != null ? String(post.id) : "";
+    const pid = post?.id != null ? String(post.id) : "";
     view.href = "post.html?id=" + encodeURIComponent(pid);
     view.textContent = "View";
     actions.appendChild(view);
@@ -186,7 +186,7 @@ function renderPeople(panelEl, list) {
     avatar.style.borderRadius = "999px";
     if (person?.avatar?.url) {
       avatar.src = person.avatar.url;
-      avatar.alt = person.avatar.alt || "";
+      avatar.alt = person.avatar?.alt || "";
     } else {
       avatar.style.display = "none";
     }
@@ -260,9 +260,9 @@ async function main() {
       following: 0,
       ...(p?._count || {}),
     };
-    setText(cntPosts, String(counts.posts ?? 0));
-    setText(cntFollowers, String(counts.followers ?? 0));
-    setText(cntFollowing, String(counts.following ?? 0));
+    setText(cntPosts, String(counts.posts || 0));
+    setText(cntFollowers, String(counts.followers || 0));
+    setText(cntFollowing, String(counts.following || 0));
 
     const rawToken = getFromLocalStorage("accessToken") || "";
     const token = normalizeBearer(rawToken);
@@ -282,7 +282,7 @@ async function main() {
 
     const followersArr = Array.isArray(p?.followers) ? [...p.followers] : [];
     let followerCount =
-      (p && p._count && typeof p._count.followers === "number"
+      (typeof p?._count?.followers === "number"
         ? p._count.followers
         : followersArr.length) || 0;
 

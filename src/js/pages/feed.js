@@ -97,19 +97,14 @@ async function fetchAllPosts() {
     throw new Error(errorFrom(json, "Failed to load feed"));
   }
 
-  let data = [];
-  if (json && json.data) {
-    data = json.data;
-  } else if (Array.isArray(json)) {
-    data = json;
-  }
+  const data = json?.data ?? (Array.isArray(json) ? json : []);
   if (!Array.isArray(data)) {
     return [];
   }
 
   return [...data].sort(function (a, b) {
-    const ta = a && a.created ? new Date(a.created).getTime() : 0;
-    const tb = b && b.created ? new Date(b.created).getTime() : 0;
+    const ta = a?.created ? new Date(a.created).getTime() : 0;
+    const tb = b?.created ? new Date(b.created).getTime() : 0;
     return tb - ta;
   });
 }
@@ -153,12 +148,11 @@ function renderListPage(allPosts, page, pageSize) {
     const item = createEl("article", "card", "");
 
     const title = createEl("h3", "", "");
-    title.textContent = post && post.title ? post.title : "Untitled";
+    title.textContent = post?.title || "Untitled";
 
     const meta = createEl("p", "muted", "");
-    const authorName =
-      post && post.author && post.author.name ? post.author.name : "Unknown";
-    const createdText = post && post.created ? formatDate(post.created) : "";
+    const authorName = post?.author?.name ?? "Unknown";
+    const createdText = post?.created ? formatDate(post.created) : "";
 
     meta.textContent = "by ";
     if (authorName !== "Unknown") {
@@ -171,25 +165,24 @@ function renderListPage(allPosts, page, pageSize) {
     }
     if (createdText) meta.append(" · " + createdText);
 
-    const media = post && post.media ? post.media : null;
-    if (media && typeof media.url === "string" && media.url) {
+    const media = post?.media || null;
+    if (typeof media?.url === "string" && media.url) {
       const img = document.createElement("img");
       img.src = media.url;
-      img.alt = media && typeof media.alt === "string" ? media.alt : "";
+      img.alt = typeof media?.alt === "string" ? media.alt : "";
       img.loading = "lazy";
       img.className = "post-media";
       item.appendChild(img);
     }
 
-    const body = createEl("p", "", post && post.body ? post.body : "");
+    const body = createEl("p", "", post?.body || "");
     if ((body.textContent || "").length > 260) {
       body.textContent = (body.textContent || "").slice(0, 257) + "...";
     }
 
     const actions = createEl("div", "form-actions", "");
     const view = createEl("a", "btn btn-outline", "View");
-    const pid =
-      post && post.id !== undefined && post.id !== null ? String(post.id) : "";
+    const pid = post?.id != null ? String(post.id) : "";
     view.href = "post.html?id=" + encodeURIComponent(pid);
     actions.appendChild(view);
 

@@ -70,16 +70,16 @@ async function loginUser(userDetails) {
     }
 
     const merged = {
-      ...(json || {}),
-      ...(json && typeof json.data === "object" ? json.data : {}),
+      ...(json ?? {}),
+      ...(typeof json?.data === "object" ? json.data : {}),
     };
 
     const accessToken =
-      typeof merged.accessToken === "string" ? merged.accessToken : "";
+      typeof merged?.accessToken === "string" ? merged.accessToken : "";
     if (!accessToken) throw new Error("No access token returned.");
     addToLocalStorage("accessToken", accessToken);
 
-    const name = typeof merged.name === "string" ? merged.name : "";
+    const name = typeof merged?.name === "string" ? merged.name : "";
     if (name) addToLocalStorage("profileName", name);
 
     return json;
@@ -110,7 +110,7 @@ function onLoginFormSubmit(event) {
       window.location.href = "feed.html";
     })
     .catch(function (err) {
-      setMsg((err && err.message) || "Login failed", "error");
+      setMsg(err?.message || "Login failed", "error");
     })
     .finally(function () {
       setFormSubmitting(form, false);

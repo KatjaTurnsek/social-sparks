@@ -40,6 +40,39 @@ function setPageInUrl(page, pageSize) {
   }
 }
 
+function isAuthenticated() {
+  const raw = getFromLocalStorage("accessToken") || "";
+  return !!normalizeBearer(raw);
+}
+
+function renderLoginGate(
+  container,
+  msg = "You need to be logged in to view the feed."
+) {
+  if (!container) return;
+  clear(container);
+  const card = document.createElement("article");
+  card.className = "card";
+  const h = document.createElement("h2");
+  h.textContent = "Please log in";
+  const p = document.createElement("p");
+  p.className = "muted";
+  p.textContent = msg;
+  const actions = document.createElement("div");
+  actions.className = "form-actions";
+  const login = document.createElement("a");
+  login.className = "btn";
+  login.href = "login.html";
+  login.textContent = "Log in";
+  const reg = document.createElement("a");
+  reg.className = "btn btn-outline";
+  reg.href = "register.html";
+  reg.textContent = "Create account";
+  actions.append(login, reg);
+  card.append(h, p, actions);
+  container.appendChild(card);
+}
+
 async function fetchAllPosts() {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
@@ -211,6 +244,11 @@ function buildPageLink(page, pageSize) {
 }
 
 async function main() {
+  if (!isAuthenticated()) {
+    renderLoginGate(display);
+    return;
+  }
+
   const page = getIntParam("page", 1);
   const pageSize = getIntParam("pageSize", 10);
 

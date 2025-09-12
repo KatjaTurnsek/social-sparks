@@ -27,6 +27,50 @@ function profileUrl(name) {
   return "profile.html?name=" + encodeURIComponent(name);
 }
 
+function isAuthenticated() {
+  const raw = getFromLocalStorage("accessToken") || "";
+  return !!normalizeBearer(raw);
+}
+
+function renderLoginGate(
+  container,
+  msg = "You need to be logged in to view posts and profiles."
+) {
+  if (!container) return;
+  clear(container);
+  if (container.parentElement)
+    container.parentElement.style.gridColumn = "1 / -1";
+  container.classList.remove("grid");
+  container.style.display = "block";
+  container.style.gridTemplateColumns = "";
+  container.style.gap = "";
+  container.style.gridColumn = "1 / -1";
+  container.style.width = "100%";
+  container.style.maxWidth = "none";
+  const card = document.createElement("article");
+  card.className = "card";
+  card.style.width = "100%";
+  card.style.margin = "0";
+  const h = document.createElement("h2");
+  h.textContent = "Please log in";
+  const p = document.createElement("p");
+  p.className = "muted";
+  p.textContent = msg;
+  const actions = document.createElement("div");
+  actions.className = "form-actions";
+  const login = document.createElement("a");
+  login.className = "btn";
+  login.href = "login.html";
+  login.textContent = "Log in";
+  const reg = document.createElement("a");
+  reg.className = "btn btn-outline";
+  reg.href = "register.html";
+  reg.textContent = "Create account";
+  actions.append(login, reg);
+  card.append(h, p, actions);
+  container.appendChild(card);
+}
+
 function buildHeaders() {
   const rawToken = getFromLocalStorage("accessToken") || "";
   const token = normalizeBearer(rawToken);
@@ -380,6 +424,13 @@ async function loadProfiles() {
 }
 
 async function main() {
+  if (!isAuthenticated()) {
+    if (profilesEl) profilesEl.style.display = "none";
+    if (pagerEl) pagerEl.style.display = "none";
+    renderLoginGate(postsEl);
+    return;
+  }
+
   if (postsEl) {
     clear(postsEl);
     const skWrap = document.createElement("div");

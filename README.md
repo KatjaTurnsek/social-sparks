@@ -52,11 +52,11 @@ Commit & push; GitHub Pages serves from main → /docs.
 
 ## ⚙️ Configuration
 Defaults to https://v2.api.noroff.dev. Optional .env:
-```env
+```dotenv
 VITE_API_BASE="https://v2.api.noroff.dev"
 ```
 ## 📁 Structure (excerpt)
-```arduino
+```text
 assets/
   images/
 src/

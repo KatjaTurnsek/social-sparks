@@ -2,48 +2,24 @@
 
 ![Social Sparks Screenshot](assets/images/social-sparks-thumb.webp)
 
-A mini social network / micro-blogging app where users can register, log in, browse the feed, create/edit/delete their own posts, follow/unfollow other users, react with emojis, and add comments. Built as a vanilla JavaScript multi-page app with Vite and ES modules, focusing on accessibility, clarity, and maintainable structure.
+A mini social network / micro-blogging app where users can register, log in, browse the feed, create/edit/delete their own posts, follow/unfollow, react with emojis, and comment. Built with Vite and vanilla JavaScript (ES modules).
 
-## 📍 Live Site
+## 🔗 Links 
 
-Deployed on GitHub Pages:
-[Social Sparks Website](https://katjaturnsek.github.io/social-sparks/)
+**Deployed on GitHub Pages:** [Social Sparks Website](https://katjaturnsek.github.io/social-sparks/)
+**GitHub Repository:** [https://github.com/KatjaTurnsek/social-sparks](https://github.com/KatjaTurnsek/social-sparks)
+**Project Kanban:** [Open the Kanban Board »](https://github.com/users/KatjaTurnsek/projects/2/views/1)
+**Api Docs:** [Open Api Docs »](https://docs.noroff.dev/docs/v2)
 
-## 💻 GitHub Repository
+## ✅ Features (per brief)
 
-[https://github.com/KatjaTurnsek/social-sparks](https://github.com/KatjaTurnsek/social-sparks)
-
-## 📌 Project Kanban
-[Open the Kanban Board »](https://github.com/users/KatjaTurnsek/projects/2/views/1)
-
-## 📝 Description
-
-**Social Sparks** is a front-end Course Assignment with the Noroff Social API (v2). 
-
-### Users can:
-
-- Register and log in 
-- View the global feed and individual posts
-- Create, edit, and delete their own posts
-- React to posts with emojis and comment on posts
-- View user profiles, including followers/following
-- Follow/unfollow other users
-- Search posts and profiles
-
-The app uses small, focused ES modules, JSDoc for better tooling/validation (via // @ts-check), and modern JavaScript patterns (template literals, array methods, destructuring). UI is intentionally clean and lightweight to highlight the JavaScript functionality.
-
-## Key Features
-
-- Authentication (Register, Login) with localStorage token handling
-- Feed with newest-first sorting and pagination
-- Single Post view with comments and emoji reactions
-- Create / Edit / Delete your own posts
-- Profiles with posts + followers/following lists
-- Follow/Unfollow users
+- Register & Login (Noroff Auth)
+- View feed & single post
+- Create / Edit / Delete own posts
+- Comments & emoji reactions
+- Profiles: posts, followers, following
+- Follow / Unfollow users
 - Search posts
-- Accessibility: skip link, semantic structure, visible focus, ARIA live regions
-- Performance: lazy-loaded images, minimal JS, skeleton loaders
-- Global nav state that updates on login/logout (with toast/flash)
 
 ## 🔧 Built With
 
@@ -54,34 +30,15 @@ The app uses small, focused ES modules, JSDoc for better tooling/validation (via
 
 Multi-page via Vite: Although this is a lightweight SPA-style experience, the project ships multiple HTML entry points (feed, post, profile, etc.) using a custom vite.config.js. This keeps each page lean while still benefiting from Vite’s dev/build pipeline.
 
-## Pages
+## 📄 Pages
 
-- index.html – Landing + latest posts & profiles
-- login.html – Log in
-- register.html – Create account
-- feed.html – All posts (paginated)
-- post.html – Single post (comments + reactions)
-- profile.html – User profile (posts, followers, following)
-- search.html – Post search results
-- create-post.html - Create your post
-- edit-post.html – Edit your post
-- edit-profile.html – Edit your profile
-
-## User Stories (Feature Matrix)
-
-- Register new user
-- Login user
-- Get all posts (Feed)
-- Get single post
-- Create post
-- Edit own post
-- Delete own post
-- Get posts of a user (on profile page)
-- Follow / Unfollow user
-- Search posts
-- View my own profile
-- Comment on post (implemented)
-- React to a post (implemented)
+- `index.html` – Landing (latest posts & profiles)
+- `login.html`, `register.html`
+- `feed.html` – All posts
+- `post.html` – Single post (comments/reactions)
+- `profile.html` – User profile
+- `search.html` – Search results
+- `edit-post.html`, `edit-profile.html`
 
 ## 🧩 How This Meets the Brief
 
@@ -93,43 +50,33 @@ Multi-page via Vite: Although this is a lightweight SPA-style experience, the pr
 
 ## 🔧 Getting Started (Local)
 
-### Prerequisites
-Node.js 18+ recommended
-
-### Install and Run
-
-#### 1) Clone
+### 1) Clone
 `git clone https://github.com/KatjaTurnsek/social-sparks.git`
 `cd social-sparks`
 
-#### 2) Install deps
+### 2) Install deps
 `npm install`
 
-#### 3) Start dev server
+### 3) Start dev server
 `npm run dev`
 
-#### 4) Build for production
+## 🏗️ Build & Deploy
+Build (outputs to /docs for GitHub Pages):
+
+### Build for production
 `npm run build`
 
-#### 5) Preview the production build locally
-`npm run preview`
+- Commit and push changes (including the /docs build) to main.
+- GitHub Pages is configured to serve from /docs on the main branch.
+- Live URL: https://katjaturnsek.github.io/social-sparks/
 
-### Environment / Config
+## ⚙️ Configuration
 
-Defaults to Noroff API v2: https://v2.api.noroff.dev
-The Vite config supports an override via VITE_API_BASE:
+- Defaults to https://v2.api.noroff.dev.
+- Optional override in a .env file:
 
 `VITE_API_BASE="https://v2.api.noroff.dev"`
-
-## 🔗 API
-
-Docs: https://docs.noroff.dev/docs/v2
-Auth: https://docs.noroff.dev/docs/v2/auth/register
- / login
-Posts: https://docs.noroff.dev/docs/v2/social/posts
-Profiles: https://docs.noroff.dev/docs/v2/social/profiles
-
-Authentication uses Bearer tokens stored in localStorage (access token + profile name). Requests include the X-Noroff-API-Key header.
+(Already handled in vite.config.js with a sensible default.)
 
 ## 📁 Project Structure (excerpt)
 
@@ -212,23 +159,6 @@ Contributions are welcome! Bug fixes, docs improvements, and small features are 
 - Maintain visible focus states and good color contrast
 - Optimize images (WebP/JPG), use lazy loading where sensible
 
-## 🧪 Testing & Debugging
-
-- Manual testing flows for auth, CRUD, follows, comments, and reactions
-- Error states surfaced via alerts/toasts and inline messages
-- DevTools + network inspection against Noroff API
-
-## 📦 Deployment (GitHub Pages)
-
-- The project is configured with base: "/social-sparks/" in vite.config.js
-- Build: `npm run build`
-- Deploy the dist/ folder to GitHub Pages (e.g. via gh-pages branch or GitHub Actions)
-- Final URL will be: https://katjaturnsek.github.io/social-sparks/
-
-## 🔒 Notes
-
-- Token is stored in localStorage for simplicity (typical for assignments)
-- Basic UI focus to showcase JavaScript functionality
 
 ## 🙋‍♀️ Author
 

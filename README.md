@@ -57,20 +57,23 @@ VITE_API_BASE="https://v2.api.noroff.dev"
 ```
 ## 📁 Structure (excerpt)
 ```text
-assets/
-  images/
-src/
-  css/
-  js/
-    boot.js
-    types.js
-    utils.js
-    pages/
-      index.js  login.js  register.js  feed.js
-      post.js   profile.js search.js   create-post.js
-      edit-post.js edit-profile.js
-index.html ... edit-profile.html
-vite.config.js
+social-sparks/
+├─ assets/
+│  └─ images/
+├─ src/
+│  ├─ css/
+│  └─ js/
+│     ├─ boot.js  utils.js  types.js
+│     ├─ shared/ (auth.js, dates.js, dom.js, errors.js)
+│     └─ pages/
+│        index.js  login.js  register.js  feed.js
+│        post.js   profile.js  search.js
+│        create-post.js  edit-post.js  edit-profile.js
+├─ index.html  login.html  register.html  feed.html
+├─ post.html   profile.html  search.html
+├─ create-post.html  edit-post.html  edit-profile.html
+├─ vite.config.js
+└─ package.json
 ```
 
 ## ♿ Accessibility & Performance

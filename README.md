@@ -99,29 +99,27 @@ Node.js 18+ recommended
 ### Install and Run
 
 #### 1) Clone
-git clone https://github.com/KatjaTurnsek/social-sparks.git
-cd social-sparks
+`git clone https://github.com/KatjaTurnsek/social-sparks.git`
+`cd social-sparks`
 
 #### 2) Install deps
-npm install
+`npm install`
 
 #### 3) Start dev server
-npm run dev
+`npm run dev`
 
 #### 4) Build for production
-npm run build
+`npm run build`
 
 #### 5) Preview the production build locally
-npm run preview
+`npm run preview`
 
 ### Environment / Config
 
 Defaults to Noroff API v2: https://v2.api.noroff.dev
 The Vite config supports an override via VITE_API_BASE:
 
-VITE_API_BASE="https://v2.api.noroff.dev"
-
-(If not set, the default is used.)
+`VITE_API_BASE="https://v2.api.noroff.dev"`
 
 ## 🔗 API
 
@@ -197,10 +195,10 @@ Contributions are welcome! Bug fixes, docs improvements, and small features are 
 
 1. **Fork** the repo and create a branch:
 
-git checkout -b feat/your-short-title
+`git checkout -b feat/your-short-title`
 #### or: fix/..., docs/..., style/...
 
-2. **Run locally** with npm run dev
+2. **Run locally** with `npm run dev`
 3. **Commit** with clear messages (Conventional Commits encouraged)
 4. **Open a PR** to main with:
 - Summary of changes and motivation
@@ -227,11 +225,10 @@ git checkout -b feat/your-short-title
 - Deploy the dist/ folder to GitHub Pages (e.g. via gh-pages branch or GitHub Actions)
 - Final URL will be: https://katjaturnsek.github.io/social-sparks/
 
-## 🔒 Notes & Limitations
+## 🔒 Notes
 
 - Token is stored in localStorage for simplicity (typical for assignments)
 - Basic UI focus to showcase JavaScript functionality
-- No front-end frameworks per assignment restriction
 
 ## 🙋‍♀️ Author
 

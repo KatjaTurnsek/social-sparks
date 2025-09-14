@@ -1,0 +1,1 @@
+function f(i){if(i)for(;i.firstChild;)i.removeChild(i.firstChild)}function s(i,t,r){const e=document.createElement(i);if(t){const n=Array.isArray(t)?t:String(t).split(/\s+/).filter(Boolean);n.length&&e.classList.add(...n)}return typeof r=="string"?e.textContent=r:r instanceof Node&&e.append(r),e}export{s as a,f as c};

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login · Social Sparks</title>
+    <meta
+      name="description"
+      content="Login to Social Sparks to share and connect."
+    />
+    <script type="module" crossorigin src="/social-sparks/assets/login-B7J6dP1Z.js"></script>
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/boot-DLZHiz98.js">
+    <link rel="stylesheet" crossorigin href="/social-sparks/assets/boot-BEWV8Vjp.css">
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="site-header">
+      <nav class="nav container" aria-label="Primary">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <!-- Leave empty; boot.js will populate based on auth -->
+        <ul class="nav-links"></ul>
+
+        <!-- Search form -->
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
+      </nav>
+    </header>
+
+    <main id="main-content" class="container" data-page="login">
+      <section
+        class="card"
+        style="max-width: 480px; margin: 2rem auto; padding: 1.5rem"
+      >
+        <h1 class="mt-0 mb-2">Login</h1>
+
+        <form class="form" id="login-form" novalidate>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              required
+              autocomplete="email"
+              inputmode="email"
+              autocapitalize="off"
+              spellcheck="false"
+              enterkeyhint="go"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Sign in</button>
+            <a href="register.html" class="btn btn-outline">Register</a>
+          </div>
+
+          <p
+            id="login-msg"
+            class="form-message alert"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></p>
+        </form>
+      </section>
+
+      <div id="app">
+        <p
+          id="page-msg"
+          class="form-message alert"
+          aria-live="polite"
+          hidden
+        ></p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
+
+    <noscript>
+      <p class="alert error" style="margin: 1rem">
+        JavaScript is required to log in.
+      </p>
+    </noscript>
+  </body>
+</html>

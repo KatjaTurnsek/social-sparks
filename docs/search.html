@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search · Social Sparks</title>
+    <meta name="description" content="Search posts on Social Sparks." />
+    <script type="module" crossorigin src="/social-sparks/assets/search-fXzHJp9m.js"></script>
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/boot-DLZHiz98.js">
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/dates-4Iv0sr_s.js">
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/dom-BvqbnuIy.js">
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/auth-B5TyBL4-.js">
+    <link rel="stylesheet" crossorigin href="/social-sparks/assets/boot-BEWV8Vjp.css">
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="site-header">
+      <nav class="nav container" aria-label="Primary">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links"></ul>
+
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
+      </nav>
+    </header>
+
+    <main
+      id="main-content"
+      class="container"
+      style="max-width: 860px; margin: 2rem auto"
+    >
+      <div id="display-container"></div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
+
+    <noscript>
+      <p class="alert error" style="margin: 1rem">
+        JavaScript is required to use search.
+      </p>
+    </noscript>
+  </body>
+</html>

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Profile · Social Sparks</title>
+    <meta name="description" content="Edit your Social Sparks profile." />
+    <script type="module" crossorigin src="/social-sparks/assets/editProfile-QaU-Facs.js"></script>
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/boot-DLZHiz98.js">
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/auth-B5TyBL4-.js">
+    <link rel="stylesheet" crossorigin href="/social-sparks/assets/boot-BEWV8Vjp.css">
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="site-header">
+      <nav class="nav container" aria-label="Primary">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links"></ul>
+
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
+      </nav>
+    </header>
+
+    <main
+      id="main-content"
+      class="container"
+      style="max-width: 760px; margin: 2rem auto"
+    >
+      <article class="card form">
+        <h1 id="heading-name" class="mt-0">Edit profile</h1>
+
+        <p
+          id="edit-profile-msg"
+          class="form-message alert"
+          aria-live="polite"
+          style="display: none"
+        ></p>
+
+        <form id="edit-profile-form" novalidate>
+          <!-- Bio -->
+          <div class="form-group">
+            <label for="bio">Bio</label>
+            <textarea
+              id="bio"
+              name="bio"
+              placeholder="Tell people about yourself…"
+              rows="4"
+            ></textarea>
+            <small class="help">Optional. Keep it short and friendly.</small>
+          </div>
+
+          <!-- Avatar -->
+          <fieldset class="form-group">
+            <legend>Avatar</legend>
+            <img
+              id="avatar-preview"
+              src="assets/images/placeholder.png"
+              alt=""
+              width="120"
+              height="120"
+              style="
+                display: none;
+                border-radius: 999px;
+                object-fit: cover;
+                border: 1px solid var(--color-border);
+                margin-bottom: 0.5rem;
+              "
+            />
+            <div class="form-row">
+              <div class="form-group">
+                <label for="avatar-url">Avatar URL</label>
+                <input
+                  id="avatar-url"
+                  name="avatar-url"
+                  type="url"
+                  placeholder="https://..."
+                />
+                <small class="help">Publicly accessible image URL.</small>
+              </div>
+              <div class="form-group">
+                <label for="avatar-alt">Avatar Alt</label>
+                <input
+                  id="avatar-alt"
+                  name="avatar-alt"
+                  type="text"
+                  placeholder="Alt text (optional)"
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Banner -->
+          <fieldset class="form-group">
+            <legend>Banner</legend>
+            <img
+              id="banner-preview"
+              src="assets/images/placeholder.png"
+              alt=""
+              style="
+                display: none;
+                width: 100%;
+                max-height: 180px;
+                object-fit: cover;
+                border-radius: var(--radius);
+                border: 1px solid var(--color-border);
+                margin-bottom: 0.5rem;
+              "
+            />
+            <div class="form-row">
+              <div class="form-group">
+                <label for="banner-url">Banner URL</label>
+                <input
+                  id="banner-url"
+                  name="banner-url"
+                  type="url"
+                  placeholder="https://..."
+                />
+                <small class="help">Publicly accessible image URL.</small>
+              </div>
+              <div class="form-group">
+                <label for="banner-alt">Banner Alt</label>
+                <input
+                  id="banner-alt"
+                  name="banner-alt"
+                  type="text"
+                  placeholder="Alt text (optional)"
+                />
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button id="btn-save" type="submit" class="btn">
+              Save changes
+            </button>
+            <a id="btn-cancel" class="btn btn-outline" href="profile.html"
+              >Cancel</a
+            >
+          </div>
+        </form>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
+
+    <noscript>
+      <p class="alert error" style="margin: 1rem">
+        JavaScript is required to edit your profile.
+      </p>
+    </noscript>
+  </body>
+</html>

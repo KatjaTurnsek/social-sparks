@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile · Social Sparks</title>
+    <meta
+      name="description"
+      content="View a Social Sparks profile and posts."
+    />
+    <script type="module" crossorigin src="/social-sparks/assets/profile-Cv2EGQyN.js"></script>
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/boot-DLZHiz98.js">
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/auth-B5TyBL4-.js">
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/dates-4Iv0sr_s.js">
+    <link rel="stylesheet" crossorigin href="/social-sparks/assets/boot-BEWV8Vjp.css">
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="site-header">
+      <nav class="nav container" aria-label="Primary">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links"></ul>
+
+        <!-- Search form -->
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
+      </nav>
+    </header>
+
+    <main
+      id="main-content"
+      class="container"
+      style="max-width: 860px; margin: 2rem auto"
+    >
+      <!-- Profile header -->
+      <article
+        id="profile-header"
+        class="card profile-header"
+        aria-live="polite"
+      >
+        <div class="profile-banner">
+          <img
+            id="profile-banner"
+            src="assets/images/placeholder.png"
+            alt=""
+            data-placeholder="assets/images/placeholder.png"
+            style="display: none"
+          />
+        </div>
+
+        <div class="profile-header-body">
+          <img
+            id="profile-avatar"
+            class="profile-avatar"
+            src="assets/images/placeholder.png"
+            alt=""
+            width="120"
+            height="120"
+            data-placeholder="assets/images/placeholder.png"
+            style="display: none"
+          />
+
+          <div class="profile-meta">
+            <h1 id="profile-name" class="mt-0 mb-0">Profile</h1>
+            <p id="profile-email" class="muted mb-1"></p>
+            <p id="profile-bio" class="mb-1"></p>
+
+            <div class="chip-group">
+              <span class="chip"
+                ><strong id="count-posts">0</strong> Posts</span
+              >
+              <span class="chip"
+                ><strong id="count-followers">0</strong> Followers</span
+              >
+              <span class="chip"
+                ><strong id="count-following">0</strong> Following</span
+              >
+            </div>
+
+            <div class="profile-actions">
+              <button id="btn-follow" class="btn" hidden>Follow</button>
+              <button id="btn-unfollow" class="btn btn-outline" hidden>
+                Unfollow
+              </button>
+              <a
+                id="btn-edit"
+                class="btn btn-outline"
+                href="edit-profile.html"
+                hidden
+                >Edit profile</a
+              >
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <!-- Tabs -->
+      <nav class="tabs" aria-label="Profile sections" role="tablist">
+        <button
+          class="tab is-active"
+          id="tab-posts"
+          data-tab="posts"
+          type="button"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-posts"
+        >
+          Posts
+        </button>
+        <button
+          class="tab"
+          id="tab-followers"
+          data-tab="followers"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-followers"
+        >
+          Followers
+        </button>
+        <button
+          class="tab"
+          id="tab-following"
+          data-tab="following"
+          type="button"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-following"
+        >
+          Following
+        </button>
+      </nav>
+
+      <!-- Panels -->
+      <section
+        id="panel-posts"
+        class="tabpanel"
+        role="tabpanel"
+        tabindex="0"
+        aria-labelledby="tab-posts"
+      ></section>
+
+      <section
+        id="panel-followers"
+        class="tabpanel is-hidden"
+        role="tabpanel"
+        tabindex="0"
+        aria-labelledby="tab-followers"
+      ></section>
+
+      <section
+        id="panel-following"
+        class="tabpanel is-hidden"
+        role="tabpanel"
+        tabindex="0"
+        aria-labelledby="tab-following"
+      ></section>
+
+      <div id="app">
+        <p
+          id="page-msg"
+          class="form-message alert"
+          aria-live="polite"
+          style="display: none"
+        ></p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
+
+    <noscript>
+      <p class="alert error" style="margin: 1rem">
+        JavaScript is required to view this profile.
+      </p>
+    </noscript>
+  </body>
+</html>

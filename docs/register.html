@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register · Social Sparks</title>
+    <meta name="description" content="Create your Social Sparks account." />
+    <script type="module" crossorigin src="/social-sparks/assets/register-Bm9p5t6U.js"></script>
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/boot-DLZHiz98.js">
+    <link rel="stylesheet" crossorigin href="/social-sparks/assets/boot-BEWV8Vjp.css">
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="site-header">
+      <nav class="nav container" aria-label="Primary">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links"></ul>
+
+        <!-- Search form -->
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
+      </nav>
+    </header>
+
+    <main id="main-content" class="container" data-page="register">
+      <section
+        class="card"
+        style="max-width: 520px; margin: 2rem auto; padding: 1.5rem"
+      >
+        <h1 class="mt-0 mb-2">Create account</h1>
+
+        <form class="form" id="register-form" novalidate>
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              required
+              autocomplete="name"
+              aria-describedby="name-help"
+            />
+            <small class="help" id="name-help">
+              This will be visible on your profile.
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              autocomplete="email"
+              inputmode="email"
+              autocapitalize="off"
+              spellcheck="false"
+              aria-describedby="email-help"
+            />
+            <small class="help" id="email-help">
+              Use a valid email you can access.
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              minlength="8"
+              autocomplete="new-password"
+              aria-describedby="password-help"
+            />
+            <small class="help" id="password-help"
+              >At least 8 characters.</small
+            >
+          </div>
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Create account</button>
+            <a href="login.html" class="btn btn-outline"
+              >I already have an account</a
+            >
+          </div>
+
+          <p
+            id="register-msg"
+            class="form-message alert"
+            role="status"
+            aria-live="polite"
+            hidden
+          ></p>
+        </form>
+      </section>
+
+      <div id="app">
+        <p
+          id="page-msg"
+          class="form-message alert"
+          aria-live="polite"
+          hidden
+        ></p>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
+
+    <noscript>
+      <p class="alert error" style="margin: 1rem">
+        JavaScript is required to register.
+      </p>
+    </noscript>
+  </body>
+</html>

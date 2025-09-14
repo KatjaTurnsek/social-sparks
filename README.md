@@ -109,6 +109,7 @@ feed.html
 post.html
 profile.html
 search.html
+create-post.html
 edit-post.html
 edit-profile.html
 vite.config.js

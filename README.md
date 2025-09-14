@@ -63,6 +63,7 @@ Multi-page via Vite: Although this is a lightweight SPA-style experience, the pr
 - post.html – Single post (comments + reactions)
 - profile.html – User profile (posts, followers, following)
 - search.html – Post search results
+- create-post.html - Create your post
 - edit-post.html – Edit your post
 - edit-profile.html – Edit your profile
 

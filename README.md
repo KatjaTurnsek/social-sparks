@@ -6,10 +6,10 @@ A mini social network / micro-blogging app where users can register, log in, bro
 
 ## 🔗 Links 
 
-**Deployed on GitHub Pages:** [Social Sparks Website](https://katjaturnsek.github.io/social-sparks/)
-**GitHub Repository:** [https://github.com/KatjaTurnsek/social-sparks](https://github.com/KatjaTurnsek/social-sparks)
-**Project Kanban:** [Open the Kanban Board »](https://github.com/users/KatjaTurnsek/projects/2/views/1)
-**Api Docs:** [Open Api Docs »](https://docs.noroff.dev/docs/v2)
+- **Deployed on GitHub Pages:** [Social Sparks Website](https://katjaturnsek.github.io/social-sparks/)
+- **GitHub Repository:** [https://github.com/KatjaTurnsek/social-sparks](https://github.com/KatjaTurnsek/social-sparks)
+- **Project Kanban:** [Open the Kanban Board »](https://github.com/users/KatjaTurnsek/projects/2/views/1)
+- **Api Docs:** [Open Api Docs »](https://docs.noroff.dev/docs/v2)
 
 ## ✅ Features (per brief)
 

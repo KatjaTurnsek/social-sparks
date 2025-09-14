@@ -38,13 +38,13 @@ Multi-page via Vite: Although this is a lightweight SPA-style experience, the pr
 - `post.html` – Single post (comments/reactions)
 - `profile.html` – User profile
 - `search.html` – Search results
-- `edit-post.html`, `edit-profile.html`
+- `create-post.html`, `edit-post.html`, `edit-profile.html`
 
 ## 🧩 How This Meets the Brief
 
 - ES6 modules used throughout
 - At least 3 functions with JSDoc: dozens of functions across pages include JSDoc + // @ts-check
-- Deployed app: GitHub Pages (link will be added once published)
+- Deployed app: GitHub Pages
 - Basic UI: Cards, grid layout, responsive inputs, accessible nav & forms
 - README includes how to run the project and documentation pointers
 
@@ -127,7 +127,6 @@ vite.config.js
 - **Error handling** centralized via `shared/errors.js` (`errorFrom`)
 _Read the docs directly in the JS files on GitHub or in your IDE._
 
-
 ## ♿ Accessibility & Performance
 
 - Semantic HTML, descriptive labels, and skip link
@@ -143,7 +142,6 @@ Contributions are welcome! Bug fixes, docs improvements, and small features are 
 1. **Fork** the repo and create a branch:
 
 `git checkout -b feat/your-short-title`
-#### or: fix/..., docs/..., style/...
 
 2. **Run locally** with `npm run dev`
 3. **Commit** with clear messages (Conventional Commits encouraged)
@@ -158,7 +156,6 @@ Contributions are welcome! Bug fixes, docs improvements, and small features are 
 - Keep modules focused; avoid large files with many responsibilities
 - Maintain visible focus states and good color contrast
 - Optimize images (WebP/JPG), use lazy loading where sensible
-
 
 ## 🙋‍♀️ Author
 

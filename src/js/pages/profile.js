@@ -31,6 +31,7 @@ function setText(el, text) {
 
 /**
  * Set (or clear) an <img>'s src/alt and visibility.
+ * Uses a placeholder from data-placeholder (or initial src) to avoid empty-src.
  * @param {HTMLImageElement|null} imgEl
  * @param {string} url
  * @param {string} [alt]
@@ -38,12 +39,20 @@ function setText(el, text) {
  */
 function setImg(imgEl, url, alt) {
   if (!imgEl) return;
+
+  // Remember initial placeholder once
+  const initial = imgEl.dataset.placeholder || imgEl.getAttribute("src") || "";
+  if (!imgEl.dataset.placeholder && initial) {
+    imgEl.dataset.placeholder = initial;
+  }
+
   if (url) {
     imgEl.src = url;
     imgEl.alt = alt || "";
     imgEl.style.display = "";
   } else {
-    imgEl.removeAttribute("src");
+    // Fall back to placeholder and keep it hidden (avoids validator errors)
+    if (imgEl.dataset.placeholder) imgEl.src = imgEl.dataset.placeholder;
     imgEl.alt = "";
     imgEl.style.display = "none";
   }

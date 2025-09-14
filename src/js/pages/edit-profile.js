@@ -7,6 +7,9 @@ import { showLoader, hideLoader } from "../boot.js";
 import { errorFrom } from "../shared/errors.js";
 import { normalizeBearer } from "../shared/auth.js";
 
+/** Transparent 1x1 GIF to keep a valid `src` at all times */
+const PLACEHOLDER_SRC = "data:image/gif;base64,R0lGODlhAQABAAAAACw=";
+
 /**
  * Return element by id.
  * @param {string} id
@@ -117,12 +120,32 @@ async function updateProfile(name, payload) {
 }
 
 /**
+ * Safely apply a preview to an <img>: always keep a valid `src`.
+ * Never removes `src` (prevents HTML validator errors).
+ * @param {HTMLImageElement|null} img
+ * @param {string} url
+ * @param {string} [alt]
+ * @returns {void}
+ */
+function applyPreview(img, url, alt = "") {
+  if (!img) return;
+  const clean = String(url || "").trim();
+  const valid = /^https?:\/\//i.test(clean);
+  img.src = valid ? clean : PLACEHOLDER_SRC;
+  img.alt = valid ? alt : "";
+  img.style.display = valid ? "" : "none";
+}
+
+/**
  * Wire avatar/banner live preview updates as the user types.
  * @returns {void}
  */
 function wirePreviews() {
   const avatarUrl = /** @type {HTMLInputElement|null} */ (byId("avatar-url"));
+  const avatarAlt = /** @type {HTMLInputElement|null} */ (byId("avatar-alt"));
   const bannerUrl = /** @type {HTMLInputElement|null} */ (byId("banner-url"));
+  const bannerAlt = /** @type {HTMLInputElement|null} */ (byId("banner-alt"));
+
   const avatarPrev = /** @type {HTMLImageElement|null} */ (
     byId("avatar-preview")
   );
@@ -130,36 +153,28 @@ function wirePreviews() {
     byId("banner-preview")
   );
 
-  /**
-   * @param {HTMLImageElement|null} img
-   * @param {string} url
-   * @returns {void}
-   */
-  function setPreview(img, url) {
-    if (!img) return;
-    if (url && /^https?:\/\//i.test(url)) {
-      img.src = url;
-      img.style.display = "";
-    } else {
-      img.removeAttribute("src");
-      img.style.display = "none";
-    }
-  }
+  const onAvatarChange = () =>
+    applyPreview(
+      avatarPrev,
+      avatarUrl?.value.trim() || "",
+      avatarAlt?.value.trim() || ""
+    );
+  const onBannerChange = () =>
+    applyPreview(
+      bannerPrev,
+      bannerUrl?.value.trim() || "",
+      bannerAlt?.value.trim() || ""
+    );
 
-  if (avatarUrl && avatarPrev) {
-    avatarUrl.addEventListener("input", () =>
-      setPreview(avatarPrev, avatarUrl.value.trim())
-    );
-  }
-  if (bannerUrl && bannerPrev) {
-    bannerUrl.addEventListener("input", () =>
-      setPreview(bannerPrev, bannerUrl.value.trim())
-    );
-  }
+  avatarUrl?.addEventListener("input", onAvatarChange);
+  avatarAlt?.addEventListener("input", onAvatarChange);
+  bannerUrl?.addEventListener("input", onBannerChange);
+  bannerAlt?.addEventListener("input", onBannerChange);
 }
 
 /**
  * Populate the form from a loaded profile.
+ * Also initializes previews with safe placeholder behavior.
  * @param {Profile|null} p
  * @returns {void}
  */
@@ -183,24 +198,9 @@ function fillForm(p) {
   if (bUrl) bUrl.value = p?.banner?.url || "";
   if (bAlt) bAlt.value = p?.banner?.alt || "";
 
-  if (avatarPrev) {
-    const url = p?.avatar?.url || "";
-    if (url) {
-      avatarPrev.src = url;
-      avatarPrev.style.display = "";
-    } else {
-      avatarPrev.style.display = "none";
-    }
-  }
-  if (bannerPrev) {
-    const url = p?.banner?.url || "";
-    if (url) {
-      bannerPrev.src = url;
-      bannerPrev.style.display = "";
-    } else {
-      bannerPrev.style.display = "none";
-    }
-  }
+  // Initialize previews (keeps valid src even when hidden)
+  applyPreview(avatarPrev, p?.avatar?.url || "", p?.avatar?.alt || "");
+  applyPreview(bannerPrev, p?.banner?.url || "", p?.banner?.alt || "");
 }
 
 /**

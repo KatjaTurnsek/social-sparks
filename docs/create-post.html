@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Post · Social Sparks</title>
+    <meta name="description" content="Create a new post on Social Sparks." />
+    <script type="module" crossorigin src="/social-sparks/assets/createPost-DdYOuZkN.js"></script>
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/boot-DLZHiz98.js">
+    <link rel="modulepreload" crossorigin href="/social-sparks/assets/auth-B5TyBL4-.js">
+    <link rel="stylesheet" crossorigin href="/social-sparks/assets/boot-BEWV8Vjp.css">
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header class="site-header">
+      <nav class="nav container" aria-label="Primary">
+        <a href="index.html" class="brand">Social Sparks</a>
+        <ul class="nav-links"></ul>
+
+        <!-- Search form -->
+        <form
+          action="search.html"
+          method="get"
+          class="nav-search"
+          role="search"
+        >
+          <label for="q" class="visually-hidden">Search posts</label>
+          <input
+            id="q"
+            name="q"
+            type="search"
+            placeholder="Search posts…"
+            required
+          />
+          <button type="submit" class="btn btn-outline">Search</button>
+        </form>
+      </nav>
+    </header>
+
+    <main
+      id="main-content"
+      class="container"
+      style="max-width: 680px; margin: 2rem auto"
+    >
+      <h1>Create a New Post</h1>
+
+      <p
+        id="create-msg"
+        class="form-message alert"
+        aria-live="polite"
+        hidden
+      ></p>
+
+      <form
+        id="create-form"
+        class="form card"
+        style="padding: 1.5rem"
+        novalidate
+      >
+        <div class="form-group">
+          <label for="title">Title <span aria-hidden="true">*</span></label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            required
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="body">Body</label>
+          <textarea
+            id="body"
+            name="body"
+            rows="5"
+            autocomplete="off"
+          ></textarea>
+          <small class="muted"
+            >Tip: Press <kbd>Ctrl</kbd>/<kbd>Cmd</kbd> + <kbd>Enter</kbd> to
+            publish.</small
+          >
+        </div>
+
+        <fieldset class="form-group">
+          <legend>Media (optional)</legend>
+
+          <label for="media-url">Image URL</label>
+          <input
+            type="url"
+            id="media-url"
+            name="media-url"
+            inputmode="url"
+            placeholder="https://example.com/image.jpg"
+            pattern="https?://.*"
+            autocomplete="off"
+          />
+
+          <label for="media-alt">Alt text</label>
+          <input
+            type="text"
+            id="media-alt"
+            name="media-alt"
+            autocomplete="off"
+          />
+        </fieldset>
+
+        <div class="form-actions">
+          <button type="submit" class="btn">Create Post</button>
+          <a href="feed.html" class="btn btn-outline">Cancel</a>
+        </div>
+      </form>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <small>&copy; 2025 Social Sparks</small>
+      </div>
+    </footer>
+
+    <noscript>
+      <p class="alert error" style="margin: 1rem">
+        JavaScript is required to create a post.
+      </p>
+    </noscript>
+  </body>
+</html>

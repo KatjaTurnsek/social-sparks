@@ -6,7 +6,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-
   return {
     base: "/social-sparks/",
     define: {
@@ -24,10 +23,12 @@ export default defineConfig(({ mode }) => {
           post: resolve(__dirname, "post.html"),
           profile: resolve(__dirname, "profile.html"),
           search: resolve(__dirname, "search.html"),
+          createPost: resolve(__dirname, "create-post.html"),
           editPost: resolve(__dirname, "edit-post.html"),
           editProfile: resolve(__dirname, "edit-profile.html"),
         },
       },
+      outDir: "docs",
     },
   };
 });

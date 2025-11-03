@@ -1,68 +1,87 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark:bg-gray-900 dark:text-gray-100">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Feed · Social Sparks</title>
     <meta name="description" content="See the latest posts on Social Sparks." />
-    <link rel="stylesheet" href="./src/css/main.css" />
     <script type="module" src="./src/js/pages/feed.js"></script>
   </head>
-  <body>
+  <body
+    class="min-h-dvh bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100"
+  >
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
+    <!-- Header (aliases) -->
     <header class="site-header">
       <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
-        <ul class="nav-links"></ul>
 
-        <!-- Search form -->
+        <!-- Fallback links -->
+        <ul class="nav-links">
+          <li><a href="feed.html" aria-current="page">Feed</a></li>
+          <li><a href="profile.html">Profile</a></li>
+          <li><a href="login.html">Login</a></li>
+        </ul>
+
         <form
           action="search.html"
           method="get"
-          class="nav-search"
           role="search"
+          class="nav-search"
         >
           <label for="q" class="visually-hidden">Search posts</label>
           <input
             id="q"
             name="q"
             type="search"
-            placeholder="Search posts…"
             required
+            placeholder="Search posts…"
           />
-          <button type="submit" class="btn btn-outline">Search</button>
+          <button type="submit" class="btn-outline">Search</button>
         </form>
       </nav>
     </header>
 
-    <main id="main-content" class="container page-narrow" data-page="feed">
-      <section id="feed-toolbar" class="form-actions toolbar">
-        <a href="create-post.html" class="btn" aria-label="Create a new post"
+    <!-- Main -->
+    <main id="main-content" class="container py-8 space-y-6" data-page="feed">
+      <section id="feed-toolbar" class="flex items-center justify-end">
+        <a href="create-post.html" aria-label="Create a new post" class="btn"
           >New Post</a
         >
       </section>
 
-      <div id="display-container"></div>
+      <section class="space-y-1">
+        <h1 class="text-2xl font-bold tracking-tight">Latest posts</h1>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Fresh from the community.
+        </p>
+      </section>
+
+      <div id="display-container" class="space-y-4"></div>
 
       <div id="app">
         <p
           id="page-msg"
-          class="form-message alert"
           aria-live="polite"
           hidden
+          class="mt-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-900 dark:border-amber-600/40 dark:bg-amber-900/20 dark:text-amber-200"
         ></p>
       </div>
     </main>
 
-    <footer class="site-footer">
+    <footer class="border-t py-8 dark:border-gray-800">
       <div class="container">
-        <small>&copy; 2025 Social Sparks</small>
+        <small class="text-gray-600 dark:text-gray-400"
+          >&copy; 2025 Social Sparks</small
+        >
       </div>
     </footer>
 
     <noscript>
-      <p class="alert error" style="margin: 1rem">
+      <p
+        class="m-4 rounded-md border border-red-300 bg-red-50 p-3 text-red-800"
+      >
         JavaScript is required to load the feed.
       </p>
     </noscript>

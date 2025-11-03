@@ -1,3 +1,4 @@
+import "../../styles/tailwind.css";
 // @ts-check
 /** @typedef {import("../types.js").Profile} Profile */
 /** @typedef {import("../types.js").Post} Post */

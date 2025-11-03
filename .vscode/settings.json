@@ -1,5 +1,27 @@
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnSave": true,
-  "eslint.validate": ["javascript"]
+  "eslint.validate": ["javascript"],
+
+  // Tailwind IntelliSense helpers
+  "css.validate": false,
+
+  // Tailwind class suggestions inside HTML/JS strings
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+
+  "tailwindCSS.includeLanguages": {
+    "css": "css",
+    "postcss": "postcss",
+    "html": "html",
+    "javascript": "javascript"
+  },
+  "tailwindCSS.experimental.configFile": "tailwind.config.js",
+
+  "tailwindCSS.files.exclude": [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/docs/**"
+  ]
 }

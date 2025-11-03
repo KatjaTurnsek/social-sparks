@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark:bg-gray-900 dark:text-gray-100">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,18 +8,25 @@
       name="description"
       content="View a Social Sparks profile and posts."
     />
-    <link rel="stylesheet" href="./src/css/main.css" />
     <script type="module" src="./src/js/pages/profile.js"></script>
   </head>
-  <body>
+  <body
+    class="min-h-dvh bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100"
+  >
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
+    <!-- Header (aliases) -->
     <header class="site-header">
       <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
-        <ul class="nav-links"></ul>
 
-        <!-- Search form -->
+        <!-- Fallback links -->
+        <ul class="nav-links">
+          <li><a href="feed.html">Feed</a></li>
+          <li><a href="profile.html" aria-current="page">Profile</a></li>
+          <li><a href="login.html">Login</a></li>
+        </ul>
+
         <form
           action="search.html"
           method="get"
@@ -34,36 +41,34 @@
             placeholder="Search posts…"
             required
           />
-          <button type="submit" class="btn btn-outline">Search</button>
+          <button type="submit" class="btn-outline">Search</button>
         </form>
       </nav>
     </header>
 
-    <main
-      id="main-content"
-      class="container"
-      style="max-width: 860px; margin: 2rem auto"
-    >
-      <!-- Profile header -->
+    <!-- Main -->
+    <main id="main-content" class="container py-8" data-page="profile">
       <article
         id="profile-header"
-        class="card profile-header"
+        class="card p-6 space-y-4"
         aria-live="polite"
       >
-        <div class="profile-banner">
+        <div class="profile-banner overflow-hidden rounded-xl">
           <img
             id="profile-banner"
             src="assets/images/placeholder.png"
             alt=""
             data-placeholder="assets/images/placeholder.png"
             style="display: none"
+            class="h-40 w-full object-cover"
           />
         </div>
 
-        <div class="profile-header-body">
+        <div class="profile-header-body mt-2 flex items-start gap-6">
+          <!-- Avatar -->
           <img
             id="profile-avatar"
-            class="profile-avatar"
+            class="profile-avatar h-28 w-28 rounded-full ring-2 ring-indigo-500/20"
             src="assets/images/placeholder.png"
             alt=""
             width="120"
@@ -72,24 +77,35 @@
             style="display: none"
           />
 
-          <div class="profile-meta">
-            <h1 id="profile-name" class="mt-0 mb-0">Profile</h1>
-            <p id="profile-email" class="muted mb-1"></p>
-            <p id="profile-bio" class="mb-1"></p>
+          <!-- Meta -->
+          <div class="profile-meta flex-1 space-y-2">
+            <h1 id="profile-name" class="text-2xl font-bold tracking-tight">
+              Profile
+            </h1>
+            <p id="profile-email" class="muted"></p>
+            <p id="profile-bio"></p>
 
-            <div class="chip-group">
-              <span class="chip"
-                ><strong id="count-posts">0</strong> Posts</span
+            <!-- Stats -->
+            <div class="chip-group flex flex-wrap gap-2 text-sm">
+              <span
+                class="chip inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
               >
-              <span class="chip"
-                ><strong id="count-followers">0</strong> Followers</span
+                <strong id="count-posts">0</strong> Posts
+              </span>
+              <span
+                class="chip inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
               >
-              <span class="chip"
-                ><strong id="count-following">0</strong> Following</span
+                <strong id="count-followers">0</strong> Followers
+              </span>
+              <span
+                class="chip inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
               >
+                <strong id="count-following">0</strong> Following
+              </span>
             </div>
 
-            <div class="profile-actions">
+            <!-- Actions -->
+            <div class="profile-actions form-actions">
               <button id="btn-follow" class="btn" hidden>Follow</button>
               <button id="btn-unfollow" class="btn btn-outline" hidden>
                 Unfollow
@@ -107,9 +123,13 @@
       </article>
 
       <!-- Tabs -->
-      <nav class="tabs" aria-label="Profile sections" role="tablist">
+      <nav
+        class="tabs mt-6 flex items-center gap-2 border-b border-gray-200 pb-2 dark:border-gray-800"
+        aria-label="Profile sections"
+        role="tablist"
+      >
         <button
-          class="tab is-active"
+          class="tab is-active rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow"
           id="tab-posts"
           data-tab="posts"
           type="button"
@@ -120,7 +140,7 @@
           Posts
         </button>
         <button
-          class="tab"
+          class="tab rounded-md px-4 py-2 text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800"
           id="tab-followers"
           data-tab="followers"
           type="button"
@@ -131,7 +151,7 @@
           Followers
         </button>
         <button
-          class="tab"
+          class="tab rounded-md px-4 py-2 text-sm font-semibold hover:bg-gray-100 dark:hover:bg-gray-800"
           id="tab-following"
           data-tab="following"
           type="button"
@@ -143,10 +163,9 @@
         </button>
       </nav>
 
-      <!-- Panels -->
       <section
         id="panel-posts"
-        class="tabpanel"
+        class="tabpanel mt-4 space-y-4"
         role="tabpanel"
         tabindex="0"
         aria-labelledby="tab-posts"
@@ -154,7 +173,7 @@
 
       <section
         id="panel-followers"
-        class="tabpanel is-hidden"
+        class="tabpanel is-hidden mt-4 space-y-4"
         role="tabpanel"
         tabindex="0"
         aria-labelledby="tab-followers"
@@ -162,30 +181,34 @@
 
       <section
         id="panel-following"
-        class="tabpanel is-hidden"
+        class="tabpanel is-hidden mt-4 space-y-4"
         role="tabpanel"
         tabindex="0"
         aria-labelledby="tab-following"
       ></section>
 
-      <div id="app">
+      <div id="app" class="mt-6">
         <p
           id="page-msg"
           class="form-message alert"
           aria-live="polite"
-          style="display: none"
+          hidden
         ></p>
       </div>
     </main>
 
-    <footer class="site-footer">
+    <footer class="border-t py-8 dark:border-gray-800">
       <div class="container">
-        <small>&copy; 2025 Social Sparks</small>
+        <small class="text-gray-600 dark:text-gray-400"
+          >&copy; 2025 Social Sparks</small
+        >
       </div>
     </footer>
 
     <noscript>
-      <p class="alert error" style="margin: 1rem">
+      <p
+        class="m-4 rounded-md border border-red-300 bg-red-50 p-3 text-red-800"
+      >
         JavaScript is required to view this profile.
       </p>
     </noscript>

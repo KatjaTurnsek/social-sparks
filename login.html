@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark:bg-gray-900 dark:text-gray-100">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,105 +8,126 @@
       name="description"
       content="Login to Social Sparks to share and connect."
     />
-    <link rel="stylesheet" href="./src/css/main.css" />
     <script type="module" src="./src/js/pages/login.js"></script>
   </head>
-  <body>
+  <body
+    class="min-h-dvh bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100"
+  >
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
+    <!-- Header (aliases) -->
     <header class="site-header">
       <nav class="nav container" aria-label="Primary">
         <a href="index.html" class="brand">Social Sparks</a>
-        <!-- Leave empty; boot.js will populate based on auth -->
-        <ul class="nav-links"></ul>
 
-        <!-- Search form -->
+        <!-- Fallback links -->
+        <ul class="nav-links">
+          <li><a href="feed.html">Feed</a></li>
+          <li><a href="profile.html">Profile</a></li>
+          <li><a href="login.html" aria-current="page">Login</a></li>
+        </ul>
+
         <form
           action="search.html"
           method="get"
-          class="nav-search"
           role="search"
+          class="nav-search"
         >
           <label for="q" class="visually-hidden">Search posts</label>
           <input
             id="q"
             name="q"
             type="search"
-            placeholder="Search posts…"
             required
+            placeholder="Search posts…"
           />
-          <button type="submit" class="btn btn-outline">Search</button>
+          <button type="submit" class="btn-outline">Search</button>
         </form>
       </nav>
     </header>
 
-    <main id="main-content" class="container" data-page="login">
-      <section
-        class="card"
-        style="max-width: 480px; margin: 2rem auto; padding: 1.5rem"
-      >
-        <h1 class="mt-0 mb-2">Login</h1>
+    <!-- Main -->
+    <main id="main-content" class="container py-10" data-page="login">
+      <section class="mx-auto max-w-md space-y-6">
+        <header class="space-y-1">
+          <h1 class="text-2xl font-bold tracking-tight">Welcome back</h1>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Sign in to continue.
+          </p>
+        </header>
 
-        <form class="form" id="login-form" novalidate>
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              autocomplete="email"
-              inputmode="email"
-              autocapitalize="off"
-              spellcheck="false"
-              enterkeyhint="go"
-            />
-          </div>
+        <section class="card p-6">
+          <h2 class="text-lg font-semibold mb-4">Login</h2>
 
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autocomplete="current-password"
-            />
-          </div>
+          <form class="form space-y-4" id="login-form">
+            <div class="space-y-1">
+              <label for="email" class="font-medium">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                autocomplete="email"
+                inputmode="email"
+                autocapitalize="off"
+                spellcheck="false"
+                enterkeyhint="go"
+                class="w-full"
+              />
+            </div>
 
-          <div class="form-actions">
-            <button class="btn" type="submit">Sign in</button>
-            <a href="register.html" class="btn btn-outline">Register</a>
-          </div>
+            <div class="space-y-1">
+              <label for="password" class="font-medium">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                minlength="8"
+                autocomplete="current-password"
+                class="w-full"
+              />
+              <p class="muted">At least 8 characters.</p>
+            </div>
 
+            <div class="form-actions">
+              <button class="btn" type="submit">Sign in</button>
+              <a href="register.html" class="btn btn-outline">Register</a>
+            </div>
+
+            <p
+              id="login-msg"
+              class="form-message alert"
+              role="status"
+              aria-live="polite"
+              hidden
+            ></p>
+          </form>
+        </section>
+
+        <div id="app">
           <p
-            id="login-msg"
+            id="page-msg"
             class="form-message alert"
-            role="status"
             aria-live="polite"
             hidden
           ></p>
-        </form>
+        </div>
       </section>
-
-      <div id="app">
-        <p
-          id="page-msg"
-          class="form-message alert"
-          aria-live="polite"
-          hidden
-        ></p>
-      </div>
     </main>
 
-    <footer class="site-footer">
+    <footer class="border-t py-8 dark:border-gray-800">
       <div class="container">
-        <small>&copy; 2025 Social Sparks</small>
+        <small class="text-gray-600 dark:text-gray-400"
+          >&copy; 2025 Social Sparks</small
+        >
       </div>
     </footer>
 
     <noscript>
-      <p class="alert error" style="margin: 1rem">
+      <p
+        class="m-4 rounded-md border border-red-300 bg-red-50 p-3 text-red-800"
+      >
         JavaScript is required to log in.
       </p>
     </noscript>

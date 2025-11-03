@@ -1,3 +1,4 @@
+import "../../styles/tailwind.css";
 // @ts-check
 import { BASE_API_URL, addToLocalStorage } from "../utils.js";
 import { showLoader, hideLoader } from "../boot.js";

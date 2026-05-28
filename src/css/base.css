@@ -55,3 +55,7 @@ textarea {
   font: inherit;
   color: inherit;
 }
+
+.no-script-message {
+  margin: 1rem;
+}

@@ -201,10 +201,7 @@ function renderPosts(posts) {
   if (!postsEl) return;
   clear(postsEl);
 
-  postsEl.classList.add("grid");
-  postsEl.style.display = "grid";
-  postsEl.style.gridTemplateColumns = "repeat(4, minmax(0, 1fr))";
-  postsEl.style.gap = "1rem";
+  postsEl.classList.add("latest-posts-grid");
 
   const latest = Array.isArray(posts) ? [...posts].slice(0, 4) : [];
 
@@ -218,14 +215,37 @@ function renderPosts(posts) {
 
   for (const post of latest) {
     const card = document.createElement("article");
-    card.className = "card";
+    card.className = "card latest-post-card";
+
+    const mediaWrap = document.createElement("div");
+    mediaWrap.className = "latest-post-media";
+
+    const media = post?.media || null;
+
+    if (typeof media?.url === "string" && media.url) {
+      const img = document.createElement("img");
+      img.src = media.url;
+      img.alt = typeof media?.alt === "string" ? media.alt : "";
+      img.loading = "lazy";
+      img.className = "post-media index-post-image";
+      mediaWrap.appendChild(img);
+    } else {
+      const placeholder = document.createElement("div");
+      placeholder.className = "latest-post-placeholder";
+      placeholder.setAttribute("aria-hidden", "true");
+      placeholder.textContent = "Social Sparks";
+      mediaWrap.appendChild(placeholder);
+    }
+
+    const content = document.createElement("div");
+    content.className = "latest-post-content";
 
     const h2 = document.createElement("h2");
+    h2.className = "latest-post-title";
     h2.textContent = post?.title || "Untitled";
 
     const meta = document.createElement("p");
-    meta.className = "muted";
-    meta.style.wordBreak = "break-word";
+    meta.className = "muted latest-post-meta";
 
     const authorName = post?.author?.name
       ? String(post.author.name)
@@ -233,6 +253,7 @@ function renderPosts(posts) {
     const created = post?.created ? formatDate(post.created) : "";
 
     meta.textContent = "by ";
+
     if (authorName !== "Unknown") {
       const a = document.createElement("a");
       a.href = profileUrl(authorName);
@@ -241,39 +262,30 @@ function renderPosts(posts) {
     } else {
       meta.append(authorName);
     }
+
     if (created) meta.append(` · ${created}`);
 
-    const media = post?.media || null;
-    if (typeof media?.url === "string" && media.url) {
-      const img = document.createElement("img");
-      img.src = media.url;
-      img.alt = typeof media?.alt === "string" ? media.alt : "";
-      img.loading = "lazy";
-      img.className = "post-media index-post-image";
-      card.appendChild(img);
-    }
-
     const body = document.createElement("p");
+    body.className = "latest-post-body";
     body.textContent = firstSentence(post?.body || "");
 
     const actions = document.createElement("div");
-    actions.className = "form-actions";
+    actions.className = "form-actions latest-post-actions";
 
     const view = document.createElement("a");
     view.className = "btn btn-outline";
     const id = post?.id != null ? post.id : "";
     view.href = `post.html?id=${encodeURIComponent(String(id))}`;
     view.textContent = "View";
-    actions.appendChild(view);
 
-    card.append(h2, meta, body, actions);
+    actions.appendChild(view);
+    content.append(h2, meta, body);
+    card.append(mediaWrap, content, actions);
     postsEl.appendChild(card);
   }
 
   const moreWrap = document.createElement("div");
-  moreWrap.className = "form-actions";
-  moreWrap.style.gridColumn = "1/-1";
-  moreWrap.style.justifyContent = "center";
+  moreWrap.className = "form-actions latest-posts-more";
 
   const more = document.createElement("a");
   more.className = "btn btn-outline";

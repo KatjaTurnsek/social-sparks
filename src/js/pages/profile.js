@@ -30,8 +30,23 @@ function setText(el, text) {
 }
 
 /**
- * Set (or clear) an <img>'s src/alt and visibility.
- * Uses a placeholder from data-placeholder (or initial src) to avoid empty-src.
+ * Show a page message without using inline styles.
+ * @param {HTMLElement|null} el
+ * @param {string} message
+ * @param {"error"|"success"|"info"} [type]
+ * @returns {void}
+ */
+function showPageMessage(el, message, type = "error") {
+  if (!el) return;
+
+  el.classList.remove("is-hidden");
+  el.className = `form-message alert ${type}`;
+  el.textContent = message;
+}
+
+/**
+ * Set or clear an image source, alt text, and visibility.
+ * Uses a placeholder from data-placeholder or initial src to avoid empty src.
  * @param {HTMLImageElement|null} imgEl
  * @param {string} url
  * @param {string} [alt]
@@ -40,8 +55,8 @@ function setText(el, text) {
 function setImg(imgEl, url, alt) {
   if (!imgEl) return;
 
-  // Remember initial placeholder once
   const initial = imgEl.dataset.placeholder || imgEl.getAttribute("src") || "";
+
   if (!imgEl.dataset.placeholder && initial) {
     imgEl.dataset.placeholder = initial;
   }
@@ -49,17 +64,19 @@ function setImg(imgEl, url, alt) {
   if (url) {
     imgEl.src = url;
     imgEl.alt = alt || "";
-    imgEl.style.display = "";
+    imgEl.classList.remove("is-hidden");
   } else {
-    // Fall back to placeholder and keep it hidden (avoids validator errors)
-    if (imgEl.dataset.placeholder) imgEl.src = imgEl.dataset.placeholder;
+    if (imgEl.dataset.placeholder) {
+      imgEl.src = imgEl.dataset.placeholder;
+    }
+
     imgEl.alt = "";
-    imgEl.style.display = "none";
+    imgEl.classList.add("is-hidden");
   }
 }
 
 /**
- * Resolve profile name to display: querystring ?name=... or current user.
+ * Resolve profile name from querystring or current logged-in user.
  * @returns {string}
  */
 function getProfileName() {
@@ -73,20 +90,21 @@ function getProfileName() {
 }
 
 /**
- * Case-insensitive name equality (trimmed).
+ * Case-insensitive name equality.
  * @param {string|undefined|null} a
  * @param {string|undefined|null} b
  * @returns {boolean}
  */
 function sameUser(a, b) {
-  return a?.trim().toLowerCase() === b?.trim().toLowerCase();
+  if (!a || !b) return false;
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
 /**
  * Fetch full profile with posts/followers/following included.
  * @param {string} name
  * @returns {Promise<Profile|null>}
- * @throws {Error} When request fails or non-OK response.
+ * @throws {Error} When request fails or response is not OK.
  */
 async function fetchProfile(name) {
   const rawToken = getFromLocalStorage("accessToken") || "";
@@ -104,6 +122,7 @@ async function fetchProfile(name) {
   const res = await fetch(url, { headers });
 
   let json = null;
+
   try {
     json = await res.json();
   } catch {
@@ -111,11 +130,12 @@ async function fetchProfile(name) {
   }
 
   if (!res.ok) throw new Error(errorFrom(json, "Failed to load profile"));
+
   return json?.data || null;
 }
 
 /**
- * Follow/unfollow a profile.
+ * Follow or unfollow a profile.
  * @param {string} name
  * @param {"follow"|"unfollow"} action
  * @returns {Promise<Profile|any>}
@@ -137,6 +157,7 @@ async function follow(name, action) {
   const res = await fetch(url, { method: "PUT", headers });
 
   let json = null;
+
   try {
     json = await res.json();
   } catch {
@@ -149,6 +170,7 @@ async function follow(name, action) {
     err.status = res.status;
     throw err;
   }
+
   return json?.data || json || null;
 }
 
@@ -160,10 +182,14 @@ async function follow(name, action) {
  */
 function renderPosts(panelEl, posts) {
   if (!panelEl) return;
+
   panelEl.innerHTML = "";
-  panelEl.classList.add("grid");
+  panelEl.classList.remove("person-list");
+  panelEl.classList.add("post-grid");
 
   if (!Array.isArray(posts) || posts.length === 0) {
+    panelEl.classList.remove("post-grid");
+
     const p = document.createElement("p");
     p.className = "muted";
     p.textContent = "No posts yet.";
@@ -172,6 +198,7 @@ function renderPosts(panelEl, posts) {
   }
 
   const items = [...posts];
+
   items.forEach((post) => {
     const card = document.createElement("article");
     card.className = "card post-card";
@@ -197,31 +224,37 @@ function renderPosts(panelEl, posts) {
 
     const actions = document.createElement("div");
     actions.className = "form-actions";
+
     const view = document.createElement("a");
     view.className = "btn btn-outline";
     const pid = post?.id != null ? String(post.id) : "";
     view.href = `post.html?id=${encodeURIComponent(pid)}`;
     view.textContent = "View";
-    actions.appendChild(view);
 
+    actions.appendChild(view);
     card.append(h, meta, bodyP, actions);
     panelEl.appendChild(card);
   });
 }
 
 /**
- * Render follower/following lists as cards with avatar + link.
+ * Render follower/following lists as cards with avatar and profile link.
  * @param {HTMLElement|null} panelEl
  * @param {ProfileSummary[]|null|undefined} list
  * @returns {void}
  */
 function renderPeople(panelEl, list) {
   if (!panelEl) return;
+
   panelEl.innerHTML = "";
-  panelEl.classList.remove("grid");
+  panelEl.classList.remove("post-grid");
+  panelEl.classList.add("person-list");
 
   const people = Array.isArray(list) ? [...list] : [];
+
   if (people.length === 0) {
+    panelEl.classList.remove("person-list");
+
     const p = document.createElement("p");
     p.className = "muted";
     p.textContent = "Nothing to show.";
@@ -231,32 +264,26 @@ function renderPeople(panelEl, list) {
 
   people.forEach((person) => {
     const line = document.createElement("article");
-    line.className = "card";
-
-    const row = document.createElement("div");
-    row.style.display = "flex";
-    row.style.gap = "0.75rem";
-    row.style.alignItems = "center";
+    line.className = "card person-card";
 
     const avatar = document.createElement("img");
-    avatar.style.width = "40px";
-    avatar.style.height = "40px";
-    avatar.style.borderRadius = "999px";
+    avatar.loading = "lazy";
+
     if (person?.avatar?.url) {
       avatar.src = person.avatar.url;
       avatar.alt = person.avatar?.alt || "";
     } else {
-      avatar.style.display = "none";
+      avatar.src = "assets/images/placeholder.png";
+      avatar.alt = "";
     }
 
     const info = document.createElement("div");
+
     const nm = document.createElement("p");
-    nm.style.margin = "0";
-    nm.style.fontWeight = "600";
     nm.textContent = person?.name || "Unknown";
+
     const bi = document.createElement("p");
     bi.className = "muted";
-    bi.style.margin = "0";
     bi.textContent = person?.bio || "";
 
     info.append(nm, bi);
@@ -266,8 +293,7 @@ function renderPeople(panelEl, list) {
     go.textContent = "View";
     go.href = `profile.html?name=${encodeURIComponent(person?.name || "")}`;
 
-    row.append(avatar, info, go);
-    line.appendChild(row);
+    line.append(avatar, info, go);
     panelEl.appendChild(line);
   });
 }
@@ -296,16 +322,21 @@ async function main() {
     byId("btn-unfollow")
   );
   const btnEdit = /** @type {HTMLAnchorElement|null} */ (byId("btn-edit"));
+  const btnCreatePost = /** @type {HTMLAnchorElement|null} */ (
+    byId("btn-create-post")
+  );
   const panelPosts = byId("panel-posts");
   const panelFollowers = byId("panel-followers");
   const panelFollowing = byId("panel-following");
+  const msgEl = byId("page-msg");
 
   if (!name) {
-    setText(byId("page-msg"), "No profile name provided.");
+    showPageMessage(msgEl, "No profile name provided.");
     return;
   }
 
   showLoader();
+
   try {
     const p = await fetchProfile(name);
 
@@ -321,6 +352,7 @@ async function main() {
       following: 0,
       ...(p?._count || {}),
     };
+
     setText(cntPosts, String(counts.posts || 0));
     setText(cntFollowers, String(counts.followers || 0));
     setText(cntFollowing, String(counts.following || 0));
@@ -341,6 +373,15 @@ async function main() {
       }
     }
 
+    if (btnCreatePost) {
+      if (isMe) {
+        btnCreatePost.hidden = false;
+        btnCreatePost.href = "create-post.html";
+      } else {
+        btnCreatePost.remove();
+      }
+    }
+
     const followersArr = Array.isArray(p?.followers) ? [...p.followers] : [];
     let followerCount =
       (typeof p?._count?.followers === "number"
@@ -353,24 +394,35 @@ async function main() {
       !!myName &&
       followersArr.some((u) => u?.name && sameUser(String(u.name), myName));
 
+    /**
+     * Update visible follow/unfollow button state.
+     * @returns {void}
+     */
     function updateFollowUI() {
       if (!btnFollow || !btnUnfollow) return;
 
       if (!token || isMe) {
-        btnFollow.style.display = "none";
-        btnUnfollow.style.display = "none";
+        btnFollow.hidden = true;
+        btnUnfollow.hidden = true;
         return;
       }
 
-      btnFollow.style.display = iFollow ? "none" : "";
-      btnUnfollow.style.display = iFollow ? "" : "none";
+      btnFollow.hidden = iFollow;
+      btnUnfollow.hidden = !iFollow;
 
-      if (cntFollowers)
+      if (cntFollowers) {
         setText(cntFollowers, String(Math.max(0, followerCount)));
+      }
     }
 
+    /**
+     * Handle profile follow/unfollow state changes.
+     * @param {"follow"|"unfollow"} action
+     * @returns {Promise<void>}
+     */
     async function handleFollowClick(action) {
       if (!p?.name) return;
+
       if (!token) {
         window.location.href = "login.html";
         return;
@@ -378,9 +430,12 @@ async function main() {
 
       if (btnFollow) btnFollow.disabled = true;
       if (btnUnfollow) btnUnfollow.disabled = true;
+
       showLoader();
+
       try {
         await follow(p.name, action);
+
         if (action === "follow" && !iFollow) {
           iFollow = true;
           followerCount += 1;
@@ -388,17 +443,24 @@ async function main() {
           iFollow = false;
           followerCount = Math.max(0, followerCount - 1);
         }
+
         updateFollowUI();
       } catch (err) {
         const status = /** @type {any} */ (err)?.status;
+
         if (status === 401 || status === 403) {
           window.location.href = "login.html";
           return;
         }
+
         // @ts-ignore
-        window.alert(err?.message || "Failed to update follow state");
+        showPageMessage(
+          msgEl,
+          err?.message || "Failed to update follow state."
+        );
       } finally {
         hideLoader();
+
         if (btnFollow) btnFollow.disabled = false;
         if (btnUnfollow) btnUnfollow.disabled = false;
       }
@@ -406,6 +468,7 @@ async function main() {
 
     if (btnFollow) btnFollow.onclick = () => handleFollowClick("follow");
     if (btnUnfollow) btnUnfollow.onclick = () => handleFollowClick("unfollow");
+
     updateFollowUI();
 
     renderPosts(panelPosts, Array.isArray(p?.posts) ? [...p.posts] : []);
@@ -420,27 +483,28 @@ async function main() {
 
     const tabs = [...document.querySelectorAll(".tabs .tab")];
     const panels = [...document.querySelectorAll(".tabpanel")];
+
     tabs.forEach((tabBtn) => {
       tabBtn.addEventListener("click", () => {
-        tabs.forEach((b) => b.classList.remove("is-active"));
+        tabs.forEach((b) => {
+          b.classList.remove("is-active");
+          b.setAttribute("aria-selected", "false");
+        });
+
         tabBtn.classList.add("is-active");
+        tabBtn.setAttribute("aria-selected", "true");
+
         const target = tabBtn.getAttribute("data-tab");
+
         panels.forEach((pnl) => pnl.classList.add("is-hidden"));
+
         const active = byId(`panel-${target || ""}`);
         if (active) active.classList.remove("is-hidden");
       });
     });
   } catch (e) {
-    const msgEl = byId("page-msg");
-    if (msgEl) {
-      msgEl.style.display = "block";
-      msgEl.className = "form-message alert error";
-      // @ts-ignore
-      msgEl.textContent = (e && e.message) || "Could not load profile.";
-    } else {
-      // @ts-ignore
-      window.alert((e && e.message) || "Could not load profile.");
-    }
+    // @ts-ignore
+    showPageMessage(msgEl, (e && e.message) || "Could not load profile.");
   } finally {
     hideLoader();
   }

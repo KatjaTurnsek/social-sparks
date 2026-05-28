@@ -5,12 +5,14 @@
 A mini social network / micro-blogging app where users can register, log in, browse the feed, create/edit/delete their own posts, follow/unfollow, react with emojis, and comment. Built with Vite and vanilla JavaScript (ES modules).
 
 ## 🔗 Links
+
 - **Live Site:** https://katjaturnsek.github.io/social-sparks/
 - **Repo:** https://github.com/KatjaTurnsek/social-sparks
 - **Project Kanban:** https://github.com/users/KatjaTurnsek/projects/2/views/1
 - **API Docs:** https://docs.noroff.dev/docs/v2
 
 ## ✅ Features (per brief)
+
 - Register & Login (Noroff Auth)
 - Feed & single post
 - Create / Edit / Delete own posts
@@ -20,22 +22,26 @@ A mini social network / micro-blogging app where users can register, log in, bro
 - Search posts
 
 ## 🔧 Built With
+
 - Vite (multi-page build via `vite.config.js`)
 - JavaScript (ES Modules) with `// @ts-check` + JSDoc
 - HTML5, CSS3
 - Noroff API v2 (Auth + Social)
 
 ## 📄 Pages
+
 `index.html`, `login.html`, `register.html`, `feed.html`, `post.html`,  
 `profile.html`, `search.html`, `create-post.html`, `edit-post.html`, `edit-profile.html`
 
 ## 🧩 How This Meets the Brief
+
 - ES6 modules throughout
 - JSDoc added to key functions (`// @ts-check` across modules)
 - Deployed on GitHub Pages
 - Basic, accessible UI (cards, grid, forms, skip link, ARIA live regions)
 
 ## 🔧 Getting Started (Local)
+
 ```bash
 git clone https://github.com/KatjaTurnsek/social-sparks.git
 cd social-sparks
@@ -44,18 +50,25 @@ npm run dev
 ```
 
 ## 🏗️ Build & Deploy
+
 Outputs to /docs (configured for GitHub Pages):
+
 ```bash
 npm run build
 ```
+
 Commit & push; GitHub Pages serves from main → /docs.
 
 ## ⚙️ Configuration
+
 Defaults to https://v2.api.noroff.dev. Optional .env:
+
 ```dotenv
 VITE_API_BASE="https://v2.api.noroff.dev"
 ```
+
 ## 📁 Structure (excerpt)
+
 ```text
 social-sparks/
 ├─ assets/
@@ -76,7 +89,19 @@ social-sparks/
 └─ package.json
 ```
 
+## ✨ Portfolio 2 Improvements
+
+For Portfolio 2, I reviewed Social Sparks as a professional portfolio project and made two focused UI/UX improvements.
+
+- Added a clear **New post** button to the profile page so logged-in users can create posts directly from their own profile.
+- Improved the latest post cards on the home page by tightening the layout and adding a temporary placeholder area for posts without images.
+
+These updates improve the discoverability of a core feature and make the latest posts section look more consistent when users publish posts with different content.
+
+**Improvement commit:** https://github.com/KatjaTurnsek/social-sparks/commit/cf386e8
+
 ## ♿ Accessibility & Performance
+
 Semantic HTML, visible focus, ARIA live regions, lazy-loaded images, skeleton loaders.
 
 ## 🙋‍♀️ Author
@@ -84,6 +109,3 @@ Semantic HTML, visible focus, ARIA live regions, lazy-loaded images, skeleton lo
 ** Katja Turnšek **
 Frontend Development Student
 [Portfolio Website](https://katjaturnsek.github.io/portfolio/) (coming soon)
-
-
-
